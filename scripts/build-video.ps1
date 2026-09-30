@@ -16,18 +16,31 @@ $ErrorActionPreference = "Stop"
 
 # Run ffmpeg and surface its stderr instead of swallowing it, so a filter error
 # is diagnosable rather than a bare "failed" throw.
+#
+# ffmpeg prints its version banner and progress on stderr even on success.
+# Under -ErrorActionPreference Stop, PowerShell promotes that stderr to a
+# terminating NativeCommandError, so the run dies on the banner before ffmpeg
+# starts working. Relax the preference for the call and judge success by the
+# exit code, which is the only reliable signal here.
 function Invoke-FF([string[]]$ffArgs, [string]$label) {
-  $log = & ffmpeg @ffArgs 2>&1
-  if ($LASTEXITCODE -ne 0) {
+  $previous = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"
+  try {
+    $log = & ffmpeg @ffArgs 2>&1
+    $code = $LASTEXITCODE
+  } finally {
+    $ErrorActionPreference = $previous
+  }
+  if ($code -ne 0) {
     $tail = ($log | Select-Object -Last 6) -join "`n"
-    throw "ffmpeg failed for ${label}:`n$tail"
+    throw "ffmpeg failed for ${label} (exit ${code}):`n$tail"
   }
 }
 
 # Order matches the required narrative: profile pages FIRST, then the agents
 # dating, then rankings, then how it works.
 $story = @(
-  @{ file = "00.png"; seconds = 6;  caption = "26 agents. 18 dates. Every claim cited to a source line." },
+  @{ file = "00.png"; seconds = 6;  caption = "26 agents. 19 dates. Every claim cited to a source line." },
   @{ file = "01.png"; seconds = 7;  caption = "Profile FIRST: hobbies, interests, needs - each quote traced to its source line" },
   @{ file = "02.png"; seconds = 6;  caption = "A second person, read only from their own two profiles" },
   @{ file = "03.png"; seconds = 11; caption = "The agents actually date. Real transcripts - every turn grounded in evidence" },
@@ -103,10 +116,11 @@ try {
   # --- concat --------------------------------------------------------------
   $listFile = Join-Path $tmp "list.txt"
   ($parts | ForEach-Object { "file '$_'" }) -join "`n" | Set-Content -Path $listFile -Encoding ascii
-  & ffmpeg -y -f concat -safe 0 -i $listFile -c copy $Out 2>&1 | Out-Null
-  if ($LASTEXITCODE -ne 0) { throw "concat failed" }
+  Invoke-FF @("-y","-f","concat","-safe","0","-i",$listFile,"-c","copy",$Out) "concat"
 
-  $dur = & ffprobe -v error -show_entries format=duration -of csv=p=0 $Out
+  $previous = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"
+  try { $dur = & ffprobe -v error -show_entries format=duration -of csv=p=0 $Out } finally { $ErrorActionPreference = $previous }
   Write-Output ("DONE {0} duration={1}s" -f $Out, [math]::Round([double]$dur, 1))
   if ([double]$dur -gt 180) { throw "Video is $([math]::Round([double]$dur,1))s, over the 3-minute limit" }
 } finally {
