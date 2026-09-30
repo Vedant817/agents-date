@@ -6,9 +6,15 @@ import type { Run } from "@/core/types";
 /**
  * Filesystem-backed run store.
  *
- * Chosen over a hosted database for one reason: the demo and the live site
- * must both work with zero external credentials. A Convex adapter can be added
- * behind the same interface later (see Store note in README).
+ * Chosen over a hosted database for one reason: the demo and the live site must
+ * both work with zero external credentials. A hosted adapter can be added
+ * behind the same interface later.
+ *
+ * DEPLOYMENT CAVEAT: on most PaaS hosts (Render, Heroku, Fly) the container
+ * filesystem is ephemeral, so user-created runs are lost on restart or
+ * redeploy. The committed demo run is unaffected because it is read from the
+ * repository. `isEphemeral` is surfaced on the run page so the UI can tell the
+ * user their run is temporary instead of silently losing it.
  *
  * Writes are atomic (tmp file + rename) and serialised per run so concurrent
  * API requests cannot interleave and corrupt a run file.
@@ -18,6 +24,8 @@ export interface RunStore {
   save(run: Run): Promise<Run>;
   list(): Promise<Run[]>;
   delete(runId: string): Promise<void>;
+  /** True when writes do not survive a restart. */
+  isEphemeral(): boolean;
 }
 
 const DATA_DIR = process.env.AGENTS_DATE_DATA_DIR ?? path.join(process.cwd(), ".data", "runs");
@@ -46,7 +54,17 @@ function runPath(runId: string): string | null {
   return path.join(DATA_DIR, `${runId}.json`);
 }
 
+/** Render and similar hosts set RENDER=1 and mount the filesystem as ephemeral. */
+function detectEphemeral(): boolean {
+  if (process.env.AGENTS_DATE_EPHEMERAL) return process.env.AGENTS_DATE_EPHEMERAL === "1";
+  return Boolean(process.env.RENDER || process.env.FLY_APP_NAME || process.env.HEROKU_APP_NAME);
+}
+
 export class FileRunStore implements RunStore {
+  isEphemeral(): boolean {
+    return detectEphemeral();
+  }
+
   async get(runId: string): Promise<Run | null> {
     const file = runPath(runId);
     if (!file || !existsSync(file)) return null;

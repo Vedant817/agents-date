@@ -12,6 +12,7 @@ import {
   validateSubmission,
 } from "@/pipeline/run";
 import { getStore } from "@/store/runs";
+import { rateLimit } from "@/api/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,10 +25,22 @@ const EntrySchema = z.object({
 });
 
 const BodySchema = z.object({
-  entries: z.array(EntrySchema).min(1, "Add at least one person.").max(30, "30 people per run is the limit."),
+  // 20 people = at most 40 paid captures in one request. The demo (26) is a
+  // prebuilt file, so this cap does not limit what can be *viewed*.
+  entries: z.array(EntrySchema).min(1, "Add at least one person.").max(20, "20 people per run is the limit."),
 });
 
 export async function POST(request: Request) {
+  // Bound the damage a single request can do. Each person costs up to two
+  // Apify captures, so an unauthenticated 30-person POST is 60 paid calls.
+  const limit = rateLimit(request);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: `Too many runs from this address. Try again in ${limit.retryAfterSeconds}s.` },
+      { status: 429, headers: { "retry-after": String(limit.retryAfterSeconds) } },
+    );
+  }
+
   let parsed: z.infer<typeof BodySchema>;
   try {
     const raw = await request.json();

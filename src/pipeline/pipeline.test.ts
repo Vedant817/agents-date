@@ -484,8 +484,7 @@ describe("processPerson (consented text, no network)", () => {
   });
 });
 
-describe("summarise", () => {
-  it("counts people and unique sessions", () => {
+describe("summarise", () => {  it("counts people and unique sessions", () => {
     const run = emptyRun("r", false);
     const people = Array.from({ length: 3 }, (_, i) =>
       rec(`p${i}`, analyse(`p${i}`, { linkedin: src("linkedin", TRAIL), instagram: src("instagram", CINEPHILE) })),

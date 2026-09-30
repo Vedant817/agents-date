@@ -61,6 +61,16 @@ export default async function RunPage(props: { params: Promise<{ runId: string }
         </div>
       )}
 
+      {!run.isDemo && store.isEphemeral() && (
+        <div className="notice notice-info">
+          This run is stored on temporary disk, so it may disappear if the server restarts. The{" "}
+          <Link href="/demo" style={{ textDecoration: "underline" }}>
+            demo run
+          </Link>{" "}
+          is always available.
+        </div>
+      )}
+
       {summary.ready === 0 ? (
         <section className="panel empty">
           <h2>No profile could be read</h2>
