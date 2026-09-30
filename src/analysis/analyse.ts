@@ -28,7 +28,11 @@ export function analyse(
   const traits = new Map<string, Trait>();
   const openers: ConversationOpener[] = [];
   const gaps: string[] = [];
-  let displayName = "";
+  // Name precedence is explicit: LinkedIn is the professional record of a
+  // person's legal-ish name, while Instagram display names are routinely
+  // shortened ("Amara" for "Amara Okonkwo"). LinkedIn therefore wins.
+  let linkedinName = "";
+  let instagramName = "";
   let headline = "";
   let location: string | undefined;
 
@@ -45,8 +49,11 @@ export function analyse(
       if (record.kind === "linkedin" && kind.kind === "headline" && !headline) {
         headline = line;
       }
-      if (record.kind === "instagram" && kind.kind === "profile_name" && !displayName) {
-        displayName = line;
+      if (record.kind === "linkedin" && kind.kind === "profile_name" && !linkedinName) {
+        linkedinName = line;
+      }
+      if (record.kind === "instagram" && kind.kind === "profile_name" && !instagramName) {
+        instagramName = line;
       }
       if (kind.kind === "location" && !location) {
         location = line;
@@ -86,10 +93,7 @@ export function analyse(
     });
   }
 
-  if (!displayName) {
-    displayName = sources.linkedin.lines?.[0] ?? sources.instagram.lines?.[0] ?? "Unnamed profile";
-    if (displayName.length > 70) displayName = `${displayName.slice(0, 69)}…`;
-  }
+  const displayName = linkedinName || instagramName || "Unnamed profile";
   if (!headline) headline = sources.linkedin.lines?.[1] ?? "";
 
   const traitList = [...traits.values()].sort((a, b) => b.confidence - a.confidence);

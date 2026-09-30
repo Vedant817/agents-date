@@ -88,8 +88,26 @@ describe("analyse", () => {
     expect(joined).toContain("orientation");
   });
 
-  it("survives an unreadable source and still analyses the other", () => {
+  it("prefers the LinkedIn name over a shortened Instagram name", () => {
+    // Regression: Instagram display names are routinely shortened. The
+    // professional record of a name should win, or profiles read as "Amara"
+    // when the person is "Amara Okonkwo".
     const a = analyse("p1", {
+      linkedin: src("linkedin", ["Amara Okonkwo", "Backend engineer"]),
+      instagram: src("instagram", ["Amara", "Runner. Coffee first."]),
+    });
+    expect(a.displayName).toBe("Amara Okonkwo");
+  });
+
+  it("falls back to the Instagram name when LinkedIn is unreadable", () => {
+    const a = analyse("p1", {
+      linkedin: { kind: "linkedin", url: "u", status: "unavailable", reason: "blocked" },
+      instagram: src("instagram", ["Amara", "Runner. Coffee first."]),
+    });
+    expect(a.displayName).toBe("Amara");
+  });
+
+  it("survives an unreadable source and still analyses the other", () => {    const a = analyse("p1", {
       linkedin: src("linkedin", TRAIL),
       instagram: { kind: "instagram", url: "u", status: "unavailable", reason: "blocked" },
     });
