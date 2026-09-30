@@ -158,6 +158,26 @@ function isNegated(line: string, form: string): boolean {
   return false;
 }
 
+/**
+ * "running" is also the gerund for operating something. A beekeeper "running
+ * 14 hives" and a psychologist "running a peer support group" are managing,
+ * not running, and the analyser reported a confident Running hobby whose
+ * citation said the opposite.
+ *
+ * Only forms that double as gerunds are guarded, so "running a meetup" still
+ * resolves community building while "running slowly" stays the sport. A
+ * following determiner or number is the tell: running has no direct object.
+ */
+const GERUND_FORMS = new Set(["running", "jogging"]);
+
+function isManagedObject(line: string, form: string): boolean {
+  if (!GERUND_FORMS.has(form)) return false;
+  const lower = line.toLowerCase().replace(/[^a-z0-9\s+]/g, " ");
+  const determiner =
+    "(?:a|an|the|my|his|her|our|their|this|that|these|those|\\d+|nine|ten|fourteen|twenty)";
+  return new RegExp(`\\b${form}\\s+${determiner}\\b`).test(lower);
+}
+
 export function matchLine(
   line: string,
 ): { def: TraitDefinition; matchedForm: string }[] {
@@ -181,7 +201,7 @@ export function matchLine(
     if (words.length > 0 && words.every((w) => claimedWords.has(w))) continue;
 
     const needle = ` ${normalised} `;
-    if (haystack.includes(needle) && !isNegated(line, form)) {
+    if (haystack.includes(needle) && !isNegated(line, form) && !isManagedObject(line, normalised)) {
       seen.add(def.key);
       for (const w of words) claimedWords.add(w);
       hits.push({ def, matchedForm: form });

@@ -186,4 +186,31 @@ describe("taxonomy", () => {
     const keys = matchLine("I hate mornings but I love bouldering").map((h) => h.def.key);
     expect(keys).toContain("hobby:climbing");
   });
+
+  it("does not read the gerund 'running' as the sport", () => {
+    // Regression: found in the seeded demo. A beekeeper "running 14 hives"
+    // and a psychologist "running a peer support group" were both reported
+    // as hobby:running, and the UI then showed the managing sentence as the
+    // citation for loving running.
+    for (const line of [
+      "Urban beekeeper running 14 hives across the city",
+      "Supervising trainee psychologists and running a peer support group.",
+      "Running a meetup every second Wednesday",
+      "Running the team was the hard part",
+    ]) {
+      const keys = matchLine(line).map((h) => h.def.key);
+      expect(keys, `"${line}" must not imply the sport`).not.toContain("hobby:running");
+    }
+  });
+
+  it("keeps the sport when running has no direct object", () => {
+    for (const line of [
+      "Running slowly is the only pace I enjoy.",
+      "Cycling to site most days and running when the light is good.",
+      "Boxing, running, and a very cold gym in February.",
+      "Long distance running when days off line up.",
+    ]) {
+      expect(matchLine(line).map((h) => h.def.key), `"${line}"`).toContain("hobby:running");
+    }
+  });
 });
