@@ -1,10 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { DateSession, MatchScore, PersonRecord, Run } from "@/core/types";
 
 type Tab = "profiles" | "dates" | "rankings";
+
+/**
+ * The run view is deep-linkable: /run/<id>?view=dates&person=<id> opens a
+ * specific tab and person. That makes a profile or a single date shareable,
+ * and lets a video capture a known state without scripting clicks.
+ */
+function readParam(name: string): string | null {
+  if (typeof window === "undefined") return null;
+  return new URLSearchParams(window.location.search).get(name);
+}
 
 export default function RunClient({ run }: { run: Run }) {
   const [tab, setTab] = useState<Tab>("profiles");
@@ -27,6 +37,25 @@ export default function RunClient({ run }: { run: Run }) {
     }
     return [...map.values()];
   }, [people]);
+
+  // Honour ?view= and ?person= on mount.
+  useEffect(() => {
+    const v = readParam("view");
+    if (v === "dates" || v === "rankings" || v === "profiles") setTab(v);
+    const p = readParam("person");
+    if (p && people.some((x) => x.id === p)) setSelected(p);
+  }, [people]);
+
+  // Keep the URL in step so the current view is always shareable.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (tab === "profiles") url.searchParams.delete("view");
+    else url.searchParams.set("view", tab);
+    if (selected && selected !== ready[0]?.id) url.searchParams.set("person", selected);
+    else url.searchParams.delete("person");
+    window.history.replaceState(null, "", url.toString());
+  }, [tab, selected, ready]);
 
   if (ready.length === 0) {
     return (
@@ -99,7 +128,7 @@ export default function RunClient({ run }: { run: Run }) {
             {ready.map((p) => (
               <a
                 key={p.id}
-                href={`#profile-${p.id}`}
+                href={`?view=profiles&person=${p.id}`}
                 aria-current={p.id === active.id ? "true" : undefined}
                 className={p.id === active.id ? "active" : ""}
                 onClick={(e) => {
@@ -117,8 +146,6 @@ export default function RunClient({ run }: { run: Run }) {
           </div>
         </div>
       )}
-
-      {unreadableBlock}
 
       {tab === "dates" && (
         <div>
@@ -143,7 +170,7 @@ export default function RunClient({ run }: { run: Run }) {
             {ready.map((p) => (
               <a
                 key={p.id}
-                href={`#rank-${p.id}`}
+                href={`?view=rankings&person=${p.id}`}
                 aria-current={p.id === active.id ? "true" : undefined}
                 className={p.id === active.id ? "active" : ""}
                 onClick={(e) => {
@@ -160,6 +187,8 @@ export default function RunClient({ run }: { run: Run }) {
           </div>
         </div>
       )}
+
+      {unreadableBlock}
     </>
   );
 }
@@ -212,18 +241,18 @@ function TraitList({
                 <span style={{ color: "var(--text)" }}>{t.label}</span>
                 <span className="mono dim small">{Math.round(t.confidence * 100)}%</span>
               </div>
-            {t.evidence.length > 0 && (
-              <div className="evidence">
-                {t.evidence.map((e, i) => (
-                  <div key={i} style={{ marginTop: i === 0 ? 0 : 4 }}>
-                    &ldquo;{e.quote}&rdquo;{" "}
-                    <span className="src">
-                      {e.source} · line {(e.line ?? 0) + 1}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
+              {t.evidence.length > 0 && (
+                <div className="evidence">
+                  {t.evidence.map((e, i) => (
+                    <div key={i} style={{ marginTop: i === 0 ? 0 : 4 }}>
+                      &ldquo;{e.quote}&rdquo;{" "}
+                      <span className="src">
+                        {e.source} · line {(e.line ?? 0) + 1}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </li>
           ))}
         </ul>
@@ -352,7 +381,8 @@ function SessionPanel({ session, nameOf }: { session: DateSession; nameOf: (id: 
             <p>{t.text}</p>
             {t.evidence.length > 0 && (
               <div className="evidence">
-                grounded in: {t.evidence.map((e) => `“${e.quote.slice(0, 90)}${e.quote.length > 90 ? "…" : ""}”`).join(" · ")}
+                grounded in:{" "}
+                {t.evidence.map((e) => `“${e.quote.slice(0, 90)}${e.quote.length > 90 ? "…" : ""}”`).join(" · ")}
               </div>
             )}
           </div>
@@ -424,7 +454,14 @@ function RankingPanel({ person, nameOf }: { person: PersonRecord; nameOf: (id: s
               {m.evidence.length > 0 && (
                 <div className="evidence">
                   <b>Evidence</b>
-                  <div className="src">{m.evidence.map((e) => `“${e.quote.slice(0, 70)}${e.quote.length > 70 ? "…" : ""}” (${e.source})`).join(" · ")}</div>
+                  <div className="src">
+                    {m.evidence
+                      .map(
+                        (e) =>
+                          `“${e.quote.slice(0, 70)}${e.quote.length > 70 ? "…" : ""}” (${e.source})`,
+                      )
+                      .join(" · ")}
+                  </div>
                 </div>
               )}
             </details>
