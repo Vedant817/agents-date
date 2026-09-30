@@ -130,6 +130,9 @@ export async function processPerson(
 
   const analysis = analyse(id, { linkedin, instagram });
   const bothUnread = linkedin.status !== "captured" && instagram.status !== "captured";
+  // A person with no readable source is NOT ready. It must be reported as a
+  // failure rather than ranked and dated as if it had a profile.
+  const readable = linkedin.status === "captured" || instagram.status === "captured";
 
   return {
     id,
@@ -137,11 +140,11 @@ export async function processPerson(
     displayName: analysis.displayName,
     linkedinUrl: li.url!,
     instagramUrl: ig.url!,
-    status: bothUnread ? "failed" : "ready",
+    status: readable ? "ready" : "failed",
     error: bothUnread
       ? "Neither source could be read, so no analysis was produced. Add an Apify token, or paste the visible profile text."
       : undefined,
-    analysis,
+    analysis: readable ? analysis : undefined,
     createdAt: Date.now(),
   };
 }
@@ -194,7 +197,10 @@ export function planSessions(
 export function computeNetwork(people: PersonRecord[]): PersonRecord[] {
   const analyses = new Map<string, PersonAnalysis>();
   for (const p of people) {
-    if (p.analysis) analyses.set(p.id, p.analysis);
+    // ONLY readable people enter the pool. A person whose sources could not be
+    // read used to be ranked and dated, producing transcripts about someone
+    // with no data at all and an "Unknown" name in the shortlist.
+    if (p.status === "ready" && p.analysis) analyses.set(p.id, p.analysis);
   }
   const list = [...analyses.values()];
 

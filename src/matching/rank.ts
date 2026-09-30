@@ -21,9 +21,19 @@ export function scoreMatch(
 ): MatchScore {
   const components: MatchComponent[] = [];
   const evidence: Evidence[] = [];
+  // Weights sum to 1.0. "Shared ground" and "Adds something new" are the two
+  // largest, because the product is about finding someone to do things with.
+  const W = {
+    shared: 0.3,
+    needs: 0.26,
+    additive: 0.18,
+    evidence: 0.16,
+    values: 0.1,
+  } as const;
 
   // --- 1. Do they share real ground? ---------------------------------------
-  const candidateKeys = new Set(candidate.traits.map((t) => t.key));
+  const candidateByKey = new Map(candidate.traits.map((t) => [t.key, t]));
+  const candidateKeys = new Set(candidateByKey.keys());
   const shared: Trait[] = subject.traits.filter((t) => candidateKeys.has(t.key));
   const sharedAffinity = shared.reduce((sum, t) => {
     const def = getTrait(t.key);
@@ -32,22 +42,26 @@ export function scoreMatch(
   }, 0);
   const sharedScore = Math.min(1, sharedAffinity / 2.2);
   if (shared.length > 0) {
+    // The detail says "both profiles show X", so the evidence must include a
+    // quote from each side. Citing only the subject left the claim unproven.
+    const sharedEvidence = shared.flatMap((t) => {
+      const mine = t.evidence.filter((e) => e.personId === subject.personId).slice(0, 1);
+      const theirs = candidateByKey.get(t.key)?.evidence.filter((e) => e.personId === candidate.personId).slice(0, 1) ?? [];
+      return [...mine, ...theirs];
+    });
     components.push({
       label: "Shared ground",
       score: sharedScore,
-      weight: 0.34,
-      detail:
-        shared.length > 0
-          ? `Both profiles show ${shared.map((t) => t.label.toLowerCase()).join(", ")}.`
-          : "No overlapping activities.",
-      evidence: shared.flatMap((t) => t.evidence.slice(0, 1)),
+      weight: W.shared,
+      detail: `Both profiles show ${shared.map((t) => t.label.toLowerCase()).join(", ")}.`,
+      evidence: sharedEvidence.slice(0, 4),
     });
-    evidence.push(...shared.flatMap((t) => t.evidence.slice(0, 1)));
+    evidence.push(...sharedEvidence);
   } else {
     components.push({
       label: "Shared ground",
       score: 0,
-      weight: 0.34,
+      weight: W.shared,
       detail: "Neither profile names an activity in common, so the first date would be pure conversation.",
       evidence: [],
     });
@@ -59,39 +73,80 @@ export function scoreMatch(
   components.push({
     label: "Meets your needs",
     score: needScore,
-    weight: 0.3,
+    weight: W.needs,
     detail:
       subject.needs.length === 0
         ? "Your sources state no clear needs, so this is scored on shared ground alone."
         : satisfied.length > 0
           ? `${satisfied.length} of ${subject.needs.length} of your stated needs appear in their profile.`
           : "None of the needs your sources imply appear in their profile.",
-    evidence: satisfied.flatMap((n) => n.evidence.slice(0, 1)),
+    // The claim is about the CANDIDATE, so cite the candidate's own line.
+    evidence: satisfied
+      .flatMap((n) => candidateByKey.get(n.derivedFromTraitKey)?.evidence.filter((e) => e.personId === candidate.personId).slice(0, 1) ?? [])
+      .slice(0, 3),
   });
 
   // --- 3. Value alignment ---------------------------------------------------
-  const candidateValues = new Set(candidate.values.map((v) => v.key));
-  const valueOverlap = subject.values.filter((v) => candidateValues.has(v.key));
+  const candidateValueKeys = new Set(candidate.values.map((v) => v.key));
+  const valueOverlap = subject.values.filter((v) => candidateValueKeys.has(v.key));
   components.push({
     label: "Values",
     score: subject.values.length === 0 ? 0.4 : Math.min(1, valueOverlap.length / Math.max(1, subject.values.length)),
-    weight: 0.16,
+    weight: W.values,
     detail:
       valueOverlap.length > 0
         ? `Aligned on ${valueOverlap.map((v) => v.label.toLowerCase()).join(", ")}.`
         : "No shared values are stated in either profile.",
-    evidence: valueOverlap.flatMap((v) => v.evidence.slice(0, 1)),
+    evidence: valueOverlap
+      .flatMap((v) => candidate.traits.find((t) => t.key === v.key)?.evidence.filter((e) => e.personId === candidate.personId).slice(0, 1) ?? [])
+      .slice(0, 2),
   });
 
-  // --- 4. Evidence quality --------------------------------------------------
+  // --- 4. Additive vs redundant ---------------------------------------------
+  // Genuinely directional, and the component that removes false ties.
+  // Shared ground is symmetric by definition, so two people who overlap
+  // equally scored identically regardless of who they were. This asks whether
+  // the candidate BRINGS something the subject lacks, weighed against how much
+  // of that they already have. Being the 4th running-adjacent hobby is
+  // redundant; being someone's only music interest is additive.
+  const subjectHobbyCategories = new Set(
+    subject.hobbies.map((h) => (getTrait(h.key)?.category ?? "hobby") + ":" + h.key.split(":")[0]),
+  );
+  const additive = candidate.traits.filter((t) => {
+    const bucket = `${t.category}:${t.key.split(":")[0]}`;
+    return !subject.traits.some((s) => `${s.category}:${s.key.split(":")[0]}` === bucket);
+  });
+  const redundancy = candidate.traits.filter((t) =>
+    subjectHobbyCategories.has(`${t.category}:${t.key.split(":")[0]}`),
+  );
+  const addScore = candidate.traits.length === 0 ? 0.3 : Math.min(1, additive.length / Math.max(2, candidate.traits.length * 0.6));
+  const redundancyPenalty = subject.traits.length === 0 ? 0 : Math.min(0.5, redundancy.length / subject.traits.length);
+  components.push({
+    label: "Adds something new",
+    score: Math.max(0, addScore - redundancyPenalty),
+    weight: W.additive,
+    detail:
+      candidate.traits.length === 0
+        ? "Their profiles name nothing to bring to a date."
+        : additive.length > 0
+          ? `They show ${additive.slice(0, 2).map((t) => t.label.toLowerCase()).join(" and ")}, which you do not already have.`
+          : "Everything they show is something you already have too, so there is less to discover.",
+    evidence: additive
+      .flatMap((t) => t.evidence.filter((e) => e.personId === candidate.personId).slice(0, 1))
+      .slice(0, 2),
+  });
+
+  // --- 5. Evidence quality --------------------------------------------------
   const subjectConf = avg(subject.traits.map((t) => t.confidence));
   const candidateConf = avg(candidate.traits.map((t) => t.confidence));
-  const evidenceScore = (subjectConf + candidateConf) / 2;
+  // Weighted 2:1 toward the candidate, because a match is only as trustworthy
+  // as the thinner of the two profiles. A plain average was provably symmetric.
+  const evidenceScore = (subjectConf + candidateConf * 2) / 3;
   components.push({
     label: "Evidence quality",
     score: evidenceScore,
-    weight: 0.2,
-    detail: `Profile detail is ${evidenceScore > 0.75 ? "strong" : evidenceScore > 0.55 ? "moderate" : "thin"} on both sides.`,
+    weight: W.evidence,
+    detail: `Profile detail is ${evidenceScore > 0.75 ? "strong" : evidenceScore > 0.55 ? "moderate" : "thin"} on both sides, and their side weighs most.`,
     evidence: [],
   });
 
@@ -137,7 +192,8 @@ function dedupeEvidence(list: readonly Evidence[]): Evidence[] {
   const seen = new Set<string>();
   const out: Evidence[] = [];
   for (const e of list) {
-    const key = `${e.source}:${e.quote}`;
+    // Include personId: the same quote from two people is two distinct facts.
+    const key = `${e.personId}:${e.source}:${e.quote}`;
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(e);

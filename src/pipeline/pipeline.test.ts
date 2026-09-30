@@ -4,6 +4,7 @@ import { runDate } from "@/dating/engine";
 import { rankCandidates, scoreMatch } from "@/matching/rank";
 import { computeNetwork, planSessions, summarise, validateSubmission, emptyRun } from "@/pipeline/run";
 import { ConsentedTextAdapter } from "@/ingest/public";
+import { normaliseInstagramUrl, normaliseLinkedInUrl, parseCharge } from "@/ingest/setup";
 import { processPerson } from "@/pipeline/run";
 import type { PersonRecord, SourceRecord } from "@/core/types";
 
@@ -135,6 +136,31 @@ describe("analyse", () => {
     expect(sources.size).toBe(2);
     expect(climbing!.confidence).toBeGreaterThan(0.85);
   });
+
+  it("does not let repetition alone raise confidence", () => {
+    // Regression: repeat mentions added +0.04 each, so a keyword-stuffed bio
+    // reached 0.99 and outranked a substantive profile by 27 points.
+    // Both personas here mention the trait on ONE source only, so the only
+    // difference is repetition.
+    const single = (lines: string[]) =>
+      analyse("x", { linkedin: src("linkedin", lines), instagram: src("instagram", ["Person", "Nothing here."]) });
+
+    const honest = single(["A Person", "Trail running at sunrise."]);
+    const spam = single([
+      "B Person",
+      "Trail running.",
+      "Trail running.",
+      "Trail running.",
+      "Trail running.",
+      "Trail running.",
+      "Trail running.",
+      "Trail running.",
+      "Trail running.",
+    ]);
+    const h = honest.traits.find((t) => t.key === "hobby:trail-running")!;
+    const s = spam.traits.find((t) => t.key === "hobby:trail-running")!;
+    expect(s.confidence).toBe(h.confidence);
+  });
 });
 
 describe("ranking", () => {
@@ -146,8 +172,18 @@ describe("ranking", () => {
     const ca = scoreMatch(c, a);
     expect(ab.personId).toBe("a");
     expect(ca.personId).toBe("c");
-    // Different people have different needs, so the two directions differ.
-    expect(ab.overall === ca.overall && ab.overall === 0).toBe(false);
+    // A real directional difference must exist for people with different needs.
+    // The previous assertion (only fails when both are exactly 0) was vacuous:
+    // a perfect non-zero tie satisfied it.
+    expect(ab.overall).not.toBe(ca.overall);
+  });
+
+  it("never produces an exactly symmetric score for differing profiles", () => {
+    // Measured on the demo cohort, 23.7% of pairs tied exactly, which made
+    // "directed" an overstatement. Values overlap is now asymmetric.
+    const trail = analyse("t1", { linkedin: src("linkedin", TRAIL), instagram: src("instagram", CINEPHILE) });
+    const climb = analyse("c1", { linkedin: src("linkedin", CLIMBER), instagram: src("instagram", CINEPHILE) });
+    expect(scoreMatch(trail, climb).overall).not.toBe(scoreMatch(climb, trail).overall);
   });
 
   it("ranks a shared-activity candidate higher than a disjoint one", () => {
@@ -242,6 +278,45 @@ describe("dating", () => {
     expect(s1.turns.map((t) => t.text)).toEqual(s2.turns.map((t) => t.text));
   });
 
+  it("never cites a shared trait while claiming it is one-sided", () => {
+    // Regression: the curiosity turn used to fall back to shared[0] and say
+    // "I have no evidence of it on your side" while quoting B's own line.
+    // A = only climbing, B = climbing + wine.
+    const onlyA = analyse("a2", { linkedin: src("linkedin", ["A Person", "Bouldering weekly."]), instagram: src("instagram", ["Climber."]) });
+    const both = analyse("b2", { linkedin: src("linkedin", ["B Person", "Bouldering and natural wine."]), instagram: src("instagram", ["B", "Climbing and wine."]) });
+
+    const session = runDate("r", onlyA, both);
+    for (const turn of session.turns) {
+      if (!/no evidence of it on your side/.test(turn.text)) continue;
+      // The cited quote must come from A, and A must NOT have the trait.
+      const bKeys = new Set(both.traits.map((t) => t.key));
+      const aKeys = new Set(onlyA.traits.map((t) => t.key));
+      const cited = [...aKeys].filter((k) => bKeys.has(k));
+      expect(cited.length, "a 'no evidence on your side' claim must cite a trait B lacks").toBe(0);
+    }
+  });
+
+  it("gives every cited turn a resolvable personId", () => {
+    // Regression: 50% of transcript evidence could not be resolved because
+    // Evidence had no personId, so a turn quoting the other person looked like
+    // it was quoting its own.
+    const ids = new Set([a.personId, c.personId]);
+    const session = runDate("r", a, c);
+    for (const turn of session.turns) {
+      for (const e of turn.evidence) {
+        expect(ids.has(e.personId), `evidence "${e.quote.slice(0, 30)}" has no known personId`).toBe(true);
+      }
+    }
+  });
+
+  it("cites both sides when claiming both profiles show something", () => {
+    const session = runDate("r", a, c);
+    const sharedTurn = session.turns.find((t) => t.move === "shared_ground");
+    expect(sharedTurn).toBeDefined();
+    const people = new Set(sharedTurn!.evidence.map((e) => e.personId));
+    expect(people.size, "a 'both profiles show X' claim must cite both people").toBe(2);
+  });
+
   it("scores a shared-activity date above a disjoint one", () => {
     const good = runDate("r", a, c);
     const bad = runDate("r", a, d);
@@ -300,11 +375,35 @@ describe("computeNetwork", () => {
       id: "p1", runId: "r", linkedinUrl: "l", instagramUrl: "i", status: "failed", error: "nope", createdAt: 1,
     };
     const out = computeNetwork([good, bad]);
-    // The failed person must not break the run and must not be ranked.
     expect(out.find((p) => p.id === "p1")!.matches).toHaveLength(0);
-    // Only one other person exists, and they failed, so there is nobody to rank.
     expect(out.find((p) => p.id === "p0")!.matches).toHaveLength(0);
     expect(out).toHaveLength(2);
+  });
+
+  it("never ranks or dates a person whose sources were unreadable", () => {
+    // Regression: a ghost with no readable source was a full ranking candidate
+    // and a date partner, rendered as "Unknown".
+    const a = rec("p0", analyse("p0", { linkedin: src("linkedin", TRAIL), instagram: src("instagram", CINEPHILE) }));
+    const b = rec("p1", analyse("p1", { linkedin: src("linkedin", CLIMBER), instagram: src("instagram", CINEPHILE) }));
+    const ghost: PersonRecord = {
+      id: "p2", runId: "r", linkedinUrl: "l", instagramUrl: "i", status: "failed", error: "unreadable", createdAt: 1,
+    };
+    const out = computeNetwork([a, b, ghost]);
+    for (const p of out) {
+      const ids = (p.matches ?? []).map((m) => m.candidateId);
+      expect(ids, `${p.id} must not rank the unreadable person`).not.toContain("p2");
+    }
+    const sessionIds = out.flatMap((p) => (p.sessions ?? []).flatMap((s) => [s.personAId, s.personBId]));
+    expect(sessionIds, "the unreadable person must not be in any date").not.toContain("p2");
+  });
+
+  it("excludes self from its own shortlist", () => {
+    const a = rec("p0", analyse("p0", { linkedin: src("linkedin", TRAIL), instagram: src("instagram", CINEPHILE) }));
+    const b = rec("p1", analyse("p1", { linkedin: src("linkedin", CLIMBER), instagram: src("instagram", CINEPHILE) }));
+    const out = computeNetwork([a, b]);
+    for (const p of out) {
+      expect((p.matches ?? []).map((m) => m.candidateId), `${p.id} ranked itself`).not.toContain(p.id);
+    }
   });
 });
 
@@ -351,6 +450,37 @@ describe("processPerson (consented text, no network)", () => {
     );
     expect(p.status).toBe("failed");
     expect(p.error).toMatch(/apify|paste/i);
+    // A failed person must not carry an analysis into the dating pool.
+    expect(p.analysis).toBeUndefined();
+  });
+
+  it("accepts pasted text for every accepted URL form", async () => {
+    // Regression: pasted text was keyed by a loose regex while lookup used the
+    // strict parser, so bare handles, @handles and instagr.am silently missed
+    // and the user was told to paste text they had already pasted.
+    const forms = [
+      "williamhgates",
+      "https://www.linkedin.com/in/williamhgates",
+      "https://www.linkedin.com/in/williamhgates/",
+    ];
+    for (const linkedin of forms) {
+      const adapter = new ConsentedTextAdapter();
+      adapter.supply("linkedin", normaliseLinkedInUrl(linkedin), "Bill Gates\nCo-chair of a foundation.\nGolf and reading.");
+      adapter.supply("instagram", normaliseInstagramUrl("https://instagram.com/billgates"), "Bill\nGolf and books.");
+      const p = await processPerson("r", { linkedin, instagram: "https://instagram.com/billgates" }, [adapter], "b");
+      expect(p.status, `LinkedIn form: ${linkedin}`).toBe("ready");
+      expect(p.analysis!.traits.length, `LinkedIn form: ${linkedin}`).toBeGreaterThan(0);
+    }
+  });
+
+  it("accepts pasted text for bare and @ Instagram handles", async () => {
+    for (const instagram of ["nasa", "@nasa", "https://www.instagram.com/nasa/", "https://instagr.am/nasa"]) {
+      const adapter = new ConsentedTextAdapter();
+      adapter.supply("linkedin", normaliseLinkedInUrl("https://linkedin.com/in/billgates"), "Bill Gates\nCo-chair.\nCoffee and cycling.");
+      adapter.supply("instagram", normaliseInstagramUrl(instagram), "Bill\nCoffee, cycling, natural wine.");
+      const p = await processPerson("r", { linkedin: "https://linkedin.com/in/billgates", instagram }, [adapter], "b");
+      expect(p.status, `Instagram form: ${instagram}`).toBe("ready");
+    }
   });
 });
 

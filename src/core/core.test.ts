@@ -1,6 +1,39 @@
 import { describe, expect, it } from "vitest";
 import { parseInstagram, parseLinkedIn, parseSource } from "./urls";
 import { matchLine, allTraitKeys, getTrait } from "./taxonomy";
+import { classifyLine } from "@/analysis/classify";
+import { parseCharge } from "@/ingest/setup";
+
+describe("classifyLine", () => {
+  it("does not give unmatched prose the highest confidence kind", () => {
+    // Regression: the LinkedIn fallthrough returned "skill" (0.92), so any
+    // unrecognised line outranked an explicit "about" section (0.64).
+    const long = "Some quite long reflective sentence about work and life that nobody classified.";
+    expect(classifyLine(long, "linkedin", 6).kind).not.toBe("skill");
+  });
+
+  it("only reads a location from an explicit statement", () => {
+    // Regression: "Pasta, it" matched the old /word, XX$/ pattern.
+    expect(classifyLine("Pasta, it", "instagram", 3).kind).not.toBe("location");
+    expect(classifyLine("Based in Glasgow", "instagram", 2).kind).toBe("location");
+  });
+});
+
+describe("parseCharge", () => {
+  it("falls back rather than disabling the cap", () => {
+    // Number("") === 0 would silently remove the spend ceiling.
+    expect(parseCharge("", 0.5)).toBe(0.5);
+    expect(parseCharge(undefined, 0.5)).toBe(0.5);
+    expect(parseCharge("abc", 0.5)).toBe(0.5);
+    expect(parseCharge("NaN", 0.5)).toBe(0.5);
+    expect(parseCharge("-3", 0.5)).toBe(0.5);
+  });
+
+  it("accepts a sane value and clamps a dangerous one", () => {
+    expect(parseCharge("0.25", 0.5)).toBe(0.25);
+    expect(parseCharge("1000", 0.5)).toBe(2);
+  });
+});
 
 describe("parseLinkedIn", () => {
   it("normalises a full profile URL", () => {
@@ -109,5 +142,29 @@ describe("taxonomy", () => {
 
   it("returns nothing for unremarkable text", () => {
     expect(matchLine("Currently a product manager at a mid-size company")).toHaveLength(0);
+  });
+
+  it("does not match ambiguous single words that are not the hobby", () => {
+    // Regression: these produced confident nonsense from ordinary prose.
+    // "Events engineer at Google" claimed community-building as a value.
+    const cases: [string, string][] = [
+      ["Events engineer at Google", "value:community-building"],
+      ["Made $10k last quarter", "hobby:running"],
+      ["Hey sup, long time", "hobby:surfing"],
+      ["Currently boarding a flight", "hobby:skiing"],
+      ["Raised a band-aid on the build", "hobby:music"],
+      ["We rely on plants in the office", "hobby:gardening"],
+      ["Pasta, it", "interest:theatre"],
+    ];
+    for (const [line, key] of cases) {
+      const keys = matchLine(line).map((h) => h.def.key);
+      expect(keys, `"${line}" must not claim ${key}`).not.toContain(key);
+    }
+  });
+
+  it("counts one phrase as one trait, not a trait plus its parent", () => {
+    const keys = matchLine("I love trail running").map((h) => h.def.key);
+    expect(keys).toContain("hobby:trail-running");
+    expect(keys, "trail running is one hobby, not also generic running").not.toContain("hobby:running");
   });
 });

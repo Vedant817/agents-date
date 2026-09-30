@@ -67,6 +67,7 @@ export function analyse(
           quote: line,
           source: record.kind as SourceKind,
           line: index,
+          personId,
         };
 
         const baseConfidence = confidenceFor(evidenceKind);
@@ -81,12 +82,15 @@ export function analyse(
             evidence: [evidence],
           });
         } else {
-          // Seeing the same trait in both sources is genuine corroboration.
           const corroborated = !existing.evidence.some((e) => e.source === record.kind);
+          // Repeat mentions add one quote for the record but must NOT raise
+          // confidence: a keyword-stuffed bio used to climb to 0.99 and outrank
+          // a substantive profile. Only a second, independent source lifts it.
+          const capped = existing.confidence;
           traits.set(def.key, {
             ...existing,
-            confidence: Math.min(0.99, existing.confidence + (corroborated ? 0.18 : 0.04)),
-            evidence: [...existing.evidence, evidence],
+            confidence: corroborated ? Math.min(0.97, capped + 0.18) : capped,
+            evidence: existing.evidence.length < 4 ? [...existing.evidence, evidence] : existing.evidence,
           });
         }
       }

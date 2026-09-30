@@ -28,41 +28,50 @@ const locks = new Map<string, Promise<unknown>>();
 async function withLock<T>(key: string, fn: () => Promise<T>): Promise<T> {
   const prev = locks.get(key) ?? Promise.resolve();
   const next = prev.then(fn, fn);
-  locks.set(
-    key,
-    next.catch(() => undefined),
-  );
+  const settled = next.catch(() => undefined);
+  locks.set(key, settled);
   try {
     return await next;
   } finally {
-    if (locks.get(key) === next || locks.size === 0) {
-      // Best-effort cleanup; a leaked entry only delays future writes slightly.
-    }
+    // Prune so the map cannot grow without bound over a long-lived process.
+    if (locks.get(key) === settled) locks.delete(key);
   }
 }
 
-function runPath(runId: string): string {
-  const safe = runId.replace(/[^a-zA-Z0-9_-]/g, "");
-  if (!safe) throw new Error("Invalid run id");
-  return path.join(DATA_DIR, `${safe}.json`);
+function runPath(runId: string): string | null {
+  // Reject, do not collapse. Stripping disallowed characters made "a.b" and
+  // "ab" alias to the same file while taking different locks, so one writer's
+  // run was silently lost. Returning null keeps lookup total and safe.
+  if (!/^[a-zA-Z0-9_-]{1,120}$/.test(runId)) return null;
+  return path.join(DATA_DIR, `${runId}.json`);
 }
 
 export class FileRunStore implements RunStore {
   async get(runId: string): Promise<Run | null> {
     const file = runPath(runId);
-    if (!existsSync(file)) return null;
+    if (!file || !existsSync(file)) return null;
     try {
       const raw = await readFile(file, "utf8");
       return JSON.parse(raw) as Run;
-    } catch {
-      return null;
+    } catch (error) {
+      // Distinguish "unreadable file" from "does not exist". Swallowing this
+      // made a corrupt run look like an expired one (404 "does not exist"),
+      // hiding real data loss.
+      const err = new Error(
+        `Run ${runId} exists but could not be read: ${error instanceof Error ? error.message : "unknown error"}`,
+      );
+      (err as Error & { code?: string }).code = "RUN_CORRUPT";
+      throw err;
     }
   }
 
   async save(run: Run): Promise<Run> {
+    const file = runPath(run.id);
+    if (!file) throw new Error(`Invalid run id: ${run.id}`);
+    // Lock on the same key used for the file, so two ids that map to one file
+    // can never take different locks.
     return withLock(run.id, async () => {
       await mkdir(DATA_DIR, { recursive: true });
-      const file = runPath(run.id);
       const tmp = `${file}.${process.pid}.${Date.now()}.tmp`;
       const payload: Run = { ...run, updatedAt: Date.now() };
       await writeFile(tmp, JSON.stringify(payload, null, 2), "utf8");
@@ -90,7 +99,7 @@ export class FileRunStore implements RunStore {
 
   async delete(runId: string): Promise<void> {
     const file = runPath(runId);
-    if (existsSync(file)) {
+    if (file && existsSync(file)) {
       const { unlink } = await import("node:fs/promises");
       await unlink(file);
     }

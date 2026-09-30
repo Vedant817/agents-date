@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -34,6 +34,14 @@ export default function StartPage() {
   const [error, setError] = useState<string | null>(null);
   const [issues, setIssues] = useState<{ index: number; field: string; message: string }[]>([]);
   const [showMethod, setShowMethod] = useState(false);
+  const errorRef = useRef<HTMLDivElement | null>(null);
+
+  // The error used to render at the top of a panel that grows with each person
+  // added, leaving it up to 1000px above the button the user just pressed. It
+  // looked like the click did nothing, so pull it into view on every failure.
+  useEffect(() => {
+    if (error) errorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [error]);
 
   function update(key: number, patch: Partial<Entry>) {
     setEntries((prev) => prev.map((e) => (e.key === key ? { ...e, ...patch } : e)));
@@ -139,7 +147,13 @@ export default function StartPage() {
         </div>
       </div>
 
-      <section className="panel">
+      <form
+        className="panel"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void submit();
+        }}
+      >
         <div className="entry-head">
           <h2 className="mb0">Add people</h2>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -153,7 +167,7 @@ export default function StartPage() {
         </div>
 
         {error ? (
-          <div className="notice notice-error">
+          <div className="notice notice-error" role="alert" ref={errorRef}>
             <b>{error}</b>
             {issues.length > 0 && (
               <ul className="clean" style={{ marginTop: 8 }}>
@@ -237,12 +251,12 @@ export default function StartPage() {
         ))}
 
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginTop: 6 }}>
-          <button className="btn btn-primary" onClick={submit} disabled={busy} type="button">
+          <button className="btn btn-primary" type="submit" disabled={busy}>
             {busy ? "Reading profiles…" : "Read profiles and start dating"}
           </button>
           <span className="small dim">Add 2+ people to get rankings. A single person still gets a profile page.</span>
         </div>
-      </section>
+      </form>
 
       <section className="panel">
         <button
@@ -272,7 +286,7 @@ export default function StartPage() {
       <section className="panel">
         <h2>Want to see it populated first?</h2>
         <p className="small">
-          The demo run is already finished: 25 people, their analysed profiles, the dates their agents went on, and every
+          The demo run is already finished: 26 people, their analysed profiles, the dates their agents went on, and every
           person&apos;s ranked shortlist.
         </p>
         <Link className="btn btn-primary" href="/demo">

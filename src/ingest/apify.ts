@@ -67,7 +67,9 @@ export class ApifyAdapter implements CaptureAdapter {
       );
 
       if (res.status === 402) {
-        return unavailable("instagram", input.url, "Apify account needs more credit for this run.", "apify");
+        // Must use input.kind, not a hardcoded "instagram": analyse() keys off
+        // record.kind, so a mislabelled record silently loses the name slot.
+        return unavailable(input.kind, input.url, "Apify account needs more credit for this run.", "apify");
       }
       if (!res.ok) {
         return unavailable(input.kind, input.url, `Apify returned HTTP ${res.status}.`, "apify");
@@ -76,6 +78,17 @@ export class ApifyAdapter implements CaptureAdapter {
       const run = (await res.json()) as {
         data: { status: string; statusMessage?: string; defaultDatasetId: string };
       };
+
+      if (run.data.status === "RUNNING" || run.data.status === "READY") {
+        // The run is still going, so the data likely exists. Reporting a
+        // permanent "unavailable" here turns a success into a stated failure.
+        return unavailable(
+          input.kind,
+          input.url,
+          `Apify run was still ${run.data.status} after ${60}s. The result is available in Apify but was not read in time — retry.`,
+          "apify",
+        );
+      }
 
       if (run.data.status !== "SUCCEEDED") {
         const msg = run.data.statusMessage ?? run.data.status;

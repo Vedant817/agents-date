@@ -15,6 +15,9 @@ export default function RunClient({ run }: { run: Run }) {
     [run.people],
   );
   const ready = useMemo(() => people.filter((p) => p.status === "ready"), [people]);
+  // People we could not read must be shown, not silently dropped. Hiding them
+  // left a bare number in a stat tile with no name, reason or next step.
+  const unreadable = useMemo(() => people.filter((p) => p.status !== "ready"), [people]);
 
   // Deduplicate sessions; they are attached to both participants.
   const sessions = useMemo(() => {
@@ -25,21 +28,67 @@ export default function RunClient({ run }: { run: Run }) {
     return [...map.values()];
   }, [people]);
 
-  if (ready.length === 0) return null;
+  if (ready.length === 0) {
+    return (
+      <div className="panel empty">
+        <h2>No readable profiles</h2>
+        <p>
+          Everyone submitted could not be read. This is usually because both platforms block anonymous automated reads —
+          add the visible profile text on the start page to see it work.
+        </p>
+      </div>
+    );
+  }
 
   const active = ready.find((p) => p.id === selected) ?? ready[0]!;
-  const nameOf = (id: string) => ready.find((p) => p.id === id)?.displayName ?? "Unknown";
+  const nameOf = (id: string) => ready.find((p) => p.id === id)?.displayName ?? "this person";
+
+  const unreadableBlock = unreadable.length > 0 && (
+    <section className="panel" style={{ marginTop: 16, borderColor: "rgba(245,158,11,.35)" }}>
+      <h3 style={{ color: "var(--warn)" }}>Could not read {unreadable.length} profile{unreadable.length === 1 ? "" : "s"}</h3>
+      <p className="small">
+        These people were submitted but neither source could be read, so no analysis exists and their agent is not in
+        the dating pool. Nothing was invented for them.
+      </p>
+      <ul className="clean">
+        {unreadable.map((p) => (
+          <li key={p.id}>
+            <b style={{ color: "var(--text)" }}>{p.linkedinUrl.replace("https://www.linkedin.com/in/", "")}</b>
+            <div className="evidence">{p.error ?? "The profile could not be read."}</div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
 
   return (
     <>
-      <div className="nav" style={{ marginBottom: 18 }}>
-        <button className={`btn btn-sm ${tab === "profiles" ? "btn-primary" : ""}`} onClick={() => setTab("profiles")} type="button">
+      <div className="nav" style={{ marginBottom: 18 }} role="tablist" aria-label="Run views">
+        <button
+          className={`btn btn-sm ${tab === "profiles" ? "btn-primary" : ""}`}
+          onClick={() => setTab("profiles")}
+          type="button"
+          role="tab"
+          aria-selected={tab === "profiles"}
+        >
           Profiles ({ready.length})
         </button>
-        <button className={`btn btn-sm ${tab === "dates" ? "btn-primary" : ""}`} onClick={() => setTab("dates")} type="button">
+        <button
+          className={`btn btn-sm ${tab === "dates" ? "btn-primary" : ""}`}
+          onClick={() => setTab("dates")}
+          type="button"
+          role="tab"
+          aria-selected={tab === "dates"}
+        >
           Dates ({sessions.length})
         </button>
-        <button className={`btn btn-sm ${tab === "rankings" ? "btn-primary" : ""}`} onClick={() => setTab("rankings")} type="button">
+        <button
+          className={`btn btn-sm ${tab === "rankings" ? "btn-primary" : ""}`}
+          onClick={() => setTab("rankings")}
+          type="button"
+          role="tab"
+          aria-selected={tab === "rankings"}
+        >
           Rankings
         </button>
       </div>
@@ -50,7 +99,8 @@ export default function RunClient({ run }: { run: Run }) {
             {ready.map((p) => (
               <a
                 key={p.id}
-                href={`#${p.id}`}
+                href={`#profile-${p.id}`}
+                aria-current={p.id === active.id ? "true" : undefined}
                 className={p.id === active.id ? "active" : ""}
                 onClick={(e) => {
                   e.preventDefault();
@@ -62,11 +112,13 @@ export default function RunClient({ run }: { run: Run }) {
               </a>
             ))}
           </nav>
-          <div id="person-detail">
+          <div id="person-detail" key={active.id}>
             <PersonPanel person={active} nameOf={nameOf} />
           </div>
         </div>
       )}
+
+      {unreadableBlock}
 
       {tab === "dates" && (
         <div>
@@ -92,6 +144,7 @@ export default function RunClient({ run }: { run: Run }) {
               <a
                 key={p.id}
                 href={`#rank-${p.id}`}
+                aria-current={p.id === active.id ? "true" : undefined}
                 className={p.id === active.id ? "active" : ""}
                 onClick={(e) => {
                   e.preventDefault();
@@ -159,14 +212,18 @@ function TraitList({
                 <span style={{ color: "var(--text)" }}>{t.label}</span>
                 <span className="mono dim small">{Math.round(t.confidence * 100)}%</span>
               </div>
-              {t.evidence[0] && (
-                <div className="evidence">
-                  &ldquo;{t.evidence[0].quote}&rdquo;
-                  <div className="src">
-                    {t.evidence[0].source} · line {(t.evidence[0].line ?? 0) + 1}
+            {t.evidence.length > 0 && (
+              <div className="evidence">
+                {t.evidence.map((e, i) => (
+                  <div key={i} style={{ marginTop: i === 0 ? 0 : 4 }}>
+                    &ldquo;{e.quote}&rdquo;{" "}
+                    <span className="src">
+                      {e.source} · line {(e.line ?? 0) + 1}
+                    </span>
                   </div>
-                </div>
-              )}
+                ))}
+              </div>
+            )}
             </li>
           ))}
         </ul>
@@ -253,7 +310,14 @@ function PersonPanel({ person, nameOf }: { person: PersonRecord; nameOf: (id: st
           </ul>
         )}
         <p className="small dim" style={{ marginTop: 10, marginBottom: 0 }}>
-          This person ranks {(person.matches?.length ?? 0)} other people. Switch to the Rankings tab to see the full order.
+          {(person.matches?.length ?? 0) > 0 ? (
+            <>
+              This person ranks {person.matches!.length} other {person.matches!.length === 1 ? "person" : "people"}.
+              Switch to the Rankings tab to see the full order.
+            </>
+          ) : (
+            <>Nobody else could be read, so there is no shortlist yet. Add at least one more readable person.</>
+          )}
         </p>
       </section>
     </div>
@@ -315,7 +379,8 @@ function RankingPanel({ person, nameOf }: { person: PersonRecord; nameOf: (id: s
       <div className="panel">
         <h3>{person.displayName ?? person.id}</h3>
         <p className="small dim mb0">
-          Needs at least one other readable person before a shortlist can be built.
+          A shortlist needs at least two readable people. Add another person and their agents will date, then everyone
+          gets ranked.
         </p>
       </div>
     );

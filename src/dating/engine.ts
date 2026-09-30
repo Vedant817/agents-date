@@ -30,6 +30,7 @@ export function runDate(
 
   const bKeys = new Set(b.traits.map((t) => t.key));
   const aKeys = new Set(a.traits.map((t) => t.key));
+  const bByKey = new Map(b.traits.map((t) => [t.key, t]));
   const shared = a.traits.filter((t) => bKeys.has(t.key));
   const aOnly = a.traits.filter((t) => !bKeys.has(t.key));
   const bOnly = b.traits.filter((t) => !aKeys.has(t.key));
@@ -38,6 +39,22 @@ export function runDate(
   let seq = 0;
   const add = (role: TurnRole, move: TurnMove, text: string, evidence: readonly Evidence[]) => {
     turns.push({ seq: seq++, role, move, text, evidence });
+  };
+
+  // Every turn that quotes a person must carry evidence tagged with THAT
+  // person's id, so a reader can resolve the quote on the right profile page.
+  const ev = (person: PersonAnalysis, ...keys: readonly (string | undefined)[]): Evidence[] => {
+    const out: Evidence[] = [];
+    const byKey = new Map(person.traits.map((t) => [t.key, t]));
+    for (const key of keys) {
+      if (!key) continue;
+      const trait = byKey.get(key);
+      if (!trait) continue;
+      for (const e of trait.evidence) {
+        if (e.personId === person.personId) out.push(e);
+      }
+    }
+    return out;
   };
 
   // --- 1. Openings, each grounded in the other person's own profile ---------
@@ -69,7 +86,8 @@ export function runDate(
       "A",
       "shared_ground",
       `Both profiles actually show this. ${firstName(b)} lists ${s.label.toLowerCase()}, and so does ${firstName(a)} — that is the strongest thing I can verify between you.`,
-      s.evidence,
+      // BOTH sides cited, because the sentence claims both.
+      [...ev(a, s.key), ...ev(b, s.key)],
     );
 
     const def = getTrait(s.key);
@@ -79,7 +97,7 @@ export function runDate(
       def?.category === "hobby"
         ? `Then the obvious first date is doing it, not describing it. Where does ${firstName(a)} actually do this — I can see the interest but not the place.`
         : `Then let us talk about it properly rather than small talk. What is ${firstName(a)}'s view, beyond the profile line?`,
-      s.evidence,
+      ev(b, s.key),
     );
   } else {
     add(
@@ -96,22 +114,46 @@ export function runDate(
     );
   }
 
-  // --- 3. Curiosity about a one-sided trait --------------------------------
-  const probe = aOnly[0] ?? shared[0];
-  if (probe) {
-    const ev = probe.evidence.slice(0, 1);
+  // --- 3. Curiosity about a trait only ONE side has ------------------------
+  // Only a one-sided trait can honestly support "I have no evidence of it on
+  // your side". Citing a shared trait here made the turn refute its own quote.
+  if (aOnly.length > 0) {
+    const probe = aOnly[0]!;
+    const probeEvidence = ev(a, probe.key);
     add(
       "B",
       "curiosity",
       `${firstName(a)} shows ${probe.label.toLowerCase()}, and I have no evidence of it on your side. Is that something you would want to share, or something you keep off a dating profile?`,
-      ev,
+      probeEvidence,
     );
 
     add(
       "A",
       "follow_up",
       `${firstName(a)}'s profile supports it, so I will answer as ${firstName(a)} would: yes, but the profile cannot tell you whether it is a social thing or a solo habit. That is the honest limit of what two links can tell me.`,
-      ev,
+      probeEvidence,
+    );
+  } else if (shared.length > 0) {
+    // Nothing is unique to A, so ask about the overlap instead of inventing a gap.
+    const s = shared[0]!;
+    add(
+      "B",
+      "curiosity",
+      `One thing I cannot tell from either profile: ${firstName(a)} and I both show ${s.label.toLowerCase()}, but whether it is social or solitary. Which is it for you?`,
+      ev(b, s.key),
+    );
+    add(
+      "A",
+      "follow_up",
+      `Also unanswerable from the profile alone. I can only tell you that both profiles show it, and I would rather ask than invent an answer for ${firstName(a)}.`,
+      ev(a, s.key),
+    );
+  } else {
+    add(
+      "B",
+      "curiosity",
+      `${firstName(a)}'s two profiles are thin, so I have nothing to go on. Tell me plainly: what is ${firstName(a)} like when off the clock?`,
+      [],
     );
   }
 
@@ -122,7 +164,7 @@ export function runDate(
       "A",
       "mismatch",
       `One tension I should name early. ${firstName(b)} is into ${t.label.toLowerCase()}, and there is no sign of that in ${firstName(a)}'s two profiles. I cannot tell you that is a dealbreaker, but I will not pretend I saw it.`,
-      t.evidence.slice(0, 1),
+      ev(b, t.key),
     );
     add(
       "B",
@@ -137,13 +179,13 @@ export function runDate(
     "A",
     "reflection",
     reflectionFor(a, b, shared, aOnly, bOnly),
-    shared[0]?.evidence.slice(0, 1) ?? [],
+    [...ev(a, shared[0]?.key), ...ev(a, aOnly[0]?.key), ...ev(b, bOnly[0]?.key)].slice(0, 2),
   );
   add(
     "B",
     "reflection",
     reflectionFor(b, a, shared, bOnly, aOnly),
-    shared[0]?.evidence.slice(0, 1) ?? [],
+    [...ev(b, shared[0]?.key), ...ev(b, bOnly[0]?.key), ...ev(a, aOnly[0]?.key)].slice(0, 2),
   );
 
   const evaluation = evaluate(turns, shared, aOnly, bOnly);

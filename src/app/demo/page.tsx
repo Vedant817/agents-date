@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { notFound } from "next/navigation";
+import Link from "next/link";
 import { DEMO_RUN_ID, summarise } from "@/pipeline/run";
 import type { Run } from "@/core/types";
 import RunClient from "../run/[runId]/client";
@@ -23,10 +23,14 @@ export default async function DemoPage() {
     return (
       <main>
         <section className="panel empty">
-          <h2>The demo run has not been generated</h2>
+          <h2>The demo run is not available</h2>
           <p>
-            Run <code className="mono">npm run seed</code> to build the 26-person demo run, then reload this page.
+            The pre-built demo could not be loaded on this deployment. You can still add your own profiles on the start
+            page and see the full pipeline run.
           </p>
+          <Link href="/" className="btn btn-primary">
+            Add your own links
+          </Link>
         </section>
       </main>
     );
@@ -45,11 +49,14 @@ export default async function DemoPage() {
 
   return (
     <main>
-      <h1 style={{ fontSize: 34 }}>26 agents, 19 dates, every shortlist ranked.</h1>
+      <h1 style={{ fontSize: 34 }}>
+        {s.ready} agents, {s.sessions} dates, every shortlist ranked.
+      </h1>
       <p className="lede" style={{ fontSize: 15.5 }}>
-        This is a completed run, not a mock-up. Each agent read exactly two profiles, extracted{" "}
-        <b style={{ color: "var(--text)" }}>{citedTraits} cited traits</b>, then dated the other agents. Every claim
-        below links back to the source line that justified it.
+        Work through it in order: <b style={{ color: "var(--text)" }}>Profiles</b> shows what each agent found,{" "}
+        <b style={{ color: "var(--text)" }}>Dates</b> shows the agents actually dating, and{" "}
+        <b style={{ color: "var(--text)" }}>Rankings</b> shows who each person fits best. Every claim links back to the
+        source line that justified it.
       </p>
 
       <div className="grid grid-4" style={{ margin: "20px 0 22px" }}>
@@ -63,7 +70,7 @@ export default async function DemoPage() {
         </div>
         <div className="stat">
           <b>{citedTraits}</b>
-          <span>cited traits</span>
+          <span>cited traits from 2 sources each</span>
         </div>
         <div className="stat">
           <b>

@@ -23,13 +23,15 @@ export interface TraitDefinition {
 
 export const TRAITS: readonly TraitDefinition[] = [
   // --- Outdoor & sport -----------------------------------------------------
-  { key: "hobby:trail-running", label: "Trail running", category: "hobby", forms: ["trail running", "trail runs", "ultra running", "trailrunner", "running"], affinity: 0.9 },
-  { key: "hobby:running", label: "Running", category: "hobby", forms: ["running", "jogging", "marathon", "10k", "half marathon"], affinity: 0.85 },
+  { key: "hobby:trail-running", label: "Trail running", category: "hobby", forms: ["trail running", "trail runs", "ultra running", "trailrunner", "trail runners"], affinity: 0.9 },
+  { key: "hobby:running", label: "Running", category: "hobby", forms: ["running", "jogging", "marathon", "marathons", "10k", "half marathon"], affinity: 0.85 },
   { key: "hobby:cycling", label: "Cycling", category: "hobby", forms: ["cycling", "biking", "bike rides", "gravel ride", "cyclocross"], affinity: 0.8 },
   { key: "hobby:climbing", label: "Climbing", category: "hobby", forms: ["climbing", "bouldering", "sport climbing", "top rope"], affinity: 0.75 },
-  { key: "hobby:surfing", label: "Surfing", category: "hobby", forms: ["surfing", "surf", "paddling", "sup"], affinity: 0.7 },
+  // "sup" alone matched "Hey sup" and "boarding" matched "boarding a flight".
+  // Multi-word or unambiguous forms only.
+  { key: "hobby:surfing", label: "Surfing", category: "hobby", forms: ["surfing", "surf", "stand up paddle", "paddleboarding", "sup surfing"], affinity: 0.7 },
   { key: "hobby:hiking", label: "Hiking", category: "hobby", forms: ["hiking", "trekking", "day hikes", "backpacking", "mountaineering"], affinity: 0.85 },
-  { key: "hobby:skiing", label: "Skiing", category: "hobby", forms: ["skiing", "ski", "snowboarding", "boarding"], affinity: 0.7 },
+  { key: "hobby:skiing", label: "Skiing", category: "hobby", forms: ["skiing", "skiing", "snowboarding", "ski slopes"], affinity: 0.7 },
   { key: "hobby:swimming", label: "Swimming", category: "hobby", forms: ["swimming", "open water", "laps"], affinity: 0.7 },
   { key: "hobby:tennis", label: "Tennis", category: "hobby", forms: ["tennis", "pickleball", "padel"], affinity: 0.7 },
   { key: "hobby:football", label: "Football", category: "hobby", forms: ["football", "soccer", "5-a-side", "futsal"], affinity: 0.65 },
@@ -40,10 +42,10 @@ export const TRAITS: readonly TraitDefinition[] = [
   // --- Creative ------------------------------------------------------------
   { key: "hobby:photography", label: "Photography", category: "hobby", forms: ["photography", "photographer", "shooting photos", "film camera"], affinity: 0.75 },
   { key: "hobby:painting", label: "Painting", category: "hobby", forms: ["painting", "painter", "watercolours", "watercolors", "sketching"], affinity: 0.65 },
-  { key: "hobby:writing", label: "Writing", category: "hobby", forms: ["writing", "writer", "short stories", "novel", "screenwriting", "blogging"], affinity: 0.7 },
-  { key: "hobby:music", label: "Music", category: "hobby", forms: ["music", "guitar", "piano", "dj", "vinyl", "band", "producing music"], affinity: 0.7 },
-  { key: "hobby:cooking", label: "Cooking", category: "hobby", forms: ["cooking", "cook", "baking", "sourdough", "recipes", "fermentation"], affinity: 0.7 },
-  { key: "hobby:gardening", label: "Gardening", category: "hobby", forms: ["gardening", "plants", "allotment", "houseplants"], affinity: 0.55 },
+  { key: "hobby:writing", label: "Writing", category: "hobby", forms: ["writing", "short stories", "novel writing", "screenwriting", "blogging"], affinity: 0.7 },
+  { key: "hobby:music", label: "Music", category: "hobby", forms: ["live music", "guitar", "piano", "djing", "vinyl", "in a band", "producing music", "music production"], affinity: 0.7 },
+  { key: "hobby:cooking", label: "Cooking", category: "hobby", forms: ["cooking", "baking", "sourdough", "recipes", "fermentation"], affinity: 0.7 },
+  { key: "hobby:gardening", label: "Gardening", category: "hobby", forms: ["gardening", "allotment", "grow vegetables", "houseplants"], affinity: 0.55 },
   { key: "hobby:woodworking", label: "Woodworking", category: "hobby", forms: ["woodworking", "carpentry", "joinery"], affinity: 0.5 },
   { key: "hobby:throwing-pottery", label: "Pottery", category: "hobby", forms: ["pottery", "ceramics", "wheel throwing"], affinity: 0.5 },
 
@@ -59,7 +61,7 @@ export const TRAITS: readonly TraitDefinition[] = [
   { key: "interest:film", label: "Film", category: "interest", forms: ["film", "cinema", "movie", "a24", "arthouse"], affinity: 0.7 },
   { key: "interest:books", label: "Books", category: "interest", forms: ["books", "reading", "novels", "book club", "literature"], affinity: 0.7 },
   { key: "interest:art-galleries", label: "Art galleries", category: "interest", forms: ["gallery", "galleries", "exhibition", "museum", "modern art"], affinity: 0.65 },
-  { key: "interest:theatre", label: "Theatre", category: "interest", forms: ["theatre", "theater", "plays", "musicals", "stand-up comedy"], affinity: 0.65 },
+  { key: "interest:theatre", label: "Theatre", category: "interest", forms: ["theatre", "theater", "musicals", "stand-up comedy", "shakespeare"], affinity: 0.65 },
   { key: "interest:comics", label: "Comics & anime", category: "interest", forms: ["comics", "anime", "manga", "graphic novel"], affinity: 0.6 },
   { key: "interest:board-games", label: "Board games", category: "interest", forms: ["board games", "chess", "puzzles", "escape room"], affinity: 0.6 },
 
@@ -68,7 +70,7 @@ export const TRAITS: readonly TraitDefinition[] = [
   { key: "value:sustainability", label: "Sustainability", category: "value", forms: ["sustainability", "sustainable", "climate", "renewable", "net zero", "recycling"], affinity: 0.65 },
   { key: "value:diversity", label: "Inclusion", category: "value", forms: ["diversity", "inclusion", "dei", "accessibility", "equity"], affinity: 0.65 },
   { key: "value:mentorship", label: "Mentorship", category: "value", forms: ["mentoring", "mentorship", "coaching", "mentee"], affinity: 0.7 },
-  { key: "value:community-building", label: "Community building", category: "value", forms: ["community", "organising", "organizing", "meetups", "events", "founders"], affinity: 0.65 },
+  { key: "value:community-building", label: "Community building", category: "value", forms: ["community work", "organising meetups", "organizing meetups", "community events", "running a meetup", "running a club", "found a meetup"], affinity: 0.65 },
 
   // --- Ways of spending time ------------------------------------------------
   { key: "interest:travel", label: "Travel", category: "interest", forms: ["travel", "travelling", "traveling", "backpacking", "road trip"], affinity: 0.6 },
@@ -104,6 +106,9 @@ export function allTraitKeys(): readonly string[] {
  * Word-boundary matching only. Without it, "art" would fire inside "start",
  * and "ipa" inside "participate", producing confident nonsense -- the exact
  * failure mode that makes an analysis feel made up.
+ *
+ * A phrase claims its own single meaning: once the longest form matches, its
+ * parent trait is not also reported. "trail running" is one hobby, not two.
  */
 export function matchLine(
   line: string,
@@ -111,12 +116,26 @@ export function matchLine(
   const haystack = ` ${line.toLowerCase().replace(/[^a-z0-9\s+]/g, " ")} `;
   const hits: { def: TraitDefinition; matchedForm: string }[] = [];
   const seen = new Set<string>();
+  // Words already consumed by a more specific trait. "trail running" claims
+  // "running", so the generic parent is not also reported. A plain substring
+  // test was wrong here: "running" is a suffix of "trail running", not a
+  // substring in the direction the old check assumed.
+  const claimedWords = new Set<string>();
 
   for (const { def, form } of SORTED) {
     if (seen.has(def.key)) continue;
-    const needle = ` ${form.toLowerCase().replace(/[^a-z0-9\s+]/g, " ")} `;
+    const normalised = form.toLowerCase().replace(/[^a-z0-9\s+]/g, " ").trim();
+    // "10k" is a legitimate running cue, but not when it is a money figure.
+    // Stripping punctuation turns "$10k" into " 10k ".
+    if (/\d/.test(form) && /[$£€]/.test(line)) continue;
+
+    const words = normalised.split(/\s+/).filter(Boolean);
+    if (words.length > 0 && words.every((w) => claimedWords.has(w))) continue;
+
+    const needle = ` ${normalised} `;
     if (haystack.includes(needle)) {
       seen.add(def.key);
+      for (const w of words) claimedWords.add(w);
       hits.push({ def, matchedForm: form });
     }
   }

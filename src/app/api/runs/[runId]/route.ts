@@ -8,7 +8,17 @@ export const dynamic = "force-dynamic";
 export async function GET(_request: Request, context: { params: Promise<{ runId: string }> }) {
   const { runId } = await context.params;
   const store = getStore();
-  const run = await store.get(runId);
+  let run;
+  try {
+    run = await store.get(runId);
+  } catch (error) {
+    // A corrupt or unreadable run is a server-side problem, not a 404. Saying
+    // "does not exist or has expired" here hides real data loss.
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "The run could not be read." },
+      { status: 500 },
+    );
+  }
   if (!run) {
     return NextResponse.json({ error: "That run does not exist or has expired." }, { status: 404 });
   }

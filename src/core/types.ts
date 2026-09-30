@@ -50,12 +50,19 @@ export type EvidenceKind = "headline" | "about" | "experience" | "education" | "
  * A single citable observation. `quote` is verbatim text from the source and
  * `line` is the index into SourceRecord.lines, so the UI can show the exact
  * line that justified a claim.
+ *
+ * `personId` is required because date transcripts legitimately quote the OTHER
+ * person's profile. Without it, a turn by agent B citing agent A's words is
+ * indistinguishable from B citing its own, and half of all transcript
+ * evidence cannot be resolved against the page it is shown on.
  */
 export interface Evidence {
   readonly kind: EvidenceKind;
   readonly quote: string;
   readonly source: SourceKind;
   readonly line?: number;
+  /** Whose profile this quote came from. */
+  readonly personId: string;
 }
 
 export type TraitCategory =

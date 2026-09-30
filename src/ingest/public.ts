@@ -97,6 +97,20 @@ export class AnonymousWebAdapter implements CaptureAdapter {
           "anonymous-web",
         );
       }
+
+      // A 200 is not proof of a profile. Instagram serves branded "page isn't
+      // available" and login pages with status 200 for private, suspended and
+      // nonexistent accounts. Treating those as captures fabricated a profile
+      // from a placeholder page.
+      if (looksLikePlaceholder(html, lines)) {
+        return unavailable(
+          "instagram",
+          input.url,
+          "Instagram returned a \"page isn't available\" or login placeholder rather than a public profile. The account is likely private, suspended, or does not exist.",
+          "anonymous-web",
+        );
+      }
+
       return captured("instagram", input.url, lines, "anonymous-web");
     } catch (error) {
       const message = error instanceof Error ? error.message : "unknown error";
@@ -122,4 +136,26 @@ function extractPublicText(html: string): string[] {
     pushMeta(key);
   }
   return normaliseLines(lines);
+}
+
+/** Detects the "this profile is not viewable" pages that still return HTTP 200. */
+export function looksLikePlaceholder(html: string, lines: readonly string[]): boolean {
+  const hay = `${html.slice(0, 60_000)} ${lines.join(" ")}`.toLowerCase();
+
+  const markers = [
+    "this page isn't available",
+    "this page isn’t available",
+    "sorry, this page",
+    "page not found",
+    "the page you were looking for isn't currently available",
+    "login and signup",
+    "log in to instagram",
+    "this account doesn't exist",
+    "user not found",
+  ];
+  if (markers.some((m) => hay.includes(m))) return true;
+
+  // A page whose only readable text is the site name is a shell, not a profile.
+  const meaningful = lines.filter((l) => l.toLowerCase() !== "instagram" && l.length > 2);
+  return meaningful.length === 0;
 }
