@@ -15,6 +15,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "seed": "tsx scripts/seed-demo.ts",
+    "audit": "tsx scripts/audit-run.ts data/demo.json",
     "pipeline": "tsx scripts/run-pipeline.ts"
   },
   "dependencies": {
