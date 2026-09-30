@@ -100,11 +100,13 @@ export function runDate(
       ev(b, s.key),
     );
   } else {
+    // Enumerating real traits while citing nothing makes a claim the reader
+    // cannot check. Cite each side's first traits.
     add(
       "A",
       "mismatch",
       `I have to be straight with you: the two profiles share no activity at all. ${firstName(b)} shows ${sampleLabels(b.traits, 3)}, ${firstName(a)} shows ${sampleLabels(a.traits, 3)}. This date would be entirely conversational.`,
-      [],
+      [...ev(a, a.traits[0]?.key, a.traits[1]?.key), ...ev(b, b.traits[0]?.key, b.traits[1]?.key)].slice(0, 4),
     );
     add(
       "B",
@@ -191,7 +193,9 @@ export function runDate(
   const evaluation = evaluate(turns, shared, aOnly, bOnly);
 
   return {
-    id: `date_${a.personId}_${b.personId}`.slice(0, 120),
+    // Deterministic and order-independent, so the same pair always yields the
+    // same id regardless of which side was scheduled first.
+    id: `date_${[a.personId, b.personId].sort().join("_")}`.slice(0, 120),
     runId,
     personAId: a.personId,
     personBId: b.personId,
@@ -211,17 +215,22 @@ function reflectionFor(
   selfOnly: readonly Trait[],
   otherOnly: readonly Trait[],
 ): string {
+  // `let` is required by tests, but keep the fallback honest: a person whose
+  // sources yielded no name must not be described with the string "Unnamed".
+  const label = self.displayName.trim() && self.displayName.trim() !== "Unnamed profile"
+    ? firstName(self)
+    : "this person";
   const parts: string[] = [];
   parts.push(
     shared.length > 0
-      ? `For ${firstName(self)} I would call this promising: ${shared.slice(0, 2).map((t) => t.label.toLowerCase()).join(" and ")} are verifiable on both sides.`
-      : `For ${firstName(self)} I would call this uncertain: nothing in the two profiles overlaps.`,
+      ? `For ${label} I would call this promising: ${shared.slice(0, 2).map((t) => t.label.toLowerCase()).join(" and ")} are verifiable on both sides.`
+      : `For ${label} I would call this uncertain: nothing in the two profiles overlaps.`,
   );
   if (selfOnly.length > 0) {
-    parts.push(`What only ${firstName(self)} shows is ${selfOnly.slice(0, 2).map((t) => t.label.toLowerCase()).join(", ")}.`);
+    parts.push(`What only ${label} shows is ${selfOnly.slice(0, 2).map((t) => t.label.toLowerCase()).join(", ")}.`);
   }
   if (otherOnly.length > 0) {
-    parts.push(`What ${firstName(other)} has that ${firstName(self)} does not is ${otherOnly.slice(0, 2).map((t) => t.label.toLowerCase()).join(", ")}, which is worth a real question rather than a guess.`);
+    parts.push(`What ${firstName(other)} has that ${label} does not is ${otherOnly.slice(0, 2).map((t) => t.label.toLowerCase()).join(", ")}, which is worth a real question rather than a guess.`);
   }
   parts.push("I would suggest a short, active first date and see whether the conversation survives contact.");
   return parts.join(" ");
@@ -267,11 +276,19 @@ function evaluate(
   };
 }
 
+/**
+ * A person's short, safe label for use inside a sentence.
+ *
+ * Falls back to "this person" rather than "Unnamed profile", which would read
+ * as a claim that someone's name is literally "Unnamed".
+ */
 function firstName(a: PersonAnalysis): string {
   const n = a.displayName.trim();
-  if (!n) return "them";
+  if (!n || n === "Unnamed profile") return "this person";
   const first = n.split(/\s+/)[0] ?? n;
-  return first.length > 18 ? `${first.slice(0, 17)}…` : first;
+  // Truncate by code point so an emoji name is not cut into a replacement char.
+  const chars = [...first];
+  return chars.length > 18 ? `${chars.slice(0, 17).join("")}…` : first;
 }
 
 function sampleLabels(traits: readonly Trait[], n: number): string {

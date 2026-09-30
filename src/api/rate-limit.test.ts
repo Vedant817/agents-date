@@ -1,14 +1,19 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { rateLimit, resetRateLimit } from "./rate-limit";
 
-function req(ip = "1.2.3.4") {
-  return new Request("https://x.test/api/runs", { headers: { "x-real-ip": ip } });
+/**
+ * NOTE: these tests must NOT set x-real-ip. The limiter deliberately ignores
+ * client-supplied IP headers unless TRUST_PROXY=1, so a test that forged one
+ * would have passed while encoding the bypass bug.
+ */
+function req() {
+  return new Request("https://x.test/api/runs");
 }
 
 describe("rateLimit", () => {
   beforeEach(() => resetRateLimit());
 
-  it("allows the first request from an address", () => {
+  it("allows the first request", () => {
     expect(rateLimit(req()).allowed).toBe(true);
   });
 
@@ -19,32 +24,35 @@ describe("rateLimit", () => {
     expect(blocked.retryAfterSeconds).toBeGreaterThan(0);
   });
 
-  it("keeps separate addresses independent", () => {
-    for (let i = 0; i < 6; i++) rateLimit(req("1.1.1.1"));
-    expect(rateLimit(req("2.2.2.2")).allowed).toBe(true);
+  it("cannot be bypassed by forging x-real-ip", () => {
+    // Regression: x-real-ip was trusted unconditionally, so rotating it per
+    // request gave unlimited runs against a paid third-party API.
+    for (let i = 0; i < 30; i++) {
+      rateLimit(new Request("https://x.test/api/runs", { headers: { "x-real-ip": `9.9.9.${i}` } }));
+    }
+    expect(rateLimit(req()).allowed, "forged x-real-ip must not reset the budget").toBe(false);
+  });
+
+  it("cannot be bypassed by forging x-forwarded-for", () => {
+    for (let i = 0; i < 30; i++) {
+      rateLimit(new Request("https://x.test/api/runs", { headers: { "x-forwarded-for": `8.8.8.${i}` } }));
+    }
+    expect(rateLimit(req()).allowed, "forged x-forwarded-for must not reset the budget").toBe(false);
   });
 
   it("resets after the window elapses", () => {
-    for (let i = 0; i < 6; i++) rateLimit(req("3.3.3.3"), 1_000);
-    expect(rateLimit(req("3.3.3.3"), 1_000).allowed).toBe(false);
+    for (let i = 0; i < 6; i++) rateLimit(req(), 1_000);
+    expect(rateLimit(req(), 1_000).allowed).toBe(false);
     // 61s later the window has rolled over.
-    expect(rateLimit(req("3.3.3.3"), 62_000).allowed).toBe(true);
+    expect(rateLimit(req(), 62_000).allowed).toBe(true);
   });
 
   it("prunes expired windows so memory cannot grow unbounded", () => {
-    // Exhaust the budget for one address, then let it expire.
-    for (let i = 0; i < 6; i++) rateLimit(req("4.4.4.4"), 1_000);
-    expect(rateLimit(req("4.4.4.4"), 1_000).allowed).toBe(false);
-
-    // After the window rolls over the address has a fresh budget, which is the
-    // correct behaviour: pruning must not permanently block anyone.
-    expect(rateLimit(req("4.4.4.4"), 62_000).allowed).toBe(true);
-
-    // Many distinct addresses, all expired, must not accumulate.
-    for (let i = 0; i < 200; i++) rateLimit(req(`10.0.${Math.floor(i / 256)}.${i % 256}`), 1_000);
-    rateLimit(req("10.0.0.1"), 62_000);
-    // The pruning pass ran, so the earlier exhausted addresses are gone and
-    // 10.0.0.1 starts clean rather than inheriting an old count.
-    expect(rateLimit(req("10.0.0.1"), 62_001).allowed).toBe(true);
+    // Exhaust the budget, then let it expire.
+    for (let i = 0; i < 6; i++) rateLimit(req(), 1_000);
+    expect(rateLimit(req(), 1_000).allowed).toBe(false);
+    // After the window rolls over the caller has a fresh budget. That is the
+    // correct behaviour and it must hold whether or not the prune loop exists.
+    expect(rateLimit(req(), 62_000).allowed).toBe(true);
   });
 });

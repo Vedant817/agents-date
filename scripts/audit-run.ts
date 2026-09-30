@@ -91,6 +91,76 @@ for (const p of run.people) {
   for (const t of p.analysis?.traits ?? []) if (t.evidence.length === 0) unevidencedTraits += 1;
 }
 
+// A trait whose own quote negates it in the SAME CLAUSE is a claim the
+// citation refutes. Scope must match taxonomy.ts exactly, otherwise
+// "Craft beer after the game, never before." is wrongly flagged -- the
+// negation is in a different clause and the trait is genuine.
+const NEG_CUES = [
+  "hate", "hates", "hated", "dislike", "dislikes", "never", "no", "not", "isnt",
+  "cant", "cannot", "wont", "avoid", "avoids", "against", "quit", "stopped",
+  "used to", "former", "gave up", "anti", "uninterested", "allergic",
+  "allergies", "intolerant", "zero", "none", "without", "except", "scraped",
+  "deleted",
+];
+function quoteRefutesTrait(quote: string, traitKey: string): boolean {
+  const label = (traitKey.split(":")[1] ?? "").replace(/-/g, " ");
+  const lower = quote.toLowerCase();
+  const idx = lower.indexOf(label.split(" ")[0] ?? label);
+  if (idx === -1) return false;
+  const before = lower.slice(0, idx);
+  const lastBreak = Math.max(
+    before.lastIndexOf(","), before.lastIndexOf(";"), before.lastIndexOf("."),
+    before.lastIndexOf(" but "), before.lastIndexOf(" though "), before.lastIndexOf(" although "),
+  );
+  const clause = lower.slice(lastBreak + 1, idx + label.length);
+  const words = clause.split(/[^a-z]+/).filter(Boolean);
+  const firstTraitWord = (label.split(" ")[0] ?? label).toLowerCase();
+  return words.some((w) => w !== firstTraitWord && NEG_CUES.includes(w));
+}
+let negatedTraits = 0;
+for (const p of run.people) {
+  for (const t of p.analysis?.traits ?? []) {
+    if (t.evidence.some((e) => quoteRefutesTrait(e.quote, t.key))) negatedTraits += 1;
+  }
+}
+
+// "Adds something new" must not claim emptiness when the candidate does add
+// something. Match ONLY the empty-case sentence, not the "is new to you" one.
+const byId = new Map(run.people.map((p) => [p.id, p]));
+let additiveChecked = 0;
+let additiveFalse = 0;
+for (const p of run.people) {
+  const mine = new Set((p.analysis?.traits ?? []).map((t) => t.key));
+  for (const m of p.matches ?? []) {
+    const c = m.components?.find((x) => x.label === "Adds something new");
+    if (!c) continue;
+    additiveChecked += 1;
+    const theirs = (byId.get(m.candidateId)?.analysis?.traits ?? []).map((t) => t.key);
+    const actuallyNew = theirs.filter((k) => !mine.has(k)).length;
+    if (/something you already have/i.test(c.detail) && actuallyNew > 0) additiveFalse += 1;
+  }
+}
+
+// Sessions must carry the real runId, not a placeholder.
+const sessionRunIds = new Set<string>();
+const seenSessions2 = new Set<string>();
+for (const p of run.people) {
+  for (const s of p.sessions ?? []) {
+    if (seenSessions2.has(s.id)) continue;
+    seenSessions2.add(s.id);
+    sessionRunIds.add(s.runId);
+  }
+}
+const badRunIds = [...sessionRunIds].filter((r) => r !== run.id);
+
+// Placeholder names must never reach a transcript.
+let unnamedTurns = 0;
+for (const p of run.people) {
+  for (const s of p.sessions ?? []) {
+    for (const t of s.turns) if (/Unnamed/.test(t.text)) unnamedTurns += 1;
+  }
+}
+
 const pct = (n: number, d: number) => (d === 0 ? "0%" : `${((n / d) * 100).toFixed(1)}%`);
 
 console.log(`run: ${file}`);
@@ -102,6 +172,10 @@ console.log(`unresolvable quote:        ${unresolved}`);
 console.log(`one-sided claim w/ wrong citation: ${selfClaimViolations}`);
 console.log(`shared-ground citing one side:      ${sharedGroundUncited}`);
 console.log(`traits with no evidence:   ${unevidencedTraits}`);
+console.log(`traits refuted by own quote:${negatedTraits}`);
+console.log(`additive claims checked:   ${additiveChecked}, false: ${additiveFalse}`);
+console.log(`sessions with wrong runId: ${badRunIds.length}`);
+console.log(`turns leaking 'Unnamed':   ${unnamedTurns}`);
 console.log(`--- ranking ---`);
 console.log(`ordered pairs compared:    ${compared}`);
 console.log(`exact symmetric ties:      ${ties} (${pct(ties, compared)})`);
@@ -112,6 +186,10 @@ const failures = [
   ["one-sided claim mis-cited", selfClaimViolations],
   ["shared-ground under-cited", sharedGroundUncited],
   ["unevidenced trait", unevidencedTraits],
+  ["trait refuted by its own quote", negatedTraits],
+  ["false 'adds nothing' claim", additiveFalse],
+  ["wrong session runId", badRunIds.length],
+  ["turn leaking 'Unnamed'", unnamedTurns],
 ] as const;
 
 const bad = failures.filter(([, n]) => n > 0);

@@ -92,7 +92,7 @@ export function validateSubmission(
  */
 export async function processPerson(
   runId: string,
-  entry: { linkedin: string; instagram: string },
+  entry: { linkedin: string; instagram: string; name?: string },
   adapters: readonly CaptureAdapter[],
   id: string,
 ): Promise<PersonRecord> {
@@ -128,7 +128,7 @@ export async function processPerson(
 
   const [linkedin, instagram] = await Promise.all([capture("linkedin"), capture("instagram")]);
 
-  const analysis = analyse(id, { linkedin, instagram });
+  const analysis = analyse(id, { linkedin, instagram }, entry.name);
   const bothUnread = linkedin.status !== "captured" && instagram.status !== "captured";
   // A person with no readable source is NOT ready. It must be reported as a
   // failure rather than ranked and dated as if it had a profile.
@@ -194,8 +194,7 @@ export function planSessions(
 }
 
 /** Recomputes rankings and dates for a fully-analysed set of people. */
-export function computeNetwork(people: PersonRecord[]): PersonRecord[] {
-  const analyses = new Map<string, PersonAnalysis>();
+export function computeNetwork(people: PersonRecord[]): PersonRecord[] {  const analyses = new Map<string, PersonAnalysis>();
   for (const p of people) {
     // ONLY readable people enter the pool. A person whose sources could not be
     // read used to be ranked and dated, producing transcripts about someone
@@ -211,12 +210,15 @@ export function computeNetwork(people: PersonRecord[]): PersonRecord[] {
   });
 
   const plan = planSessions(withMatches);
+  const runId = withMatches[0]?.runId ?? "run";
   const sessions: DateSession[] = [];
   for (const [aId, bId] of plan) {
     const a = analyses.get(aId);
     const b = analyses.get(bId);
     if (!a || !b) continue;
-    sessions.push(runDate("run", a, b));
+    // Use the real runId. It was previously hardcoded to "run", which made
+    // DateSession.runId identical for every session in every run.
+    sessions.push(runDate(runId, a, b));
   }
 
   // Attach each session to both participants so either profile page can show it.

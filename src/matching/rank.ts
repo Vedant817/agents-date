@@ -15,21 +15,67 @@ import type {
  * from B's own needs. Two people can therefore rank each other differently,
  * which is what makes the rankings worth reading.
  */
+/**
+ * Component weights. Sum to 1.0.
+ *
+ * EXPORTED so the /method page renders the real numbers. A previous version
+ * hardcoded the weights in the copy, and when a component was added the page
+ * kept describing a four-component model that no longer existed -- on the page
+ * whose own lede claims to be "the honest version of that claim".
+ */
+export const MATCH_WEIGHTS = {
+  shared: 0.3,
+  needs: 0.26,
+  additive: 0.18,
+  evidence: 0.16,
+  values: 0.1,
+} as const;
+
+export const MATCH_COMPONENTS = [
+  {
+    key: "shared",
+    label: "Shared ground",
+    weight: MATCH_WEIGHTS.shared,
+    detail: "Activities both profiles evidence, weighted by how specific each one is. Two climbers outrank a climber and a reader.",
+    directional: false,
+  },
+  {
+    key: "needs",
+    label: "Meets your needs",
+    weight: MATCH_WEIGHTS.needs,
+    detail: "How much of what your own sources imply appears in theirs.",
+    directional: true,
+  },
+  {
+    key: "additive",
+    label: "Adds something new",
+    weight: MATCH_WEIGHTS.additive,
+    detail: "What they bring that you do not already have, minus what merely repeats your own profile.",
+    directional: true,
+  },
+  {
+    key: "evidence",
+    label: "Evidence quality",
+    weight: MATCH_WEIGHTS.evidence,
+    detail: "How directly both profiles state things, weighted toward theirs because a match is only as good as the thinner side.",
+    directional: true,
+  },
+  {
+    key: "values",
+    label: "Values",
+    weight: MATCH_WEIGHTS.values,
+    detail: "Overlap on stated community, sustainability or inclusion work.",
+    directional: true,
+  },
+] as const;
+
 export function scoreMatch(
   subject: PersonAnalysis,
   candidate: PersonAnalysis,
 ): MatchScore {
   const components: MatchComponent[] = [];
   const evidence: Evidence[] = [];
-  // Weights sum to 1.0. "Shared ground" and "Adds something new" are the two
-  // largest, because the product is about finding someone to do things with.
-  const W = {
-    shared: 0.3,
-    needs: 0.26,
-    additive: 0.18,
-    evidence: 0.16,
-    values: 0.1,
-  } as const;
+  const W = MATCH_WEIGHTS;
 
   // --- 1. Do they share real ground? ---------------------------------------
   const candidateByKey = new Map(candidate.traits.map((t) => [t.key, t]));
@@ -104,33 +150,31 @@ export function scoreMatch(
 
   // --- 4. Additive vs redundant ---------------------------------------------
   // Genuinely directional, and the component that removes false ties.
-  // Shared ground is symmetric by definition, so two people who overlap
-  // equally scored identically regardless of who they were. This asks whether
-  // the candidate BRINGS something the subject lacks, weighed against how much
-  // of that they already have. Being the 4th running-adjacent hobby is
-  // redundant; being someone's only music interest is additive.
-  const subjectHobbyCategories = new Set(
-    subject.hobbies.map((h) => (getTrait(h.key)?.category ?? "hobby") + ":" + h.key.split(":")[0]),
-  );
-  const additive = candidate.traits.filter((t) => {
-    const bucket = `${t.category}:${t.key.split(":")[0]}`;
-    return !subject.traits.some((s) => `${s.category}:${s.key.split(":")[0]}` === bucket);
-  });
-  const redundancy = candidate.traits.filter((t) =>
-    subjectHobbyCategories.has(`${t.category}:${t.key.split(":")[0]}`),
-  );
-  const addScore = candidate.traits.length === 0 ? 0.3 : Math.min(1, additive.length / Math.max(2, candidate.traits.length * 0.6));
-  const redundancyPenalty = subject.traits.length === 0 ? 0 : Math.min(0.5, redundancy.length / subject.traits.length);
+  //
+  // The previous version bucketed by `${category}:${keyPrefix}`, which mapped
+  // EVERY hobby to the single bucket "hobby:hobby". A candidate who climbs but
+  // does not run was then reported as "Everything they show is something you
+  // already have too" -- false for 77% of real pairs, with a real citation
+  // missing. Redundancy is now exact-key, which is the only honest test.
+  const subjectKeys = new Set(subject.traits.map((t) => t.key));
+  const additive = candidate.traits.filter((t) => !subjectKeys.has(t.key));
+  // Redundancy: the candidate re-shows what the subject already has. Cap the
+  // penalty so a long profile is not punished for merely being long.
+  const redundancy = candidate.traits.filter((t) => subjectKeys.has(t.key)).length;
+  const addScore = candidate.traits.length === 0 ? 0.3 : additive.length / candidate.traits.length;
+  const redundancyPenalty = candidate.traits.length === 0 ? 0 : Math.min(0.4, redundancy / candidate.traits.length);
   components.push({
     label: "Adds something new",
-    score: Math.max(0, addScore - redundancyPenalty),
+    score: Math.max(0, Math.min(1, addScore - redundancyPenalty)),
     weight: W.additive,
     detail:
       candidate.traits.length === 0
         ? "Their profiles name nothing to bring to a date."
-        : additive.length > 0
-          ? `They show ${additive.slice(0, 2).map((t) => t.label.toLowerCase()).join(" and ")}, which you do not already have.`
-          : "Everything they show is something you already have too, so there is less to discover.",
+        : additive.length === 0
+          ? "Everything they show is something you already have too, so there is less to discover."
+          : redundancy === 0
+            ? `Everything they show is new to you: ${additive.slice(0, 2).map((t) => t.label.toLowerCase()).join(" and ")}.`
+            : `They add ${additive.slice(0, 2).map((t) => t.label.toLowerCase()).join(" and ")} beyond what you already share.`,
     evidence: additive
       .flatMap((t) => t.evidence.filter((e) => e.personId === candidate.personId).slice(0, 1))
       .slice(0, 2),

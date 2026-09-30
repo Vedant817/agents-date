@@ -18,6 +18,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const EntrySchema = z.object({
+  name: z.string().max(120).optional(),
   linkedin: z.string().min(1, "LinkedIn link is required").max(300),
   instagram: z.string().min(1, "Instagram link is required").max(300),
   linkedinText: z.string().max(8000).optional(),
@@ -85,7 +86,7 @@ export async function POST(request: Request) {
   for (const [i, entry] of parsed.entries.entries()) {
     const person = await processPerson(
       runId,
-      { linkedin: entry.linkedin, instagram: entry.instagram },
+      { linkedin: entry.linkedin, instagram: entry.instagram, name: entry.name },
       adapters,
       `p${i + 1}`,
     );

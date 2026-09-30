@@ -332,7 +332,7 @@ function PersonPanel({ person, nameOf }: { person: PersonRecord; nameOf: (id: st
               const other = s.personAId === person.id ? s.personBId : s.personAId;
               return (
                 <li key={s.id}>
-                  vs {nameOf(other)} · score {s.evaluation?.overall ?? "—"}
+                  vs {nameOf(other)} · date quality {s.evaluation?.overall ?? "—"}
                 </li>
               );
             })}
@@ -434,7 +434,10 @@ function RankingPanel({ person, nameOf }: { person: PersonRecord; nameOf: (id: s
                 <div className="person-name">
                   {i + 1}. {nameOf(m.candidateId)}
                 </div>
-                <div className="person-sub">{m.overall >= 0.7 ? "Strong fit" : m.overall >= 0.5 ? "Plausible" : "Weak fit"}</div>
+                <div className="person-sub">
+                  {m.overall >= 0.7 ? "Strong fit" : m.overall >= 0.5 ? "Plausible" : "Weak fit"} · fit{" "}
+                  {m.overall.toFixed(2)}
+                </div>
               </div>
               <span className="score-pill">{m.overall.toFixed(2)}</span>
             </div>

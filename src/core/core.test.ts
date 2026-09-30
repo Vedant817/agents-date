@@ -167,4 +167,23 @@ describe("taxonomy", () => {
     expect(keys).toContain("hobby:trail-running");
     expect(keys, "trail running is one hobby, not also generic running").not.toContain("hobby:running");
   });
+
+  it("does not turn a negated mention into a hobby", () => {
+    // CRITICAL regression: "I hate running" produced a confident "Running"
+    // trait whose citation read "I hate running" -- a claim the citation
+    // itself refuted, shown side by side in the UI.
+    const lines = [
+      "I hate running and I hate cycling. Never doing a marathon.",
+      "Allergic to cats, so no pets.",
+      "I do not do charity or volunteering. Not a sustainability person.",
+    ];
+    for (const line of lines) {
+      expect(matchLine(line), `"${line}" must yield no traits`).toHaveLength(0);
+    }
+  });
+
+  it("still detects a genuine hobby when the line also contains negation elsewhere", () => {
+    const keys = matchLine("I hate mornings but I love bouldering").map((h) => h.def.key);
+    expect(keys).toContain("hobby:climbing");
+  });
 });

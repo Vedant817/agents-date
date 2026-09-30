@@ -24,6 +24,13 @@ import { classifyLine, evidenceKindOf } from "./classify";
 export function analyse(
   personId: string,
   sources: { linkedin: SourceRecord; instagram: SourceRecord },
+  /**
+   * Name supplied by whoever submitted the profile. Preferred over anything
+   * parsed out of the text, because pasted bios often begin with a sentence
+   * rather than a name -- which previously produced "Unnamed profile" for
+   * every person who took the documented paste route.
+   */
+  submittedName?: string,
 ): PersonAnalysis {
   const traits = new Map<string, Trait>();
   const openers: ConversationOpener[] = [];
@@ -97,7 +104,10 @@ export function analyse(
     });
   }
 
-  const displayName = linkedinName || instagramName || "Unnamed profile";
+  // Name precedence: what the submitter typed, then LinkedIn (the professional
+  // record), then Instagram. Instagram display names are routinely shortened.
+  const typed = (submittedName ?? "").trim();
+  const displayName = typed || linkedinName || instagramName || "Unnamed profile";
   if (!headline) headline = sources.linkedin.lines?.[1] ?? "";
 
   const traitList = [...traits.values()].sort((a, b) => b.confidence - a.confidence);

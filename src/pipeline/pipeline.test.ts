@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { analyse } from "@/analysis/analyse";
 import { runDate } from "@/dating/engine";
-import { rankCandidates, scoreMatch } from "@/matching/rank";
+import { rankCandidates, scoreMatch, MATCH_WEIGHTS, MATCH_COMPONENTS } from "@/matching/rank";
 import { computeNetwork, planSessions, summarise, validateSubmission, emptyRun } from "@/pipeline/run";
 import { ConsentedTextAdapter } from "@/ingest/public";
 import { normaliseInstagramUrl, normaliseLinkedInUrl, parseCharge } from "@/ingest/setup";
@@ -230,6 +230,35 @@ describe("ranking", () => {
     expect(m.components.length).toBeGreaterThanOrEqual(3);
     for (const comp of m.components) expect(comp.detail.length).toBeGreaterThan(5);
   });
+
+  it("does not say a candidate adds nothing when they do add something", () => {
+    // CRITICAL regression: the bucket was `${category}:${keyPrefix}`, which put
+    // EVERY hobby in one bucket, so a candidate who climbs but does not run
+    // was told "Everything they show is something you already have too".
+    const runner = analyse("r9", { linkedin: src("linkedin", ["A Person", "Trail running."]), instagram: src("instagram", ["A", "Runner."]) });
+    const climber = analyse("c9", { linkedin: src("linkedin", ["B Person", "Bouldering weekly."]), instagram: src("instagram", ["B", "Climber."]) });
+    const m = scoreMatch(runner, climber);
+    const additive = m.components.find((c) => c.label === "Adds something new")!;
+    expect(additive.detail, "climbing is not running").not.toMatch(/everything they show is something you already have/i);
+    expect(additive.score).toBeGreaterThan(0);
+    expect(additive.evidence.length, "an additive claim must be cited").toBeGreaterThan(0);
+  });
+
+  it("publishes weights that sum to 1 and match the component list", () => {
+    const total = Object.values(MATCH_WEIGHTS).reduce((a, b) => a + b, 0);
+    expect(total).toBeCloseTo(1, 5);
+    expect(MATCH_COMPONENTS.length).toBe(Object.keys(MATCH_WEIGHTS).length);
+    for (const c of MATCH_COMPONENTS) {
+      expect(MATCH_WEIGHTS[c.key], `${c.key} weight must match the exported value`).toBe(c.weight);
+    }
+  });
+
+  it("gives every match the same components the method page documents", () => {
+    const m = scoreMatch(a, c);
+    const labels = m.components.map((c) => c.label).sort();
+    const documented = MATCH_COMPONENTS.map((c) => c.label).sort();
+    expect(labels, "the UI must not show a component the docs do not describe").toEqual(documented);
+  });
 });
 
 describe("dating", () => {
@@ -315,6 +344,38 @@ describe("dating", () => {
     expect(sharedTurn).toBeDefined();
     const people = new Set(sharedTurn!.evidence.map((e) => e.personId));
     expect(people.size, "a 'both profiles show X' claim must cite both people").toBe(2);
+  });
+
+  it("cites the traits it enumerates when there is no overlap", () => {
+    // Regression: the "we share nothing" turn listed up to six real traits
+    // with evidence: [], naming facts a reader could not check. The audit
+    // script cannot catch a missing citation, so assert it here.
+    const runner = analyse("r7", { linkedin: src("linkedin", ["A Person", "Trail running, natural wine."]), instagram: src("instagram", ["A", "Runner."]) });
+    const gamer = analyse("g7", { linkedin: src("linkedin", ["B Person", "Board games and comics."]), instagram: src("instagram", ["B", "Gamer."]) });
+    const session = runDate("r", runner, gamer);
+    for (const turn of session.turns) {
+      if (!/share no activity at all/.test(turn.text)) continue;
+      expect(turn.evidence.length, "a turn enumerating real traits must cite them").toBeGreaterThan(0);
+    }
+  });
+
+  it("never calls a person 'Unnamed' in the transcript", () => {
+    const anon = analyse("anon", { linkedin: src("linkedin", ["Backend engineer"]), instagram: src("instagram", ["Runner."]) });
+    const other = analyse("o8", { linkedin: src("linkedin", ["Real Name", "Cycling."]), instagram: src("instagram", ["Real", "Cycling."]) });
+    const session = runDate("r", anon, other);
+    for (const turn of session.turns) {
+      expect(turn.text, "transcript must not leak the placeholder name").not.toMatch(/Unnamed/);
+    }
+  });
+
+  it("uses a submitted name over text parsed from the profile", () => {
+    // Regression: pasting bio-first text made the bio the display name, and
+    // with no typed name the person became "Unnamed profile".
+    const withName = analyse("n1", {
+      linkedin: src("linkedin", ["Trail running, bouldering and natural wine fill my weekends."]),
+      instagram: src("instagram", ["Coffee first."]),
+    }, "Jordan Blake");
+    expect(withName.displayName).toBe("Jordan Blake");
   });
 
   it("scores a shared-activity date above a disjoint one", () => {

@@ -6,6 +6,7 @@ import Link from "next/link";
 
 interface Entry {
   key: number;
+  name: string;
   linkedin: string;
   instagram: string;
   linkedinText: string;
@@ -16,12 +17,16 @@ interface Entry {
 let seq = 0;
 const blank = (): Entry => ({
   key: seq++,
+  name: "",
   linkedin: "",
   instagram: "",
   linkedinText: "",
   instagramText: "",
   showText: false,
 });
+
+/** Must match the zod cap in src/app/api/runs/route.ts. */
+const MAX_PEOPLE = 20;
 
 const SAMPLES = [
   { name: "Trail runner", linkedin: "linkedin.com/in/example-runner", instagram: "instagram.com/example.runner" },
@@ -35,6 +40,9 @@ export default function StartPage() {
   const [issues, setIssues] = useState<{ index: number; field: string; message: string }[]>([]);
   const [showMethod, setShowMethod] = useState(false);
   const errorRef = useRef<HTMLDivElement | null>(null);
+  // Read at render time on the server, so the disclosure is honest and
+  // immediately visible rather than hidden behind a collapsed button.
+  const captureEnabled = Boolean(process.env.APIFY_TOKEN);
 
   // The error used to render at the top of a panel that grows with each person
   // added, leaving it up to 1000px above the button the user just pressed. It
@@ -48,7 +56,9 @@ export default function StartPage() {
   }
 
   function add() {
-    setEntries((prev) => [...prev, blank()]);
+    // The API caps a run at 20; do not let a user build a form that is
+    // guaranteed to be rejected on submit.
+    setEntries((prev) => (prev.length >= MAX_PEOPLE ? prev : [...prev, blank()]));
   }
 
   function remove(key: number) {
@@ -59,8 +69,9 @@ export default function StartPage() {
     setEntries((prev) =>
       prev.map((e, i) =>
         i === 0
-          ? {
+            ? {
               ...e,
+              name: "Alex Rivera",
               linkedin: SAMPLES[0]!.linkedin,
               instagram: SAMPLES[0]!.instagram,
               linkedinText: [
@@ -90,6 +101,7 @@ export default function StartPage() {
     try {
       const payload = {
         entries: entries.map((e) => ({
+          name: e.name || undefined,
           linkedin: e.linkedin,
           instagram: e.instagram,
           linkedinText: e.linkedinText || undefined,
@@ -128,14 +140,23 @@ export default function StartPage() {
         ranked shortlist of who fits them best.
       </p>
 
+      {!captureEnabled && (
+        <div className="notice notice-warn" style={{ marginTop: 18 }}>
+          <b>Automatic capture is off in this deployment.</b> LinkedIn returns HTTP 999 to automated readers and
+          Instagram serves a JavaScript-only page, so a link alone cannot be read without a paid scraping credential.
+          Paste the visible profile text on each person below and everything else works identically — analysis, dating and
+          rankings. This deployment reads pasted text only.
+        </div>
+      )}
+
       <div className="grid grid-4" style={{ margin: "22px 0 26px" }}>
         <div className="stat">
           <b>2</b>
-          <span>sources per person</span>
+          <span>sources read per person</span>
         </div>
         <div className="stat">
           <b>100%</b>
-          <span>claims cited</span>
+          <span>of claims cited</span>
         </div>
         <div className="stat">
           <b>n−1</b>
@@ -160,11 +181,16 @@ export default function StartPage() {
             <button className="btn btn-sm btn-ghost" onClick={loadSample} type="button">
               Fill example
             </button>
-            <button className="btn btn-sm" onClick={add} type="button">
+            <button className="btn btn-sm" onClick={add} type="button" disabled={entries.length >= MAX_PEOPLE}>
               + Add person
             </button>
           </div>
         </div>
+        {entries.length >= MAX_PEOPLE && (
+          <p className="small dim" style={{ margin: "0 0 12px" }}>
+            {MAX_PEOPLE} people is the per-run limit.
+          </p>
+        )}
 
         {error ? (
           <div className="notice notice-error" role="alert" ref={errorRef}>
@@ -194,6 +220,15 @@ export default function StartPage() {
 
             <div className="row">
               <label className="field">
+                <span>Name (optional)</span>
+                <input
+                  type="text"
+                  value={entry.name}
+                  placeholder="Their first and last name"
+                  onChange={(ev) => update(entry.key, { name: ev.target.value })}
+                />
+              </label>
+              <label className="field">
                 <span>LinkedIn profile URL</span>
                 <input
                   type="text"
@@ -202,16 +237,16 @@ export default function StartPage() {
                   onChange={(ev) => update(entry.key, { linkedin: ev.target.value })}
                 />
               </label>
-              <label className="field">
-                <span>Instagram profile URL</span>
-                <input
-                  type="text"
-                  value={entry.instagram}
-                  placeholder="instagram.com/username"
-                  onChange={(ev) => update(entry.key, { instagram: ev.target.value })}
-                />
-              </label>
             </div>
+            <label className="field">
+              <span>Instagram profile URL</span>
+              <input
+                type="text"
+                value={entry.instagram}
+                placeholder="instagram.com/username"
+                onChange={(ev) => update(entry.key, { instagram: ev.target.value })}
+              />
+            </label>
 
             <button
               className="btn btn-sm btn-ghost"

@@ -110,6 +110,54 @@ export function allTraitKeys(): readonly string[] {
  * A phrase claims its own single meaning: once the longest form matches, its
  * parent trait is not also reported. "trail running" is one hobby, not two.
  */
+/**
+ * Negation cues that make a following trait word mean the opposite.
+ *
+ * Without this, "I hate running" produced a confident "Running" trait whose
+ * citation read "I hate running" -- a cited claim that the citation itself
+ * refutes. That is the single most credibility-destroying output this app can
+ * produce, so a negated mention is treated as absent, not as a hobby.
+ */
+const NEGATION_CUES = [
+  "hate", "hates", "hated", "dislike", "dislikes", "never", "no", "not", "isnt",
+  "cant", "cannot", "wont", "avoid", "avoids", "against", "quit", "stopped",
+  "used to", "former", "gave up", "anti", "uninterested", "nothing to do with",
+  "allergic", "allergies", "intolerant", "zero", "none", "without", "except",
+  "rather not", "not into", "not a fan", "scraped", "deleted",
+];
+
+/**
+ * Returns true when the trait word is negated in its own clause.
+ *
+ * Scope is clause-bounded: in "I hate mornings but I love bouldering" the
+ * negation applies to "mornings", not to "bouldering". Splitting on clause
+ * markers first is what makes the check correct rather than merely cautious.
+ */
+function isNegated(line: string, form: string): boolean {
+  const lower = line.toLowerCase();
+  const idx = lower.indexOf(form.toLowerCase());
+  if (idx === -1) return false;
+
+  // Isolate the clause containing the match.
+  const boundary = /[,;.!?]|\bbut\b|\bthough\b|\balthough\b|\bhowever\b|\bbut also\b/;
+  const before = lower.slice(0, idx);
+  const lastBreak = Math.max(
+    before.lastIndexOf(","), before.lastIndexOf(";"), before.lastIndexOf("."),
+    before.lastIndexOf(" but "), before.lastIndexOf(" though "), before.lastIndexOf(" although "),
+  );
+  const clauseStart = lastBreak >= 0 ? lastBreak + 1 : 0;
+  const clause = lower.slice(clauseStart, idx + form.length);
+
+  const words = clause.split(/[^a-z]+/).filter(Boolean);
+  // Cue words anywhere in the clause, but never the trait word itself.
+  const traitWord = form.toLowerCase().split(/\s+/)[0] ?? form;
+  for (const w of words) {
+    if (w === traitWord) continue;
+    if (NEGATION_CUES.includes(w)) return true;
+  }
+  return false;
+}
+
 export function matchLine(
   line: string,
 ): { def: TraitDefinition; matchedForm: string }[] {
@@ -133,7 +181,7 @@ export function matchLine(
     if (words.length > 0 && words.every((w) => claimedWords.has(w))) continue;
 
     const needle = ` ${normalised} `;
-    if (haystack.includes(needle)) {
+    if (haystack.includes(needle) && !isNegated(line, form)) {
       seen.add(def.key);
       for (const w of words) claimedWords.add(w);
       hits.push({ def, matchedForm: form });

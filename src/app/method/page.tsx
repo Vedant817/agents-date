@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MATCH_COMPONENTS } from "@/matching/rank";
 
 export const metadata = { title: "How it works — Agents Date" };
 
@@ -76,26 +77,17 @@ export default function MethodPage() {
       <section className="panel">
         <h2>Scoring model</h2>
         <p className="small">
-          Four weighted components, each shown with its own explanation on every match card so a ranking can be
-          audited rather than trusted.
+          {MATCH_COMPONENTS.length} weighted components, each shown with its own explanation on every match card so a
+          ranking can be audited rather than trusted. These weights are imported from the ranker, so this page cannot
+          drift from the code.
         </p>
         <ul className="clean">
-          <li>
-            <b style={{ color: "var(--text)" }}>Shared ground — 34%.</b> Activities both profiles evidence, weighted by
-            how specific the activity is. Two climbers outrank a climber and a reader.
-          </li>
-          <li>
-            <b style={{ color: "var(--text)" }}>Needs met — 30%.</b> How much of what the subject&apos;s own
-            sources imply appears in the candidate&apos;s.
-          </li>
-          <li>
-            <b style={{ color: "var(--text)" }}>Evidence quality — 20%.</b> How directly both profiles state things. A
-            thin profile produces an openly uncertain ranking.
-          </li>
-          <li>
-            <b style={{ color: "var(--text)" }}>Values — 16%.</b> Overlap on stated community, sustainability or
-            inclusion work.
-          </li>
+          {MATCH_COMPONENTS.map((c) => (
+            <li key={c.key}>
+              <b style={{ color: "var(--text)" }}>{c.label} — {Math.round(c.weight * 100)}%.</b> {c.detail}{" "}
+              <span className="dim">{c.directional ? "Directed." : "Symmetric."}</span>
+            </li>
+          ))}
         </ul>
       </section>
 

@@ -38,6 +38,11 @@ export default async function DemoPage() {
 
   const s = summarise(run);
   const citedTraits = run.people.reduce((n, p) => n + (p.analysis?.traits.length ?? 0), 0);
+  // How many people have evidence from BOTH sources, rather than claiming it.
+  const bothSources = run.people.filter((p) => {
+    const ev = (p.analysis?.traits ?? []).flatMap((t) => t.evidence);
+    return ev.some((e) => e.source === "linkedin") && ev.some((e) => e.source === "instagram");
+  }).length;
   const citedTurns = run.people.reduce(
     (n, p) => n + (p.sessions ?? []).reduce((m, d) => m + d.turns.filter((t) => t.evidence.length > 0).length, 0),
     0,
@@ -55,8 +60,9 @@ export default async function DemoPage() {
       <p className="lede" style={{ fontSize: 15.5 }}>
         Work through it in order: <b style={{ color: "var(--text)" }}>Profiles</b> shows what each agent found,{" "}
         <b style={{ color: "var(--text)" }}>Dates</b> shows the agents actually dating, and{" "}
-        <b style={{ color: "var(--text)" }}>Rankings</b> shows who each person fits best. Every claim links back to the
-        source line that justified it.
+        <b style={{ color: "var(--text)" }}>Rankings</b> shows who each person fits best. Every trait links back to the
+        source line that justified it, and {Math.round((citedTurns / Math.max(1, allTurns)) * 100)}% of date turns carry
+        a citation.
       </p>
 
       <div className="grid grid-4" style={{ margin: "20px 0 22px" }}>
@@ -70,7 +76,7 @@ export default async function DemoPage() {
         </div>
         <div className="stat">
           <b>{citedTraits}</b>
-          <span>cited traits from 2 sources each</span>
+          <span>cited traits ({bothSources} of {s.ready} cite both sources)</span>
         </div>
         <div className="stat">
           <b>

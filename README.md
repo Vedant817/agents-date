@@ -15,7 +15,7 @@ This README leads with the limits, because they were measured, not assumed.
 
 | Claim | Status |
 | --- | --- |
-| Pipeline runs end to end | Yes — verified with 68 unit tests and an integrity audit on real data |
+| Pipeline runs end to end | Yes — verified with 82 unit tests and an integrity audit on real data |
 | Every claim cites a source line | Yes — 321/321 transcript citations resolve; `npm run audit` proves it |
 | Ranking is per-person, not one global list | Yes — 2.5% symmetric ties, and the rest are genuinely similar people |
 | Reads LinkedIn automatically | **No.** LinkedIn returns HTTP 999 (bot-block) to anonymous requests |
@@ -74,7 +74,7 @@ data being read, which is what the pasted-text path is.
 | Matching | Weighted directed scoring, 5 components | Every component shows its own explanation |
 | Dating | Structured multi-turn generation with evidence on each turn | Grounded, reproducible, no invented biography |
 | Storage | Atomic filesystem store behind a `RunStore` interface | No credentials needed; swap for a hosted DB without touching callers |
-| Tests | **Vitest**, 68 tests | Includes regression tests for every fixed defect |
+| Tests | **Vitest**, 82 tests | Includes regression tests for every fixed defect |
 | Integrity check | `npm run audit` | Verifies citations on a real run file, not mocks |
 
 ### Environment variables
@@ -97,7 +97,7 @@ npm run dev         # http://localhost:3000
 
 ```bash
 npm run typecheck   # tsc --noEmit
-npm test            # 68 unit tests
+npm test            # 82 unit tests
 npm run audit       # evidence integrity over a real run file
 npm run build       # production build
 ```
@@ -153,13 +153,17 @@ that prompted it, tagged with whose profile it came from.
 
 ```
 $ npm run audit
-turn citations:                     321
+turn citations:                     325
 missing personId:                   0
 unresolvable quote:                 0
 one-sided claim w/ wrong citation:  0
 shared-ground citing one side:       0
 traits with no evidence:            0
-exact symmetric ties:               8 (2.5%)   [was 23.7%]
+traits refuted by own quote:        0
+additive claims checked: 650, false: 0
+sessions with wrong runId:          0
+turns leaking 'Unnamed':            0
+exact symmetric ties:               6 (1.8%)
 ```
 
 The remaining ties are between people with genuinely equivalent profiles.

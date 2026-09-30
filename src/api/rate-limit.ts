@@ -14,7 +14,19 @@ interface Window {
 }
 
 const WINDOW_MS = 60_000;
-const MAX_RUNS_PER_WINDOW = Number(process.env.RATE_LIMIT_RUNS_PER_MINUTE ?? 5);
+
+/**
+ * Parse the limit defensively. `Number("abc")` is NaN and `count > NaN` is
+ * always false, so a typo in the env var would silently DISABLE the limiter --
+ * the exact bug class guarded by parseCharge() in src/ingest/setup.ts.
+ */
+function parseLimit(raw: string | undefined): number {
+  const n = Number(raw ?? 5);
+  if (!Number.isFinite(n) || n < 1) return 5;
+  return Math.min(Math.floor(n), 1000);
+}
+
+const MAX_RUNS_PER_WINDOW = parseLimit(process.env.RATE_LIMIT_RUNS_PER_MINUTE);
 
 // Prune expired entries on every call so the map cannot grow unbounded.
 const windows = new Map<string, Window>();
@@ -48,13 +60,19 @@ export function rateLimit(request: Request, now = Date.now()): RateResult {
 }
 
 function clientKey(request: Request): string {
-  // Trust proxy headers only when explicitly configured, since they are
-  // trivially spoofable when the app is exposed directly.
+  // Client-supplied IP headers are trivially forged, so they are only honoured
+  // when the deployment sits behind a proxy that overwrites them. Trusting
+  // them unconditionally let one header bypass the spend cap entirely.
   if (process.env.TRUST_PROXY === "1") {
     const fwd = request.headers.get("x-forwarded-for");
-    if (fwd) return fwd.split(",")[0]!.trim();
+    if (fwd) return `xf:${fwd.split(",")[0]!.trim()}`;
+    const real = request.headers.get("x-real-ip");
+    if (real) return `ri:${real.trim()}`;
   }
-  return request.headers.get("x-real-ip") ?? "anon";
+  // Without a trusted proxy we cannot identify the caller, so every anonymous
+  // request shares one budget. That is deliberately strict: it is a spend cap,
+  // not an auth system.
+  return "anon";
 }
 
 /** Test hook: clears all windows. */
