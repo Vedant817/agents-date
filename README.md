@@ -15,7 +15,7 @@ This README leads with the limits, because they were measured, not assumed.
 
 | Claim | Status |
 | --- | --- |
-| Pipeline runs end to end | Yes — verified with 84 unit tests and an integrity audit on real data |
+| Pipeline runs end to end | Yes — verified with 85 unit tests and an integrity audit on real data |
 | Every claim cites a source line | Yes — 321/321 transcript citations resolve; `npm run audit` proves it |
 | Ranking is per-person, not one global list | Yes — 2.5% symmetric ties, and the rest are genuinely similar people |
 | Reads LinkedIn automatically | **No.** LinkedIn returns HTTP 999 (bot-block) to anonymous requests |
@@ -74,7 +74,7 @@ data being read, which is what the pasted-text path is.
 | Matching | Weighted directed scoring, 5 components | Every component shows its own explanation |
 | Dating | Structured multi-turn generation with evidence on each turn | Grounded, reproducible, no invented biography |
 | Storage | Atomic filesystem store behind a `RunStore` interface | No credentials needed; swap for a hosted DB without touching callers |
-| Tests | **Vitest**, 84 tests | Includes regression tests for every fixed defect |
+| Tests | **Vitest**, 85 tests | Includes regression tests for every fixed defect |
 | Integrity check | `npm run audit` | Verifies citations on a real run file, not mocks |
 
 ### Environment variables
@@ -97,7 +97,7 @@ npm run dev         # http://localhost:3000
 
 ```bash
 npm run typecheck   # tsc --noEmit
-npm test            # 84 unit tests
+npm test            # 85 unit tests
 npm run audit       # evidence integrity over a real run file
 npm run build       # production build
 ```

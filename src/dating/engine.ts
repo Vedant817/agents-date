@@ -221,11 +221,16 @@ function reflectionFor(
     ? firstName(self)
     : "this person";
   const parts: string[] = [];
-  parts.push(
-    shared.length > 0
-      ? `For ${label} I would call this promising: ${shared.slice(0, 2).map((t) => t.label.toLowerCase()).join(" and ")} are verifiable on both sides.`
-      : `For ${label} I would call this uncertain: nothing in the two profiles overlaps.`,
-  );
+  if (shared.length > 0) {
+    // Verb agreement: "wine is verifiable" reads correctly, "wine are" does
+    // not. With two items the plural is right.
+    const named = shared.slice(0, 2).map((t) => t.label.toLowerCase());
+    parts.push(
+      `For ${label} I would call this promising: ${named.join(" and ")} ${named.length > 1 ? "are" : "is"} verifiable on both sides.`,
+    );
+  } else {
+    parts.push(`For ${label} I would call this uncertain: nothing in the two profiles overlaps.`);
+  }
   if (selfOnly.length > 0) {
     parts.push(`What only ${label} shows is ${selfOnly.slice(0, 2).map((t) => t.label.toLowerCase()).join(", ")}.`);
   }

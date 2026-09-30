@@ -283,6 +283,34 @@ describe("dating", () => {
     expect(s.turns.some((t) => t.move === "shared_ground")).toBe(true);
   });
 
+  it("agrees the verb with the number of shared traits", () => {
+    // Regression: the summary hardcoded "are", so a single shared trait
+    // produced "wine are verifiable on both sides" on the live site.
+    const solo = analyse("s1", {
+      linkedin: src("linkedin", ["Only natural wine here."]),
+      instagram: src("instagram", ["Wine."]),
+    });
+    const other = analyse("s2", {
+      linkedin: src("linkedin", ["Natural wine only for me."]),
+      instagram: src("instagram", ["Wine."]),
+    });
+    const one = runDate("r", solo, other).turns.filter((t) => /verifiable/.test(t.text));
+    expect(one.length).toBeGreaterThan(0);
+    for (const t of one) expect(t.text, "one shared trait needs 'is'").toMatch(/\bis verifiable\b/);
+
+    const pairA = analyse("p1", {
+      linkedin: src("linkedin", ["Wine and climbing."]),
+      instagram: src("instagram", ["Wine, climbing, espresso."]),
+    });
+    const pairB = analyse("p2", {
+      linkedin: src("linkedin", ["Wine and climbing."]),
+      instagram: src("instagram", ["Wine, climbing, hiking."]),
+    });
+    const two = runDate("r", pairA, pairB).turns.filter((t) => /verifiable/.test(t.text));
+    expect(two.length).toBeGreaterThan(0);
+    for (const t of two) expect(t.text, "two shared traits need 'are'").toMatch(/\bare verifiable\b/);
+  });
+
   it("admits a mismatch when there is no overlap", () => {
     const s = runDate("r", a, d);
     expect(s.turns.some((t) => t.move === "mismatch")).toBe(true);
