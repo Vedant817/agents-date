@@ -7,51 +7,73 @@ import RunClient from "./client";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export default async function RunPage(props: { params: Promise<{ runId: string }> }) {
+export default async function RunPage(props: {
+  params: Promise<{ runId: string }>;
+  searchParams: Promise<{ view?: string; person?: string }>;
+}) {
   const { runId } = await props.params;
   const store = getStore();
   const run = await store.get(runId);
   if (!run) notFound();
 
   const summary = summarise(run);
+  // Read the deep link on the server. Doing it in the client only meant the
+  // first paint, share previews and crawlers showed the default tab and the
+  // first person, so a shared ?view=rankings&person=p20 link looked like it
+  // pointed at somebody else.
+  const params = await props.searchParams;
+  const initialView = params?.view === "dates" || params?.view === "rankings" || params?.view === "profiles"
+    ? params.view
+    : "profiles";
+  const knownPeople = new Set(run.people.filter((p) => p.status === "ready").map((p) => p.id));
+  const initialPerson = params?.person && knownPeople.has(params.person) ? params.person : null;
 
   return (
     <main>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 18, flexWrap: "wrap" }}>
-        <div>
-          <h1 style={{ fontSize: 32 }}>
-            {run.isDemo ? "Demo run" : "Your run"}
+      <div className="cluster cluster-between">
+        <div className="page-head">
+          <p className="eyebrow">{run.isDemo ? "Completed demo run" : "Your run"}</p>
+          <h1>
+            {run.isSample ? "Example run" : "Your run"}
             {summary.ready > 0 ? ` — ${summary.ready} agent${summary.ready === 1 ? "" : "s"} ready` : ""}
           </h1>
-          <p className="lede" style={{ fontSize: 15 }}>
+          <p className="lede mb0">
             Open a person to read what their agent found, then the dates their agents went on, then who they rank best.
           </p>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <Link className="btn btn-sm btn-ghost" href="/">
+        <div className="cluster">
+          <Link className="btn btn-sm" href="/">
             Add more people
           </Link>
         </div>
       </div>
 
-      <div className="grid grid-4" style={{ margin: "18px 0 22px" }}>
-        <div className="stat">
+      <div className="facts">
+        <div className="fact">
           <b>{summary.total}</b>
           <span>people</span>
         </div>
-        <div className="stat">
+        <div className="fact">
           <b>{summary.ready}</b>
           <span>profiles read</span>
         </div>
-        <div className="stat">
+        <div className="fact">
           <b>{summary.sessions}</b>
           <span>dates completed</span>
         </div>
-        <div className="stat">
+        <div className="fact">
           <b>{summary.failed}</b>
           <span>unreadable</span>
         </div>
       </div>
+
+      {run.isSample && (
+        <div className="notice notice-warn">
+          <b>This run used the built-in example personas.</b> The people below are illustrative sample data, not real
+          profiles, so nothing here is a capture of an actual person. Add your own two links to see the pipeline run on
+          real public profiles.
+        </div>
+      )}
 
       {run.notes && run.notes.length > 0 && (
         <div className="notice notice-warn">
@@ -64,7 +86,7 @@ export default async function RunPage(props: { params: Promise<{ runId: string }
       {!run.isDemo && store.isEphemeral() && (
         <div className="notice notice-info">
           This run is stored on temporary disk, so it may disappear if the server restarts. The{" "}
-          <Link href="/demo" style={{ textDecoration: "underline" }}>
+          <Link href="/demo">
             demo run
           </Link>{" "}
           is always available.
@@ -83,7 +105,7 @@ export default async function RunPage(props: { params: Promise<{ runId: string }
           </Link>
         </section>
       ) : (
-        <RunClient run={run} />
+        <RunClient run={run} initialView={initialView} initialPerson={initialPerson} />
       )}
     </main>
   );

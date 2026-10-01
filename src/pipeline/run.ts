@@ -49,6 +49,47 @@ export interface ValidationIssue {
   readonly message: string;
 }
 
+/**
+ * Handles that belong to the built-in example, not to a real person. The
+ * start page "Fill example" button fills these so a visitor can reach a real
+ * result without their own links. The run is accepted and flagged `isSample`
+ * rather than rejected, and the UI labels it, so the guided path works while
+ * synthetic data is still never presented as a real capture.
+ */
+const PLACEHOLDER_HANDLES = new Set(
+  [
+    "example",
+    "example-runner",
+    "example.runner",
+    "example-designer",
+    "example.designer",
+    "yourname",
+    "your-name",
+    "your_name",
+    "username",
+    "john-doe",
+    "jane-doe",
+    "foo",
+    "sample",
+  ].map((h) => h.toLowerCase()),
+);
+
+function isPlaceholderHandle(handle: string | undefined): boolean {
+  return Boolean(handle && PLACEHOLDER_HANDLES.has(handle.toLowerCase()));
+}
+
+/** True when every submitted person used an example handle. */
+export function isSampleSubmission(
+  entries: readonly { linkedin?: string; instagram?: string }[],
+): boolean {
+  if (entries.length === 0) return false;
+  return entries.every((entry) => {
+    const li = parseLinkedIn(entry.linkedin ?? "");
+    const ig = parseInstagram(entry.instagram ?? "");
+    return isPlaceholderHandle(li.handle) && isPlaceholderHandle(ig.handle);
+  });
+}
+
 /** Validates a whole submission before any network work begins. */
 export function validateSubmission(
   entries: readonly { linkedin?: string; instagram?: string; name?: string }[],
@@ -151,7 +192,7 @@ export async function processPerson(
 
 /**
  * Chooses date sessions so every agent appears in at least one, then adds the
- * highest-ranked pairs. 25 people need at least 13 sessions for coverage.
+ * highest-ranked pairs. 26 people need at least 13 sessions for coverage.
  */
 export function planSessions(
   people: readonly { id: string; matches?: readonly { candidateId: string; overall: number }[] }[],

@@ -17,7 +17,9 @@ async function loadDemo(): Promise<Run | null> {
   }
 }
 
-export default async function DemoPage() {
+export default async function DemoPage(props: {
+  searchParams: Promise<{ view?: string; person?: string }>;
+}) {
   const run = await loadDemo();
   if (!run) {
     return (
@@ -52,36 +54,46 @@ export default async function DemoPage() {
     0,
   );
 
+  // Deep links are resolved on the server so the first paint matches the link.
+  const params = await props.searchParams;
+  const initialView = params?.view === "dates" || params?.view === "rankings" || params?.view === "profiles"
+    ? params.view
+    : "profiles";
+  const knownPeople = new Set(run.people.filter((p) => p.status === "ready").map((p) => p.id));
+  const initialPerson = params?.person && knownPeople.has(params.person) ? params.person : null;
+
   return (
     <main>
-      <h1 style={{ fontSize: 34 }}>
-        {s.ready} agents, {s.sessions} dates, every shortlist ranked.
-      </h1>
-      <p className="lede" style={{ fontSize: 15.5 }}>
-        Work through it in order: <b style={{ color: "var(--text)" }}>Profiles</b> shows what each agent found,{" "}
-        <b style={{ color: "var(--text)" }}>Dates</b> shows the agents actually dating, and{" "}
-        <b style={{ color: "var(--text)" }}>Rankings</b> shows who each person fits best. Every trait links back to the
-        source line that justified it, and {Math.round((citedTurns / Math.max(1, allTurns)) * 100)}% of date turns carry
-        a citation.
+      <div className="page-head">
+        <p className="eyebrow">Completed demo run</p>
+        <h1>
+          {s.ready} agents, {s.sessions} dates, every shortlist ranked.
+        </h1>
+      </div>
+      <p className="lede">
+        Work through it in order: <b>Profiles</b> shows what each agent found, <b>Dates</b> shows the agents actually
+        dating, and <b>Rankings</b> shows who each person fits best. Every trait links back to the source line that
+        justified it, and {Math.round((citedTurns / Math.max(1, allTurns)) * 100)}% of date turns carry a citation.
       </p>
 
-      <div className="grid grid-4" style={{ margin: "20px 0 22px" }}>
-        <div className="stat">
+      <div className="facts">
+        <div className="fact">
           <b>{s.ready}</b>
           <span>people profiled</span>
         </div>
-        <div className="stat">
+        <div className="fact">
           <b>{s.sessions}</b>
           <span>agent dates</span>
         </div>
-        <div className="stat">
+        <div className="fact">
           <b>{citedTraits}</b>
-          <span>cited traits ({bothSources} of {s.ready} cite both sources)</span>
+          <span>cited traits</span>
+          <span className="fact-sub">
+            {bothSources} of {s.ready} cite both sources
+          </span>
         </div>
-        <div className="stat">
-          <b>
-            {allTurns > 0 ? Math.round((citedTurns / allTurns) * 100) : 0}%
-          </b>
+        <div className="fact">
+          <b>{allTurns > 0 ? Math.round((citedTurns / allTurns) * 100) : 0}%</b>
           <span>date turns with evidence</span>
         </div>
       </div>
@@ -94,7 +106,7 @@ export default async function DemoPage() {
         reads real ones the moment a token is configured. Add your own links on the start page to see it run on you.
       </div>
 
-      <RunClient run={run} />
+      <RunClient run={run} initialView={initialView} initialPerson={initialPerson} />
     </main>
   );
 }

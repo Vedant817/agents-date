@@ -227,6 +227,13 @@ export interface Run {
   readonly id: string;
   /** Marks the frozen, already-completed run used by /demo. */
   readonly isDemo: boolean;
+  /**
+   * Marks a run created from the built-in example personas. The data is
+   * synthetic, so the UI must never present it as a real capture. Rejecting
+   * the example instead would make the one guided path a dead end, so the run
+   * is accepted and labelled instead.
+   */
+  readonly isSample?: boolean;
   status: RunStatus;
   people: PersonRecord[];
   createdAt: number;

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { analyse } from "@/analysis/analyse";
 import { runDate } from "@/dating/engine";
 import { rankCandidates, scoreMatch, MATCH_WEIGHTS, MATCH_COMPONENTS } from "@/matching/rank";
-import { computeNetwork, planSessions, summarise, validateSubmission, emptyRun } from "@/pipeline/run";
+import { computeNetwork, planSessions, summarise, validateSubmission, emptyRun, isSampleSubmission } from "@/pipeline/run";
 import { ConsentedTextAdapter } from "@/ingest/public";
 import { normaliseInstagramUrl, normaliseLinkedInUrl, parseCharge } from "@/ingest/setup";
 import { processPerson } from "@/pipeline/run";
@@ -374,6 +374,48 @@ describe("dating", () => {
     expect(people.size, "a 'both profiles show X' claim must cite both people").toBe(2);
   });
 
+  it("grounds each opener in the ADDRESSEE's profile, not the speaker's", () => {
+    // Regression: opener prompts are second-person ("I saw you are into X"),
+    // but A's opener cited A's own evidence while describing B — 19/19 dates
+    // in the demo opened by quoting yourself about the other person.
+    const session = runDate("r", a, c);
+    const openerA = session.turns.find((t) => t.role === "A" && t.move === "opener");
+    const openerB = session.turns.find((t) => t.role === "B" && t.move === "opener");
+    expect(openerA?.evidence.length).toBeGreaterThan(0);
+    expect(openerB?.evidence.length).toBeGreaterThan(0);
+    for (const e of openerA!.evidence) {
+      expect(e.personId, "A's opener describes B, so it must cite B").toBe(c.personId);
+    }
+    for (const e of openerB!.evidence) {
+      expect(e.personId, "B's opener describes A, so it must cite A").toBe(a.personId);
+    }
+  });
+
+  it("cites A's line when the follow-up asks about A's view", () => {
+    // Regression: "What is A's view, beyond the profile line?" cited B's own
+    // line in 19/19 demo dates.
+    const session = runDate("r", a, c);
+    const followUp = session.turns.find(
+      (t) => t.role === "B" && t.move === "follow_up" && /view, beyond the profile line/.test(t.text),
+    );
+    if (!followUp) return; // hobby variant asks a different question
+    for (const e of followUp.evidence) {
+      expect(e.personId, "a question about A's view must cite A").toBe(a.personId);
+    }
+  });
+
+  it("cites both sides in a reflection that claims both-sides overlap", () => {
+    // Regression: "X is verifiable on both sides" cited self-only in 37/38
+    // demo reflections because truncation dropped the other side.
+    const session = runDate("r", a, c);
+    const reflections = session.turns.filter((t) => t.move === "reflection" && /verifiable on both sides/.test(t.text));
+    expect(reflections.length).toBeGreaterThan(0);
+    for (const r of reflections) {
+      const people = new Set(r.evidence.map((e) => e.personId));
+      expect(people.size, "a both-sides claim must cite both people").toBe(2);
+    }
+  });
+
   it("cites the traits it enumerates when there is no overlap", () => {
     // Regression: the "we share nothing" turn listed up to six real traits
     // with evidence: [], naming facts a reader could not check. The audit
@@ -497,6 +539,11 @@ describe("computeNetwork", () => {
 });
 
 describe("validateSubmission", () => {
+  const SAMPLE_SUBMISSION = [
+    { linkedin: "linkedin.com/in/example-runner", instagram: "instagram.com/example.runner" },
+    { linkedin: "linkedin.com/in/example-designer", instagram: "instagram.com/example.designer" },
+  ];
+
   it("accepts a clean pair", () => {
     expect(validateSubmission([{ linkedin: "https://linkedin.com/in/a", instagram: "https://instagram.com/b" }])).toHaveLength(0);
   });
@@ -512,6 +559,20 @@ describe("validateSubmission", () => {
       { linkedin: "https://linkedin.com/in/a", instagram: "https://instagram.com/c" },
     ]);
     expect(issues.some((i) => i.message.includes("Same profile"))).toBe(true);
+  });
+
+  it("flags an all-example submission as sample data, and not a mixed one", () => {
+    // Regression: the example links used to be rejected outright, so the one
+    // guided path on the start page was a guaranteed dead end.
+    expect(validateSubmission(SAMPLE_SUBMISSION)).toHaveLength(0);
+    expect(isSampleSubmission(SAMPLE_SUBMISSION)).toBe(true);
+
+    const mixed = [
+      ...SAMPLE_SUBMISSION,
+      { linkedin: "linkedin.com/in/real-person", instagram: "instagram.com/realperson" },
+    ];
+    expect(isSampleSubmission(mixed), "one real handle means it is not purely sample data").toBe(false);
+    expect(isSampleSubmission([])).toBe(false);
   });
 });
 
