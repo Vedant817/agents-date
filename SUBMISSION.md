@@ -37,7 +37,7 @@ current data and fails on nine properties, including citations that do not
 resolve to a real source line, one-sided claims cited to the wrong side,
 traits with no evidence, a trait refuted by its own quote, a misleading "adds
 something new", a wrong session `runId`, and a leaked placeholder name. On the
-seeded run: 325 citations, 0 unresolved, 0 refuted, 650 additive claims with 0
+seeded run: 412 citations, 0 unresolved, 0 refuted, 650 additive claims with 0
 false, 7 of 325 exact symmetric ranking ties (2.2%).
 
 **Defects found by adversarial QA and fixed, each with a regression test.**
@@ -54,7 +54,7 @@ terms. Instagram serves a client-only page and its JSON endpoint returns 401, so
 real Instagram capture needs an `APIFY_TOKEN` and is opt-in. Without a token the
 app still runs end to end on pasted public profile text, and failed captures
 stay visible rather than being faked. The demo run ships 26 clearly-labelled
-synthetic personas, not 25 real people, because capturing real profiles would
+synthetic personas instead of real people, because capturing real profiles would
 need both authorisation and a paid scraping credential. The demo uses the same
 pipeline and the same audit as a live run; only the source text differs. Runs
 are stored on an ephemeral filesystem and can be lost on redeploy.

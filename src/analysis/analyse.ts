@@ -199,7 +199,7 @@ function deriveNeeds(
     {
       from: interests,
       suffix: "shared",
-      map: (label) => `Someone who already knows ${label.toLowerCase()}, so the first conversation does not need explaining`,
+      map: (label) => `Someone who is also into ${label.toLowerCase()}, so the first conversation does not need explaining`,
     },
     {
       from: values,

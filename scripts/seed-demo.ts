@@ -1,5 +1,5 @@
 /**
- * Demo seed: 25 people with two cited sources each.
+ * Demo seed: 26 people with two cited sources each.
  *
  * HONESTY NOTE, and this matters for grading:
  * These are SYNTHETIC personas, not scraped real people. LinkedIn blocks
@@ -29,7 +29,7 @@ interface Persona {
   instagram: string[];
 }
 
-/** 25 varied personas: different cities, domains, and activity mixes so the
+/** 26 varied personas: different cities, domains, and activity mixes so the
  *  rankings produce genuine winners and genuine mismatches. */
 const PERSONAS: Persona[] = [
   {
@@ -595,7 +595,7 @@ async function main() {
 
   const run = {
     ...emptyRun(DEMO_RUN_ID, true, [
-      "This demo run uses 25 clearly-labelled synthetic personas, not real people's profiles. LinkedIn blocks anonymous reads and Instagram serves a client-only page, so real capture needs an Apify token. The pipeline is identical: add your own links on the start page to read real profiles.",
+      "This demo run uses 26 clearly-labelled synthetic personas, not real people's profiles. LinkedIn blocks anonymous reads and Instagram serves a client-only page, so real capture needs an Apify token. The pipeline is identical: add your own links on the start page to read real profiles.",
     ]),
     status: "complete" as const,
     people: computeNetwork(people),

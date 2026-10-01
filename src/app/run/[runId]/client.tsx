@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import Link from "next/link";
 import type { DateSession, MatchScore, PersonRecord, Run } from "@/core/types";
 
@@ -8,17 +8,40 @@ type Tab = "profiles" | "dates" | "rankings";
 
 /**
  * The run view is deep-linkable: /run/<id>?view=dates&person=<id> opens a
- * specific tab and person. That makes a profile or a single date shareable,
- * and lets a video capture a known state without scripting clicks.
+ * specific tab and person. The server reads those params and passes them in
+ * so the first paint, a share preview and a crawler all agree with the link.
  */
-function readParam(name: string): string | null {
-  if (typeof window === "undefined") return null;
-  return new URLSearchParams(window.location.search).get(name);
-}
 
-export default function RunClient({ run }: { run: Run }) {
-  const [tab, setTab] = useState<Tab>("profiles");
-  const [selected, setSelected] = useState<string | null>(null);
+export default function RunClient({
+  run,
+  initialView = "profiles",
+  initialPerson = null,
+}: {
+  run: Run;
+  initialView?: Tab;
+  initialPerson?: string | null;
+}) {
+  const [tab, setTab] = useState<Tab>(initialView);
+  const [selected, setSelected] = useState<string | null>(initialPerson);
+
+  function onTabsKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft" && event.key !== "Home" && event.key !== "End") {
+      return;
+    }
+    event.preventDefault();
+    const order: Tab[] = ["profiles", "dates", "rankings"];
+    const current = order.indexOf(tab);
+    const next =
+      event.key === "ArrowRight"
+        ? order[(current + 1) % order.length]!
+        : event.key === "ArrowLeft"
+          ? order[(current + order.length - 1) % order.length]!
+          : event.key === "Home"
+            ? "profiles"
+            : "rankings";
+    setTab(next);
+    document.getElementById(`run-tab-${next}`)?.focus();
+  }
 
   const people = useMemo(
     () => [...run.people].sort((a, b) => (a.displayName ?? "").localeCompare(b.displayName ?? "")),
@@ -38,13 +61,8 @@ export default function RunClient({ run }: { run: Run }) {
     return [...map.values()];
   }, [people]);
 
-  // Honour ?view= and ?person= on mount.
-  useEffect(() => {
-    const v = readParam("view");
-    if (v === "dates" || v === "rankings" || v === "profiles") setTab(v);
-    const p = readParam("person");
-    if (p && people.some((x) => x.id === p)) setSelected(p);
-  }, [people]);
+  // ?view= and ?person= are read on the server and passed in as props, so the
+  // first paint already matches the link. Nothing to re-read on mount.
 
   // Keep the URL in step so the current view is always shareable.
   useEffect(() => {
@@ -73,8 +91,8 @@ export default function RunClient({ run }: { run: Run }) {
   const nameOf = (id: string) => ready.find((p) => p.id === id)?.displayName ?? "this person";
 
   const unreadableBlock = unreadable.length > 0 && (
-    <section className="panel" style={{ marginTop: 16, borderColor: "rgba(245,158,11,.35)" }}>
-      <h3 style={{ color: "var(--warn)" }}>Could not read {unreadable.length} profile{unreadable.length === 1 ? "" : "s"}</h3>
+    <section className="panel warn-card" aria-label="Unreadable profiles">
+      <h3>Could not read {unreadable.length} profile{unreadable.length === 1 ? "" : "s"}</h3>
       <p className="small">
         These people were submitted but neither source could be read, so no analysis exists and their agent is not in
         the dating pool. Nothing was invented for them.
@@ -82,7 +100,7 @@ export default function RunClient({ run }: { run: Run }) {
       <ul className="clean">
         {unreadable.map((p) => (
           <li key={p.id}>
-            <b style={{ color: "var(--text)" }}>{p.linkedinUrl.replace("https://www.linkedin.com/in/", "")}</b>
+            <b>{p.linkedinUrl.replace("https://www.linkedin.com/in/", "")}</b>
             <div className="evidence">{p.error ?? "The profile could not be read."}</div>
           </li>
         ))}
@@ -92,104 +110,117 @@ export default function RunClient({ run }: { run: Run }) {
 
   return (
     <>
-      <div className="nav" style={{ marginBottom: 18 }} role="tablist" aria-label="Run views">
-        <button
-          className={`btn btn-sm ${tab === "profiles" ? "btn-primary" : ""}`}
-          onClick={() => setTab("profiles")}
-          type="button"
-          role="tab"
-          aria-selected={tab === "profiles"}
-        >
-          Profiles ({ready.length})
-        </button>
-        <button
-          className={`btn btn-sm ${tab === "dates" ? "btn-primary" : ""}`}
-          onClick={() => setTab("dates")}
-          type="button"
-          role="tab"
-          aria-selected={tab === "dates"}
-        >
-          Dates ({sessions.length})
-        </button>
-        <button
-          className={`btn btn-sm ${tab === "rankings" ? "btn-primary" : ""}`}
-          onClick={() => setTab("rankings")}
-          type="button"
-          role="tab"
-          aria-selected={tab === "rankings"}
-        >
-          Rankings
-        </button>
+      <div className="tabs" role="tablist" aria-label="Run views" onKeyDown={onTabsKeyDown}>
+        {(
+          [
+            { id: "profiles", label: "Profiles", count: ready.length },
+            { id: "dates", label: "Dates", count: sessions.length },
+            { id: "rankings", label: "Rankings", count: undefined },
+          ] as { id: Tab; label: string; count?: number }[]
+        ).map((item) => (
+          <button
+            key={item.id}
+            id={`run-tab-${item.id}`}
+            className={tab === item.id ? "tab active" : "tab"}
+            onClick={() => setTab(item.id)}
+            type="button"
+            role="tab"
+            aria-selected={tab === item.id}
+            aria-controls={`run-panel-${item.id}`}
+            tabIndex={tab === item.id ? 0 : -1}
+          >
+            {item.label}
+            {typeof item.count === "number" ? <span className="tab-count">{item.count}</span> : null}
+          </button>
+        ))}
       </div>
 
       {tab === "profiles" && (
-        <div className="two-col">
-          <nav className="list-nav">
-            {ready.map((p) => (
-              <a
-                key={p.id}
-                href={`?view=profiles&person=${p.id}`}
-                aria-current={p.id === active.id ? "true" : undefined}
-                className={p.id === active.id ? "active" : ""}
-                onClick={(e) => {
-                  e.preventDefault();
-                  setSelected(p.id);
-                  document.getElementById("person-detail")?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }}
-              >
-                {p.displayName ?? p.id}
-              </a>
-            ))}
-          </nav>
-          <div id="person-detail" key={active.id}>
-            <PersonPanel person={active} nameOf={nameOf} />
+        <section id="run-panel-profiles" role="tabpanel" aria-labelledby="run-tab-profiles">
+          <div className="people-layout">
+            <PersonNav
+              people={ready}
+              activeId={active.id}
+              view="profiles"
+              onSelect={(id) => {
+                setSelected(id);
+                const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+                document
+                  .getElementById("person-detail")
+                  ?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+              }}
+            />
+            <div id="person-detail" key={active.id}>
+              <PersonPanel person={active} nameOf={nameOf} />
+            </div>
           </div>
-        </div>
+        </section>
       )}
 
       {tab === "dates" && (
-        <div>
+        <section id="run-panel-dates" role="tabpanel" aria-labelledby="run-tab-dates">
           {sessions.length === 0 ? (
             <div className="panel empty">
               <h2>No dates yet</h2>
               <p>Dates are planned once at least two people have a readable profile.</p>
             </div>
           ) : (
-            <div className="grid grid-2">
+            <div className="session-list">
               {sessions.map((s) => (
                 <SessionPanel key={s.id} session={s} nameOf={nameOf} />
               ))}
             </div>
           )}
-        </div>
+        </section>
       )}
 
       {tab === "rankings" && (
-        <div className="two-col">
-          <nav className="list-nav">
-            {ready.map((p) => (
-              <a
-                key={p.id}
-                href={`?view=rankings&person=${p.id}`}
-                aria-current={p.id === active.id ? "true" : undefined}
-                className={p.id === active.id ? "active" : ""}
-                onClick={(e) => {
-                  e.preventDefault();
-                  setSelected(p.id);
-                }}
-              >
-                {p.displayName ?? p.id}
-              </a>
-            ))}
-          </nav>
-          <div>
-            <RankingPanel person={active} nameOf={nameOf} />
+        <section id="run-panel-rankings" role="tabpanel" aria-labelledby="run-tab-rankings">
+          <div className="people-layout">
+            <PersonNav people={ready} activeId={active.id} view="rankings" onSelect={setSelected} />
+            <div>
+              <RankingPanel person={active} nameOf={nameOf} />
+            </div>
           </div>
-        </div>
+        </section>
       )}
 
       {unreadableBlock}
     </>
+  );
+}
+
+function PersonNav({
+  people,
+  activeId,
+  view,
+  onSelect,
+}: {
+  people: readonly PersonRecord[];
+  activeId: string;
+  view: "profiles" | "rankings";
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <div className="people-nav">
+      <p className="eyebrow">People</p>
+      <nav className="list-nav" aria-label={`Choose a person for ${view}`}>
+        {people.map((p) => (
+          <a
+            key={p.id}
+            href={`?view=${view}&person=${p.id}`}
+            aria-current={p.id === activeId ? "true" : undefined}
+            className={p.id === activeId ? "active" : ""}
+            onClick={(e) => {
+              e.preventDefault();
+              onSelect(p.id);
+            }}
+          >
+            {p.displayName ?? p.id}
+          </a>
+        ))}
+      </nav>
+    </div>
   );
 }
 
@@ -237,14 +268,14 @@ function TraitList({
         <ul className="clean">
           {items.map((t) => (
             <li key={t.key}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                <span style={{ color: "var(--text)" }}>{t.label}</span>
-                <span className="mono dim small">{Math.round(t.confidence * 100)}%</span>
+              <div className="trait-row">
+                <span className="trait-name">{t.label}</span>
+                <span className="trait-confidence">{Math.round(t.confidence * 100)}%</span>
               </div>
               {t.evidence.length > 0 && (
                 <div className="evidence">
                   {t.evidence.map((e, i) => (
-                    <div key={i} style={{ marginTop: i === 0 ? 0 : 4 }}>
+                    <div key={i} className="evidence-item">
                       &ldquo;{e.quote}&rdquo;{" "}
                       <span className="src">
                         {e.source} · line {(e.line ?? 0) + 1}
@@ -275,20 +306,20 @@ function PersonPanel({ person, nameOf }: { person: PersonRecord; nameOf: (id: st
   return (
     <div>
       <section className="panel">
-        <h2 style={{ fontSize: 26, marginBottom: 4 }}>{a.displayName}</h2>
+        <h2>{a.displayName}</h2>
         {a.headline ? <p className="small mb0">{a.headline}</p> : <p className="small dim mb0">No headline captured.</p>}
         {a.location ? <p className="small dim mb0">{a.location}</p> : null}
-        <div style={{ marginTop: 12 }}>
+        <div className="mt16">
           <SourceLinks person={person} />
         </div>
-        <p className="small dim" style={{ marginTop: 12, marginBottom: 0 }}>
+        <p className="small dim mt16 mb0">
           Analysed from {a.sources.linkedin.status === "captured" ? "LinkedIn" : "no LinkedIn data"} +{" "}
           {a.sources.instagram.status === "captured" ? "Instagram" : "no Instagram data"} · {a.traits.length} cited
           traits · engine: {a.engine}
         </p>
       </section>
 
-      <div className="grid grid-2" style={{ marginTop: 16 }}>
+      <div className="grid grid-2 mt16">
         <TraitList title="Hobbies" items={a.hobbies} empty="Neither profile states a hobby." />
         <TraitList title="Interests" items={a.interests} empty="Neither profile names an interest." />
         <TraitList title="Values" items={a.values} empty="Neither profile states a value." />
@@ -300,7 +331,7 @@ function PersonPanel({ person, nameOf }: { person: PersonRecord; nameOf: (id: st
             <ul className="clean">
               {a.needs.map((n) => (
                 <li key={n.key}>
-                  <span style={{ color: "var(--text)" }}>{n.label}</span>
+                  <span className="trait-name">{n.label}</span>
                   {n.evidence[0] && (
                     <div className="evidence">
                       from &ldquo;{n.evidence[0].quote}&rdquo; <span className="src">({n.evidence[0].source})</span>
@@ -313,7 +344,7 @@ function PersonPanel({ person, nameOf }: { person: PersonRecord; nameOf: (id: st
         </div>
       </div>
 
-      <section className="panel" style={{ marginTop: 16 }}>
+      <section className="panel mt16">
         <h3>What the two sources do not say</h3>
         <ul className="clean">
           {a.gaps.map((g) => (
@@ -338,7 +369,7 @@ function PersonPanel({ person, nameOf }: { person: PersonRecord; nameOf: (id: st
             })}
           </ul>
         )}
-        <p className="small dim" style={{ marginTop: 10, marginBottom: 0 }}>
+        <p className="small dim mt16 mb0">
           {(person.matches?.length ?? 0) > 0 ? (
             <>
               This person ranks {person.matches!.length} other {person.matches!.length === 1 ? "person" : "people"}.
@@ -359,13 +390,13 @@ function SessionPanel({ session, nameOf }: { session: DateSession; nameOf: (id: 
   return (
     <section className="panel">
       <div className="entry-head">
-        <h3 style={{ marginBottom: 0 }}>
+        <h3 className="mb0">
           {aName} <span className="dim">×</span> {bName}
         </h3>
         {session.evaluation && <span className="score-pill">{session.evaluation.overall}</span>}
       </div>
       {session.evaluation && (
-        <div className="tag-row" style={{ marginTop: 0, marginBottom: 10 }}>
+        <div className="tag-row eval-chips">
           <span className="chip">shared ground {Math.round(session.evaluation.sharedGround * 100)}%</span>
           <span className="chip">reciprocity {Math.round(session.evaluation.reciprocity * 100)}%</span>
           <span className="chip">mismatch risk {Math.round(session.evaluation.mismatchRisk * 100)}%</span>
@@ -381,8 +412,15 @@ function SessionPanel({ session, nameOf }: { session: DateSession; nameOf: (id: 
             <p>{t.text}</p>
             {t.evidence.length > 0 && (
               <div className="evidence">
-                grounded in:{" "}
-                {t.evidence.map((e) => `“${e.quote.slice(0, 90)}${e.quote.length > 90 ? "…" : ""}”`).join(" · ")}
+                {t.evidence.map((e, i) => (
+                  <div key={i} className="evidence-item">
+                    &ldquo;{e.quote.slice(0, 90)}
+                    {e.quote.length > 90 ? "…" : ""}&rdquo;{" "}
+                    <span className="src">
+                      {nameOf(e.personId)} · {e.source} · line {(e.line ?? 0) + 1}
+                    </span>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -391,7 +429,7 @@ function SessionPanel({ session, nameOf }: { session: DateSession; nameOf: (id: 
       {session.evaluation && session.evaluation.notes.length > 0 && (
         <details className="disclose">
           <summary>Evaluation notes</summary>
-          <ul className="clean" style={{ marginTop: 8 }}>
+          <ul className="clean mt8">
             {session.evaluation.notes.map((n) => (
               <li key={n}>{n}</li>
             ))}
@@ -419,14 +457,14 @@ function RankingPanel({ person, nameOf }: { person: PersonRecord; nameOf: (id: s
   return (
     <div>
       <section className="panel">
-        <h2 style={{ fontSize: 24, marginBottom: 4 }}>{person.displayName} ranks</h2>
+        <h2>{person.displayName} ranks</h2>
         <p className="small dim mb0">
           Directed scoring: this list is {person.displayName}&apos;s view, and is not the same as anyone else&apos;s list.
           Uncertainty is shown because a thin profile produces a thinner ranking.
         </p>
       </section>
 
-      <div className="grid grid-2" style={{ marginTop: 16 }}>
+      <div className="grid grid-2 mt16">
         {matches.map((m: MatchScore, i: number) => (
           <section className="panel person-card" key={m.candidateId}>
             <div className="person-top">
@@ -446,10 +484,10 @@ function RankingPanel({ person, nameOf }: { person: PersonRecord; nameOf: (id: s
             </div>
             <details className="disclose">
               <summary>Why ({m.components.length} factors)</summary>
-              <ul className="clean" style={{ marginTop: 8 }}>
+              <ul className="clean mt8">
                 {m.components.map((c) => (
                   <li key={c.label}>
-                    <b style={{ color: "var(--text)" }}>{c.label}</b> · {Math.round(c.score * c.weight * 100)} pts
+                    <b>{c.label}</b> · {Math.round(c.score * c.weight * 100)} pts
                     <div className="evidence">{c.detail}</div>
                   </li>
                 ))}

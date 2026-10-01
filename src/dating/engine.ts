@@ -58,25 +58,29 @@ export function runDate(
   };
 
   // --- 1. Openings, each grounded in the other person's own profile ---------
+  // Opener prompts are second-person ("I saw you are into X"), so the agent
+  // addressing B must use B's opener material, not its own. Using your own
+  // opener here made every date open by citing yourself to describe the
+  // other person.
   const openA = a.openers[0];
   const openB = b.openers[0];
 
   add(
     "A",
     "opener",
-    openA
-      ? `Hi ${firstName(b)} — I am ${firstName(a)}'s agent, reading only their LinkedIn and Instagram. ${openA.prompt}`
+    openB
+      ? `Hi ${firstName(b)} — I am ${firstName(a)}'s agent, reading only their LinkedIn and Instagram. ${openB.prompt}`
       : `Hi ${firstName(b)} — I am ${firstName(a)}'s agent. Their two profiles are thin on detail, so I will keep this simple: what are you hoping to get out of a first date?`,
-    openA?.evidence ?? [],
+    openB?.evidence ?? [],
   );
 
   add(
     "B",
     "opener",
-    openB
-      ? `Hi ${firstName(a)} — I am ${firstName(b)}'s agent. Fair. ${openB.prompt}`
+    openA
+      ? `Hi ${firstName(a)} — I am ${firstName(b)}'s agent. Fair. ${openA.prompt}`
       : `Hi ${firstName(a)} — I am ${firstName(b)}'s agent. Their profiles are thin, so I am asking directly: what would make a good evening for you?`,
-    openB?.evidence ?? [],
+    openA?.evidence ?? [],
   );
 
   // --- 2. Shared ground, only if it is actually evidenced ------------------
@@ -97,7 +101,8 @@ export function runDate(
       def?.category === "hobby"
         ? `Then the obvious first date is doing it, not describing it. Where does ${firstName(a)} actually do this — I can see the interest but not the place.`
         : `Then let us talk about it properly rather than small talk. What is ${firstName(a)}'s view, beyond the profile line?`,
-      ev(b, s.key),
+      // The sentence asks about A's side, so it must cite A's line, not B's.
+      ev(a, s.key),
     );
   } else {
     // Enumerating real traits while citing nothing makes a claim the reader
@@ -177,18 +182,28 @@ export function runDate(
   }
 
   // --- 5. Reflections from each side ---------------------------------------
-  add(
-    "A",
-    "reflection",
-    reflectionFor(a, b, shared, aOnly, bOnly),
-    [...ev(a, shared[0]?.key), ...ev(a, aOnly[0]?.key), ...ev(b, bOnly[0]?.key)].slice(0, 2),
-  );
-  add(
-    "B",
-    "reflection",
-    reflectionFor(b, a, shared, bOnly, aOnly),
-    [...ev(b, shared[0]?.key), ...ev(b, bOnly[0]?.key), ...ev(a, aOnly[0]?.key)].slice(0, 2),
-  );
+  // The text claims what is verifiable on BOTH sides and what each side
+  // uniquely shows, so the evidence must contain one quote from each side.
+  // Truncating a self-side-only list dropped the other side in 37 of 38
+  // reflections while the sentence still claimed overlap.
+  const reflectionEvidence = (
+    self: PersonAnalysis,
+    other: PersonAnalysis,
+    sharedTraits: readonly Trait[],
+    selfOnlyTraits: readonly Trait[],
+    otherOnlyTraits: readonly Trait[],
+  ): Evidence[] => {
+    const out: Evidence[] = [];
+    if (sharedTraits[0]) {
+      // "verifiable on both sides" needs one quote from EACH side.
+      out.push(...ev(self, sharedTraits[0].key).slice(0, 1), ...ev(other, sharedTraits[0].key).slice(0, 1));
+    }
+    if (selfOnlyTraits[0]) out.push(...ev(self, selfOnlyTraits[0].key).slice(0, 1));
+    if (otherOnlyTraits[0]) out.push(...ev(other, otherOnlyTraits[0].key).slice(0, 1));
+    return out;
+  };
+  add("A", "reflection", reflectionFor(a, b, shared, aOnly, bOnly), reflectionEvidence(a, b, shared, aOnly, bOnly));
+  add("B", "reflection", reflectionFor(b, a, shared, bOnly, aOnly), reflectionEvidence(b, a, shared, bOnly, aOnly));
 
   const evaluation = evaluate(turns, shared, aOnly, bOnly);
 

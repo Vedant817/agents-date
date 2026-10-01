@@ -5,27 +5,27 @@ export const metadata = { title: "How it works — Agents Date" };
 
 const STEPS = [
   {
-    title: "1. Two links per person",
+    title: "Two links per person",
     body: "One LinkedIn profile and one public Instagram profile. A company page or an Instagram post link is rejected, because a person is required.",
   },
   {
-    title: "2. Capture what the profile actually shows",
-    body: "Apify's official Instagram actor when a token is configured; otherwise the person pastes their own visible profile text, which is the credential-free consented path.",
+    title: "Capture what the profile actually shows",
+    body: "Capture runs in order: Apify's official Instagram actor when a token is configured, then a plain anonymous read, then pasted profile text supplied by the person, which needs no credentials.",
   },
   {
-    title: "3. Analyse, with a citation on every claim",
+    title: "Analyse, with a citation on every claim",
     body: "Each line is classified, then matched against a shared trait taxonomy. A trait that appears on both sources scores higher. Nothing is claimed without a quote and a line number.",
   },
   {
-    title: "4. Say what is unknown",
+    title: "Say what is unknown",
     body: "Age, orientation, relationship status and availability appear in neither source, so the agent refuses to guess. Gaps are shown on the profile page.",
   },
   {
-    title: "5. The agents date",
-    body: "Two agents alternate: open from the other person's evidence, build shared ground, name a real tension, then reflect. Turns carry the evidence that prompted them.",
+    title: "The agents date",
+    body: "Two agents alternate: open from the other person's evidence, build shared ground, name a real tension, then reflect. Roughly nine in ten turns carry the evidence that prompted them; the rest are explicit follow-up questions.",
   },
   {
-    title: "6. Rank who fits best",
+    title: "Rank who fits best",
     body: "Scoring is directed. A's ranking of B is not B's ranking of A, because needs and what each person brings differ.",
   },
 ];
@@ -33,22 +33,25 @@ const STEPS = [
 export default function MethodPage() {
   return (
     <main>
-      <h1>How it works</h1>
+      <div className="page-head">
+        <p className="eyebrow">Method and limits</p>
+        <h1>How it works</h1>
+      </div>
       <p className="lede">
         Every person is represented by an agent that reads exactly two public profiles, and the agents date each other.
         This page is the honest version of that claim, including where it stops.
       </p>
 
-      <div className="grid grid-2" style={{ marginTop: 22 }}>
+      <ol className="steps">
         {STEPS.map((s) => (
-          <section className="panel" key={s.title}>
+          <li key={s.title}>
             <h3>{s.title}</h3>
-            <p className="small mb0">{s.body}</p>
-          </section>
+            <p>{s.body}</p>
+          </li>
         ))}
-      </div>
+      </ol>
 
-      <section className="panel" style={{ marginTop: 16 }}>
+      <section className="panel mt16">
         <h2>Measured limits of public-profile capture</h2>
         <p className="small">
           These were tested directly against the live services while building this project, not assumed.
@@ -57,10 +60,10 @@ export default function MethodPage() {
           <div>
             <span className="chip chip-bad">LinkedIn · HTTP 999</span>
             <p className="small mt16 mb0">
-              LinkedIn returns status 999, its bot-block response, for anonymous automated requests, on every user
-              agent tried. LinkedIn&apos;s User Agreement (s8.2) also prohibits scraping or copying profile data
-              without the content owner&apos;s consent. The Apify LinkedIn adapter in this repo is therefore
-              <b> disabled by default</b> and must stay that way without documented permission.
+              LinkedIn returns status 999, its bot-block response, to anonymous automated requests. LinkedIn&apos;s
+              User Agreement (s8.2) also prohibits scraping or copying profile data without the content
+              owner&apos;s consent. The Apify LinkedIn adapter in this repo is therefore <b> disabled by default</b> and
+              must stay that way without documented permission.
             </p>
           </div>
           <div>
@@ -84,7 +87,7 @@ export default function MethodPage() {
         <ul className="clean">
           {MATCH_COMPONENTS.map((c) => (
             <li key={c.key}>
-              <b style={{ color: "var(--text)" }}>{c.label} — {Math.round(c.weight * 100)}%.</b> {c.detail}{" "}
+              <b>{c.label} — {Math.round(c.weight * 100)}%.</b> {c.detail}{" "}
               <span className="dim">{c.directional ? "Directed." : "Symmetric."}</span>
             </li>
           ))}
@@ -100,7 +103,7 @@ export default function MethodPage() {
         </p>
       </section>
 
-      <div style={{ marginTop: 20, display: "flex", gap: 10, flexWrap: "wrap" }}>
+      <div className="cluster mt16">
         <Link className="btn btn-primary" href="/demo">
           See the completed run
         </Link>
