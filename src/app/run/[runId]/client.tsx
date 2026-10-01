@@ -126,7 +126,7 @@ export default function RunClient({
             type="button"
             role="tab"
             aria-selected={tab === item.id}
-            aria-controls={`run-panel-${item.id}`}
+            aria-controls={tab === item.id ? `run-panel-${item.id}` : undefined}
             tabIndex={tab === item.id ? 0 : -1}
           >
             {item.label}
@@ -246,6 +246,11 @@ function SourceLinks({ person }: { person: PersonRecord }) {
         </span>
       )}
       {li?.provider && <span className="chip">via {li.provider}</span>}
+      {person.isSample && (
+        <span className="chip chip-warn" title="Both links are the built-in example, so this profile is sample data.">
+          Example persona
+        </span>
+      )}
     </div>
   );
 }

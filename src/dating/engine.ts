@@ -147,13 +147,15 @@ export function runDate(
       "B",
       "curiosity",
       `One thing I cannot tell from either profile: ${firstName(a)} and I both show ${s.label.toLowerCase()}, but whether it is social or solitary. Which is it for you?`,
-      ev(b, s.key),
+      // The sentence asserts BOTH profiles show it, so cite both sides.
+      [...ev(a, s.key), ...ev(b, s.key)],
     );
     add(
       "A",
       "follow_up",
       `Also unanswerable from the profile alone. I can only tell you that both profiles show it, and I would rather ask than invent an answer for ${firstName(a)}.`,
-      ev(a, s.key),
+      // Same here: "both profiles" needs a quote from each.
+      [...ev(a, s.key), ...ev(b, s.key)],
     );
   } else {
     add(

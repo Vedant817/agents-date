@@ -216,6 +216,13 @@ export interface PersonRecord {
   readonly instagramUrl: string;
   status: PersonStatus;
   error?: string;
+  /**
+   * True when BOTH of this person's links are the built-in example handles.
+   * Tracked per person, not per run: a run that mixes example people with a
+   * real person would otherwise lose the sample marker entirely and present
+   * invented profiles as a real capture.
+   */
+  isSample?: boolean;
   analysis?: PersonAnalysis;
   /** Computed once both sides exist. */
   matches?: readonly MatchScore[];

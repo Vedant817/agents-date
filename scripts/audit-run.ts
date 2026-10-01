@@ -27,6 +27,17 @@ let unresolved = 0;
 let missingPerson = 0;
 let selfClaimViolations = 0;
 let sharedGroundUncited = 0;
+let openerSelfCited = 0;
+let openerWrongSide = 0;
+let bothSidesUncited = 0;
+
+/**
+ * Copy that asserts the overlap exists on both sides. Anything matching this
+ * must carry a quote from each person. Kept in one place so a new turn phrase
+ * cannot silently escape the check.
+ */
+const BOTH_SIDES_CLAIM =
+  /verifiable on both sides|both profiles (?:actually )?show|both show|two profiles share|and I both show/i;
 
 const seenSessions = new Set<string>();
 
@@ -65,6 +76,22 @@ for (const p of run.people) {
         const aboutTraits = traitKeys.get(about) ?? new Set<string>();
         const trulyShared = [...speakerTraits].filter((k) => aboutTraits.has(k));
         if (people.size < 2 && trulyShared.length > 0) sharedGroundUncited += 1;
+      }
+
+      // An opener is second-person ("I saw you are into X"), so the agent
+      // opening must cite the person being addressed, never itself. This was
+      // wrong in 19 of 19 demo dates and no check here covered it.
+      if (turn.move === "opener" && turn.evidence.length > 0) {
+        if (turn.evidence.some((e) => e.personId === speaker)) openerSelfCited += 1;
+        if (turn.evidence.some((e) => e.personId !== about)) openerWrongSide += 1;
+      }
+
+      // Any turn whose text asserts BOTH profiles show something must cite one
+      // quote from each side, whatever the move is called. Reflections missed
+      // 37 of 38 before this, and the curiosity/follow_up pair missed 6 more.
+      if (BOTH_SIDES_CLAIM.test(turn.text)) {
+        const sides = new Set(turn.evidence.map((e) => e.personId));
+        if (sides.size < 2 && turn.evidence.length > 0) bothSidesUncited += 1;
       }
     }
   }
@@ -171,6 +198,9 @@ console.log(`missing personId:          ${missingPerson}`);
 console.log(`unresolvable quote:        ${unresolved}`);
 console.log(`one-sided claim w/ wrong citation: ${selfClaimViolations}`);
 console.log(`shared-ground citing one side:      ${sharedGroundUncited}`);
+console.log(`opener citing the speaker:          ${openerSelfCited}`);
+console.log(`opener citing the wrong person:     ${openerWrongSide}`);
+console.log(`both-sides claim on one side:        ${bothSidesUncited}`);
 console.log(`traits with no evidence:   ${unevidencedTraits}`);
 console.log(`traits refuted by own quote:${negatedTraits}`);
 console.log(`additive claims checked:   ${additiveChecked}, false: ${additiveFalse}`);
@@ -185,6 +215,9 @@ const failures = [
   ["unresolvable quote", unresolved],
   ["one-sided claim mis-cited", selfClaimViolations],
   ["shared-ground under-cited", sharedGroundUncited],
+  ["opener citing the speaker", openerSelfCited],
+  ["opener citing the wrong person", openerWrongSide],
+  ["both-sides claim on one side", bothSidesUncited],
   ["unevidenced trait", unevidencedTraits],
   ["trait refuted by its own quote", negatedTraits],
   ["false 'adds nothing' claim", additiveFalse],

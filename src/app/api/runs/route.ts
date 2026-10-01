@@ -6,6 +6,7 @@ import type { Run } from "@/core/types";
 import {
   computeNetwork,
   emptyRun,
+  hasSampleEntry,
   isSampleSubmission,
   newRunId,
   processPerson,
@@ -55,24 +56,53 @@ function zodIssues(error: z.ZodError): { index: number; field: string; message: 
   return out;
 }
 
+/**
+ * Link problems from a payload that failed shape validation. Runs on whatever
+ * arrived so one missing field does not hide the rest of the mistakes.
+ */
+function linkIssuesFromUnknown(raw: unknown): { index: number; field: string; message: string }[] {
+  if (typeof raw !== "object" || raw === null) return [];
+  const entries = (raw as { entries?: unknown }).entries;
+  if (!Array.isArray(entries)) return [];
+  const usable = entries
+    .map((e) => {
+      const o = (typeof e === "object" && e !== null ? e : {}) as Record<string, unknown>;
+      return {
+        linkedin: typeof o.linkedin === "string" ? o.linkedin : "",
+        instagram: typeof o.instagram === "string" ? o.instagram : "",
+      };
+    })
+    // Skip people missing a link entirely; the shape error already names those,
+    // and validating "" again would duplicate the message.
+    .filter((e) => e.linkedin !== "" || e.instagram !== "");
+  return validateSubmission(usable);
+}
+
 export async function POST(request: Request) {
   const contentType = request.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) {
     return NextResponse.json({ error: "Send the run as JSON." }, { status: 415 });
   }
 
-  let parsed: z.infer<typeof BodySchema>;
+  let raw: unknown;
   try {
-    const raw = await request.json();
-    parsed = BodySchema.parse(raw);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      const issues = zodIssues(error);
-      const message = issues[0]?.message ?? error.issues[0]?.message ?? "Invalid request.";
-      return NextResponse.json({ error: message, issues }, { status: 400 });
-    }
+    raw = await request.json();
+  } catch {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
+
+  const shape = BodySchema.safeParse(raw);
+  if (!shape.success) {
+    // Collect shape problems AND link problems together. Returning on the
+    // shape error first meant one missing field hid every other problem, so
+    // the user fixed one thing, resubmitted, and only then found the next.
+    const shapeIssues = zodIssues(shape.error);
+    const linkIssues = linkIssuesFromUnknown(raw);
+    const issues = [...shapeIssues, ...linkIssues];
+    const message = issues[0]?.message ?? shape.error.issues[0]?.message ?? "Invalid request.";
+    return NextResponse.json({ error: message, issues }, { status: 400 });
+  }
+  const parsed = shape.data;
 
   // Validate every link BEFORE any network work, so the user gets one clear
   // list of problems instead of a partial run.
@@ -97,10 +127,15 @@ export async function POST(request: Request) {
   const notes: string[] = [];
   // The built-in example is accepted so the guided path works, but flagged so
   // the UI can label it instead of presenting synthetic profiles as a capture.
+  // Each person is flagged individually: a run that mixes example and real
+  // people must still mark the example ones.
   const isSample = isSampleSubmission(parsed.entries);
-  if (isSample) {
+  const isMixed = !isSample && hasSampleEntry(parsed.entries);
+  if (isSample || isMixed) {
     notes.push(
-      "This run used the built-in example personas, so the profiles are illustrative sample data rather than a real capture.",
+      isSample
+        ? "This run used the built-in example personas, so the profiles are illustrative sample data rather than a real capture."
+        : "This run mixes the built-in example personas with real links. The people marked as example are illustrative sample data, not a real capture.",
     );
   }
   if (!process.env.APIFY_TOKEN) {
@@ -109,7 +144,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const run: Run = { ...emptyRun(runId, false, notes), isSample };
+  const run: Run = { ...emptyRun(runId, false, notes), isSample: isSample || isMixed };
   run.status = "running";
   await store.save(run);
 

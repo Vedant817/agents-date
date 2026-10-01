@@ -326,7 +326,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/amara-okonkwo",
             "status": "captured",
-            "capturedAt": 1790785768529,
+            "capturedAt": 1790854838946,
             "lines": [
               "Amara Okonkwo",
               "Staff Backend Engineer at Monzo",
@@ -341,7 +341,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/amara-okonkwo",
             "status": "captured",
-            "capturedAt": 1790785768529,
+            "capturedAt": 1790854838946,
             "lines": [
               "Amara",
               "Engineer. Long distance runner. Coffee first.",
@@ -352,9 +352,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768531
+        "analysedAt": 1790854838949
       },
-      "createdAt": 1790785768531,
+      "createdAt": 1790854838949,
       "matches": [
         {
           "personId": "p1",
@@ -3352,8 +3352,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768568,
-          "finishedAt": 1790785768568
+          "startedAt": 1790854838993,
+          "finishedAt": 1790854838994
         },
         {
           "id": "date_p1_p8",
@@ -3595,8 +3595,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768568,
-          "finishedAt": 1790785768569
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         },
         {
           "id": "date_p1_p13",
@@ -3851,8 +3851,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768569,
-          "finishedAt": 1790785768569
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         }
       ]
     },
@@ -4213,7 +4213,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/tobias-lindqvist",
             "status": "captured",
-            "capturedAt": 1790785768531,
+            "capturedAt": 1790854838949,
             "lines": [
               "Tobias Lindqvist",
               "Bouldering instructor and outdoor guide",
@@ -4228,7 +4228,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/tobias-lindqvist",
             "status": "captured",
-            "capturedAt": 1790785768531,
+            "capturedAt": 1790854838949,
             "lines": [
               "tobiasclimbs",
               "Climbing. Coffee. Bad puns about crimps.",
@@ -4239,9 +4239,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768532
+        "analysedAt": 1790854838951
       },
-      "createdAt": 1790785768531,
+      "createdAt": 1790854838950,
       "matches": [
         {
           "personId": "p2",
@@ -7528,8 +7528,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768568,
-          "finishedAt": 1790785768568
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         }
       ]
     },
@@ -7826,7 +7826,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/yusuf-demir",
             "status": "captured",
-            "capturedAt": 1790785768532,
+            "capturedAt": 1790854838951,
             "lines": [
               "Yusuf Demir",
               "Documentary filmmaker",
@@ -7841,7 +7841,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/yusuf-demir",
             "status": "captured",
-            "capturedAt": 1790785768532,
+            "capturedAt": 1790854838951,
             "lines": [
               "yusufcameras",
               "Filmmaker. Film camera apologist.",
@@ -7852,9 +7852,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768533
+        "analysedAt": 1790854838952
       },
-      "createdAt": 1790785768531,
+      "createdAt": 1790854838950,
       "matches": [
         {
           "personId": "p3",
@@ -10099,8 +10099,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768568,
-          "finishedAt": 1790785768568
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         }
       ]
     },
@@ -10499,7 +10499,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/chloe-bennett",
             "status": "captured",
-            "capturedAt": 1790785768533,
+            "capturedAt": 1790854838952,
             "lines": [
               "Chloe Bennett",
               "Sustainability Manager at IKEA",
@@ -10514,7 +10514,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/chloe-bennett",
             "status": "captured",
-            "capturedAt": 1790785768533,
+            "capturedAt": 1790854838952,
             "lines": [
               "chloegrows",
               "Sustainability, allotments, and slow mornings.",
@@ -10525,9 +10525,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768535
+        "analysedAt": 1790854838953
       },
-      "createdAt": 1790785768532,
+      "createdAt": 1790854838950,
       "matches": [
         {
           "personId": "p4",
@@ -13430,8 +13430,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768568,
-          "finishedAt": 1790785768568
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         },
         {
           "id": "date_p10_p4",
@@ -13743,8 +13743,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768569,
-          "finishedAt": 1790785768569
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         }
       ]
     },
@@ -14062,7 +14062,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/marcus-oliveira",
             "status": "captured",
-            "capturedAt": 1790785768535,
+            "capturedAt": 1790854838953,
             "lines": [
               "Marcus Oliveira",
               "Head Chef at Ember & Oak",
@@ -14077,7 +14077,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/marcus-oliveira",
             "status": "captured",
-            "capturedAt": 1790785768535,
+            "capturedAt": 1790854838953,
             "lines": [
               "marcuscooks",
               "Chef. Sourdough obsessive.",
@@ -14088,9 +14088,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768535
+        "analysedAt": 1790854838954
       },
-      "createdAt": 1790785768531,
+      "createdAt": 1790854838950,
       "matches": [
         {
           "personId": "p5",
@@ -16731,6 +16731,27 @@
               "text": "One thing I cannot tell from either profile: Marcus and I both show cooking, but whether it is social or solitary. Which is it for you?",
               "evidence": [
                 {
+                  "kind": "skill",
+                  "quote": "Skills: menu design, open fire cooking, kitchen management.",
+                  "source": "linkedin",
+                  "line": 3,
+                  "personId": "p5"
+                },
+                {
+                  "kind": "bio",
+                  "quote": "Chef. Sourdough obsessive.",
+                  "source": "instagram",
+                  "line": 1,
+                  "personId": "p5"
+                },
+                {
+                  "kind": "interest",
+                  "quote": "Baking bread at 4am because the house smells better by 7.",
+                  "source": "instagram",
+                  "line": 2,
+                  "personId": "p5"
+                },
+                {
                   "kind": "bio",
                   "quote": "Pastry chef. Sourdough when days off allow it.",
                   "source": "instagram",
@@ -16779,6 +16800,27 @@
                   "source": "instagram",
                   "line": 2,
                   "personId": "p5"
+                },
+                {
+                  "kind": "bio",
+                  "quote": "Pastry chef. Sourdough when days off allow it.",
+                  "source": "instagram",
+                  "line": 1,
+                  "personId": "p22"
+                },
+                {
+                  "kind": "interest",
+                  "quote": "Baking on Sundays and cooking for friends on Sundays.",
+                  "source": "instagram",
+                  "line": 2,
+                  "personId": "p22"
+                },
+                {
+                  "kind": "interest",
+                  "quote": "Cooking, natural wine, and a small espresso setup at home.",
+                  "source": "instagram",
+                  "line": 3,
+                  "personId": "p22"
                 }
               ]
             },
@@ -16875,8 +16917,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768568,
-          "finishedAt": 1790785768568
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         }
       ]
     },
@@ -17171,7 +17213,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/priya-raman",
             "status": "captured",
-            "capturedAt": 1790785768535,
+            "capturedAt": 1790854838954,
             "lines": [
               "Priya Raman",
               "Data Scientist at DeepMind",
@@ -17187,7 +17229,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/priya-raman",
             "status": "captured",
-            "capturedAt": 1790785768535,
+            "capturedAt": 1790854838954,
             "lines": [
               "priyaruns",
               "New to the city. Bouldering four times a week.",
@@ -17199,9 +17241,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768536
+        "analysedAt": 1790854838955
       },
-      "createdAt": 1790785768531,
+      "createdAt": 1790854838950,
       "matches": [
         {
           "personId": "p6",
@@ -20070,6 +20112,34 @@
               "text": "One thing I cannot tell from either profile: Priya and I both show climbing, but whether it is social or solitary. Which is it for you?",
               "evidence": [
                 {
+                  "kind": "about",
+                  "quote": "Bouldering four times a week and volunteering at a community climbing wall.",
+                  "source": "linkedin",
+                  "line": 5,
+                  "personId": "p6"
+                },
+                {
+                  "kind": "bio",
+                  "quote": "New to the city. Bouldering four times a week.",
+                  "source": "instagram",
+                  "line": 1,
+                  "personId": "p6"
+                },
+                {
+                  "kind": "interest",
+                  "quote": "Looking for climbing partners and good espresso in equal measure.",
+                  "source": "instagram",
+                  "line": 2,
+                  "personId": "p6"
+                },
+                {
+                  "kind": "interest",
+                  "quote": "Bouldering V4 and still smiling about it. Climbing gym is my office now.",
+                  "source": "instagram",
+                  "line": 3,
+                  "personId": "p6"
+                },
+                {
                   "kind": "interest",
                   "quote": "Bouldering when the tide is out. Coffee always.",
                   "source": "instagram",
@@ -20111,6 +20181,13 @@
                   "source": "instagram",
                   "line": 3,
                   "personId": "p6"
+                },
+                {
+                  "kind": "interest",
+                  "quote": "Bouldering when the tide is out. Coffee always.",
+                  "source": "instagram",
+                  "line": 4,
+                  "personId": "p14"
                 }
               ]
             },
@@ -20228,8 +20305,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768568,
-          "finishedAt": 1790785768568
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         }
       ]
     },
@@ -20628,7 +20705,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/hana-kimura",
             "status": "captured",
-            "capturedAt": 1790785768536,
+            "capturedAt": 1790854838955,
             "lines": [
               "Hana Kimura",
               "Product Designer at Figma",
@@ -20643,7 +20720,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/hana-kimura",
             "status": "captured",
-            "capturedAt": 1790785768536,
+            "capturedAt": 1790854838955,
             "lines": [
               "hanadesigns",
               "Designer. Bouldering beginner, enthusiast otherwise.",
@@ -20654,9 +20731,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768537
+        "analysedAt": 1790854838957
       },
-      "createdAt": 1790785768531,
+      "createdAt": 1790854838951,
       "matches": [
         {
           "personId": "p7",
@@ -23628,8 +23705,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768568,
-          "finishedAt": 1790785768568
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         },
         {
           "id": "date_p24_p7",
@@ -23871,8 +23948,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768569,
-          "finishedAt": 1790785768569
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         }
       ]
     },
@@ -24241,7 +24318,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/daniel-mensah",
             "status": "captured",
-            "capturedAt": 1790785768537,
+            "capturedAt": 1790854838957,
             "lines": [
               "Daniel Mensah",
               "Civil Engineer on the HS2 programme",
@@ -24257,7 +24334,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/daniel-mensah",
             "status": "captured",
-            "capturedAt": 1790785768537,
+            "capturedAt": 1790854838957,
             "lines": [
               "dannybuilds",
               "Engineer. Weekend football. Dad of one.",
@@ -24269,9 +24346,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768538
+        "analysedAt": 1790854838958
       },
-      "createdAt": 1790785768531,
+      "createdAt": 1790854838951,
       "matches": [
         {
           "personId": "p8",
@@ -26634,8 +26711,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768568,
-          "finishedAt": 1790785768569
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         }
       ]
     },
@@ -26953,7 +27030,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/sofia-ricci",
             "status": "captured",
-            "capturedAt": 1790785768538,
+            "capturedAt": 1790854838958,
             "lines": [
               "Sofia Ricci",
               "Curator at a contemporary gallery in Milan",
@@ -26968,7 +27045,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/sofia-ricci",
             "status": "captured",
-            "capturedAt": 1790785768538,
+            "capturedAt": 1790854838958,
             "lines": [
               "sofia.muse",
               "Curator. Gallery hours are the good hours.",
@@ -26979,9 +27056,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768539
+        "analysedAt": 1790854838959
       },
-      "createdAt": 1790785768531,
+      "createdAt": 1790854838951,
       "matches": [
         {
           "personId": "p9",
@@ -29517,8 +29594,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768569,
-          "finishedAt": 1790785768569
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         }
       ]
     },
@@ -29971,7 +30048,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/owen-blackwell",
             "status": "captured",
-            "capturedAt": 1790785768539,
+            "capturedAt": 1790854838959,
             "lines": [
               "Owen Blackwell",
               "Head Brewer at a small Bristol brewery",
@@ -29986,7 +30063,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/owen-blackwell",
             "status": "captured",
-            "capturedAt": 1790785768539,
+            "capturedAt": 1790854838959,
             "lines": [
               "owenbrews",
               "Brewer. Fermentation is the whole hobby.",
@@ -29997,9 +30074,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768539
+        "analysedAt": 1790854838961
       },
-      "createdAt": 1790785768530,
+      "createdAt": 1790854838952,
       "matches": [
         {
           "personId": "p10",
@@ -33115,8 +33192,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768569,
-          "finishedAt": 1790785768569
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         }
       ]
     },
@@ -33385,7 +33462,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/grace-nkemelu",
             "status": "captured",
-            "capturedAt": 1790785768539,
+            "capturedAt": 1790854838961,
             "lines": [
               "Grace Nkemelu",
               "Emergency Medicine Registrar, Wales",
@@ -33400,7 +33477,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/grace-nkemelu",
             "status": "captured",
-            "capturedAt": 1790785768539,
+            "capturedAt": 1790854838961,
             "lines": [
               "drgrace",
               "Registrar. Shift worker. Chronically tired.",
@@ -33411,9 +33488,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768540
+        "analysedAt": 1790854838961
       },
-      "createdAt": 1790785768530,
+      "createdAt": 1790854838951,
       "matches": [
         {
           "personId": "p11",
@@ -36138,8 +36215,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768568,
-          "finishedAt": 1790785768568
+          "startedAt": 1790854838993,
+          "finishedAt": 1790854838994
         }
       ]
     },
@@ -36370,7 +36447,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/lars-andersen",
             "status": "captured",
-            "capturedAt": 1790785768540,
+            "capturedAt": 1790854838961,
             "lines": [
               "Lars Andersen",
               "Marine Biologist, Scottish Marine Institute",
@@ -36385,7 +36462,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/lars-andersen",
             "status": "captured",
-            "capturedAt": 1790785768540,
+            "capturedAt": 1790854838961,
             "lines": [
               "larsdives",
               "Marine biologist. Most of my photos are at 15 metres.",
@@ -36396,9 +36473,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768541
+        "analysedAt": 1790854838962
       },
-      "createdAt": 1790785768530,
+      "createdAt": 1790854838951,
       "matches": [
         {
           "personId": "p12",
@@ -38773,6 +38850,20 @@
               "evidence": [
                 {
                   "kind": "interest",
+                  "quote": "Scientific diving, and surfing when the swell is wrong for work anyway.",
+                  "source": "instagram",
+                  "line": 2,
+                  "personId": "p12"
+                },
+                {
+                  "kind": "interest",
+                  "quote": "Surfing, open water, and cold water that does not feel cold after a minute.",
+                  "source": "instagram",
+                  "line": 3,
+                  "personId": "p12"
+                },
+                {
+                  "kind": "interest",
                   "quote": "Surfing badly in Brighton, enthusiastically.",
                   "source": "instagram",
                   "line": 4,
@@ -38799,6 +38890,13 @@
                   "source": "instagram",
                   "line": 3,
                   "personId": "p12"
+                },
+                {
+                  "kind": "interest",
+                  "quote": "Surfing badly in Brighton, enthusiastically.",
+                  "source": "instagram",
+                  "line": 4,
+                  "personId": "p17"
                 }
               ]
             },
@@ -38916,8 +39014,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768569,
-          "finishedAt": 1790785768569
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         }
       ]
     },
@@ -39249,7 +39347,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/fatima-al-rashid",
             "status": "captured",
-            "capturedAt": 1790785768541,
+            "capturedAt": 1790854838962,
             "lines": [
               "Fatima Al-Rashid",
               "Founder of Second Serve, a community tennis programme",
@@ -39264,7 +39362,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/fatima-al-rashid",
             "status": "captured",
-            "capturedAt": 1790785768541,
+            "capturedAt": 1790854838962,
             "lines": [
               "fatimaplays",
               "Tennis. Community. Extremely competitive about both.",
@@ -39275,9 +39373,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768541
+        "analysedAt": 1790854838963
       },
-      "createdAt": 1790785768529,
+      "createdAt": 1790854838951,
       "matches": [
         {
           "personId": "p13",
@@ -42052,8 +42150,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768569,
-          "finishedAt": 1790785768569
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         }
       ]
     },
@@ -42549,7 +42647,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/tom-whitfield",
             "status": "captured",
-            "capturedAt": 1790785768541,
+            "capturedAt": 1790854838963,
             "lines": [
               "Tom Whitfield",
               "Documentary photographer, The Slow Coast",
@@ -42564,7 +42662,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/tom-whitfield",
             "status": "captured",
-            "capturedAt": 1790785768541,
+            "capturedAt": 1790854838963,
             "lines": [
               "tomslowcoast",
               "Photographer. Film only, digital only for clients.",
@@ -42575,9 +42673,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768542
+        "analysedAt": 1790854838964
       },
-      "createdAt": 1790785768529,
+      "createdAt": 1790854838951,
       "matches": [
         {
           "personId": "p14",
@@ -45795,8 +45893,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768568,
-          "finishedAt": 1790785768568
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         },
         {
           "id": "date_p14_p6",
@@ -45921,6 +46019,34 @@
               "text": "One thing I cannot tell from either profile: Priya and I both show climbing, but whether it is social or solitary. Which is it for you?",
               "evidence": [
                 {
+                  "kind": "about",
+                  "quote": "Bouldering four times a week and volunteering at a community climbing wall.",
+                  "source": "linkedin",
+                  "line": 5,
+                  "personId": "p6"
+                },
+                {
+                  "kind": "bio",
+                  "quote": "New to the city. Bouldering four times a week.",
+                  "source": "instagram",
+                  "line": 1,
+                  "personId": "p6"
+                },
+                {
+                  "kind": "interest",
+                  "quote": "Looking for climbing partners and good espresso in equal measure.",
+                  "source": "instagram",
+                  "line": 2,
+                  "personId": "p6"
+                },
+                {
+                  "kind": "interest",
+                  "quote": "Bouldering V4 and still smiling about it. Climbing gym is my office now.",
+                  "source": "instagram",
+                  "line": 3,
+                  "personId": "p6"
+                },
+                {
                   "kind": "interest",
                   "quote": "Bouldering when the tide is out. Coffee always.",
                   "source": "instagram",
@@ -45962,6 +46088,13 @@
                   "source": "instagram",
                   "line": 3,
                   "personId": "p6"
+                },
+                {
+                  "kind": "interest",
+                  "quote": "Bouldering when the tide is out. Coffee always.",
+                  "source": "instagram",
+                  "line": 4,
+                  "personId": "p14"
                 }
               ]
             },
@@ -46079,8 +46212,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768568,
-          "finishedAt": 1790785768568
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         },
         {
           "id": "date_p14_p7",
@@ -46335,8 +46468,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768568,
-          "finishedAt": 1790785768568
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         },
         {
           "id": "date_p14_p16",
@@ -46598,8 +46731,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768569,
-          "finishedAt": 1790785768569
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         },
         {
           "id": "date_p14_p18",
@@ -46876,8 +47009,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768569,
-          "finishedAt": 1790785768569
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         },
         {
           "id": "date_p14_p26",
@@ -47140,8 +47273,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768569,
-          "finishedAt": 1790785768569
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         }
       ]
     },
@@ -47431,7 +47564,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/aisha-mbeki",
             "status": "captured",
-            "capturedAt": 1790785768542,
+            "capturedAt": 1790854838964,
             "lines": [
               "Aisha Mbeki",
               "Policy Advisor on education access",
@@ -47446,7 +47579,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/aisha-mbeki",
             "status": "captured",
-            "capturedAt": 1790785768542,
+            "capturedAt": 1790854838964,
             "lines": [
               "aishapolicy",
               "Policy nerd. Marathon hopeful.",
@@ -47457,9 +47590,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768543
+        "analysedAt": 1790854838965
       },
-      "createdAt": 1790785768529,
+      "createdAt": 1790854838951,
       "matches": [
         {
           "personId": "p15",
@@ -50514,8 +50647,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768569,
-          "finishedAt": 1790785768569
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         }
       ]
     },
@@ -50847,7 +50980,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/ben-halvorsen",
             "status": "captured",
-            "capturedAt": 1790785768543,
+            "capturedAt": 1790854838965,
             "lines": [
               "Ben Halvorsen",
               "Software Engineer at an independent games studio",
@@ -50862,7 +50995,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/ben-halvorsen",
             "status": "captured",
-            "capturedAt": 1790785768543,
+            "capturedAt": 1790854838965,
             "lines": [
               "benmakesgames",
               "Games, bouldering, and too much coffee.",
@@ -50873,9 +51006,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768543
+        "analysedAt": 1790854838966
       },
-      "createdAt": 1790785768528,
+      "createdAt": 1790854838951,
       "matches": [
         {
           "personId": "p16",
@@ -53873,8 +54006,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768569,
-          "finishedAt": 1790785768569
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         }
       ]
     },
@@ -54349,7 +54482,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/zoe-papadopoulos",
             "status": "captured",
-            "capturedAt": 1790785768543,
+            "capturedAt": 1790854838966,
             "lines": [
               "Zoe Papadopoulos",
               "Yoga teacher and breathwork coach",
@@ -54364,7 +54497,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/zoe-papadopoulos",
             "status": "captured",
-            "capturedAt": 1790785768543,
+            "capturedAt": 1790854838966,
             "lines": [
               "zoeyoga",
               "Yoga, breathwork, swimming in cold water when brave.",
@@ -54375,9 +54508,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768544
+        "analysedAt": 1790854838967
       },
-      "createdAt": 1790785768528,
+      "createdAt": 1790854838951,
       "matches": [
         {
           "personId": "p17",
@@ -57099,6 +57232,20 @@
               "evidence": [
                 {
                   "kind": "interest",
+                  "quote": "Scientific diving, and surfing when the swell is wrong for work anyway.",
+                  "source": "instagram",
+                  "line": 2,
+                  "personId": "p12"
+                },
+                {
+                  "kind": "interest",
+                  "quote": "Surfing, open water, and cold water that does not feel cold after a minute.",
+                  "source": "instagram",
+                  "line": 3,
+                  "personId": "p12"
+                },
+                {
+                  "kind": "interest",
                   "quote": "Surfing badly in Brighton, enthusiastically.",
                   "source": "instagram",
                   "line": 4,
@@ -57125,6 +57272,13 @@
                   "source": "instagram",
                   "line": 3,
                   "personId": "p12"
+                },
+                {
+                  "kind": "interest",
+                  "quote": "Surfing badly in Brighton, enthusiastically.",
+                  "source": "instagram",
+                  "line": 4,
+                  "personId": "p17"
                 }
               ]
             },
@@ -57242,8 +57396,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768569,
-          "finishedAt": 1790785768569
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         },
         {
           "id": "date_p17_p23",
@@ -57478,8 +57632,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768569,
-          "finishedAt": 1790785768569
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         }
       ]
     },
@@ -57694,7 +57848,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/nathan-cole",
             "status": "captured",
-            "capturedAt": 1790785768544,
+            "capturedAt": 1790854838967,
             "lines": [
               "Nathan Cole",
               "Furniture maker and workshop owner",
@@ -57709,7 +57863,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/nathan-cole",
             "status": "captured",
-            "capturedAt": 1790785768544,
+            "capturedAt": 1790854838967,
             "lines": [
               "nathanwoodworks",
               "Woodworker. Sawdust is a lifestyle.",
@@ -57720,9 +57874,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768545
+        "analysedAt": 1790854838968
       },
-      "createdAt": 1790785768528,
+      "createdAt": 1790854838951,
       "matches": [
         {
           "personId": "p18",
@@ -60046,8 +60200,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768569,
-          "finishedAt": 1790785768569
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         }
       ]
     },
@@ -60366,7 +60520,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/isla-murray",
             "status": "captured",
-            "capturedAt": 1790785768545,
+            "capturedAt": 1790854838968,
             "lines": [
               "Isla Murray",
               "Clinical Psychologist, NHS",
@@ -60381,7 +60535,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/isla-murray",
             "status": "captured",
-            "capturedAt": 1790785768545,
+            "capturedAt": 1790854838968,
             "lines": [
               "islamurray",
               "Psychologist. Runner. Learning to be a person outdoors.",
@@ -60392,9 +60546,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768546
+        "analysedAt": 1790854838969
       },
-      "createdAt": 1790785768528,
+      "createdAt": 1790854838951,
       "matches": [
         {
           "personId": "p19",
@@ -62908,8 +63062,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768569,
-          "finishedAt": 1790785768569
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         }
       ]
     },
@@ -63278,7 +63432,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/kofi-mensah",
             "status": "captured",
-            "capturedAt": 1790785768546,
+            "capturedAt": 1790854838969,
             "lines": [
               "Kofi Mensah",
               "Urban beekeeper running 14 hives across the city",
@@ -63293,7 +63447,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/kofi-mensah",
             "status": "captured",
-            "capturedAt": 1790785768546,
+            "capturedAt": 1790854838969,
             "lines": [
               "kofibees",
               "Beekeeper in a city that should not have this many bees.",
@@ -63304,9 +63458,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768547
+        "analysedAt": 1790854838970
       },
-      "createdAt": 1790785768528,
+      "createdAt": 1790854838951,
       "matches": [
         {
           "personId": "p20",
@@ -66093,8 +66247,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768568,
-          "finishedAt": 1790785768568
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         }
       ]
     },
@@ -66391,7 +66545,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/elena-vasquez",
             "status": "captured",
-            "capturedAt": 1790785768547,
+            "capturedAt": 1790854838970,
             "lines": [
               "Elena Vasquez",
               "Creative Director of an independent magazine",
@@ -66406,7 +66560,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/elena-vasquez",
             "status": "captured",
-            "capturedAt": 1790785768547,
+            "capturedAt": 1790854838970,
             "lines": [
               "elenavq",
               "Art director. Prints on every wall.",
@@ -66417,9 +66571,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768547
+        "analysedAt": 1790854838971
       },
-      "createdAt": 1790785768527,
+      "createdAt": 1790854838951,
       "matches": [
         {
           "personId": "p21",
@@ -68671,8 +68825,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768568,
-          "finishedAt": 1790785768568
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         },
         {
           "id": "date_p21_p9",
@@ -68941,8 +69095,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768569,
-          "finishedAt": 1790785768569
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         }
       ]
     },
@@ -69297,7 +69451,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/ravi-prasad",
             "status": "captured",
-            "capturedAt": 1790785768547,
+            "capturedAt": 1790854838971,
             "lines": [
               "Ravi Prasad",
               "Chef de Partie in a two-star kitchen",
@@ -69312,7 +69466,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/ravi-prasad",
             "status": "captured",
-            "capturedAt": 1790785768547,
+            "capturedAt": 1790854838971,
             "lines": [
               "ravicooks",
               "Pastry chef. Sourdough when days off allow it.",
@@ -69323,9 +69477,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768548
+        "analysedAt": 1790854838972
       },
-      "createdAt": 1790785768527,
+      "createdAt": 1790854838951,
       "matches": [
         {
           "personId": "p22",
@@ -72056,6 +72210,27 @@
               "text": "One thing I cannot tell from either profile: Marcus and I both show cooking, but whether it is social or solitary. Which is it for you?",
               "evidence": [
                 {
+                  "kind": "skill",
+                  "quote": "Skills: menu design, open fire cooking, kitchen management.",
+                  "source": "linkedin",
+                  "line": 3,
+                  "personId": "p5"
+                },
+                {
+                  "kind": "bio",
+                  "quote": "Chef. Sourdough obsessive.",
+                  "source": "instagram",
+                  "line": 1,
+                  "personId": "p5"
+                },
+                {
+                  "kind": "interest",
+                  "quote": "Baking bread at 4am because the house smells better by 7.",
+                  "source": "instagram",
+                  "line": 2,
+                  "personId": "p5"
+                },
+                {
                   "kind": "bio",
                   "quote": "Pastry chef. Sourdough when days off allow it.",
                   "source": "instagram",
@@ -72104,6 +72279,27 @@
                   "source": "instagram",
                   "line": 2,
                   "personId": "p5"
+                },
+                {
+                  "kind": "bio",
+                  "quote": "Pastry chef. Sourdough when days off allow it.",
+                  "source": "instagram",
+                  "line": 1,
+                  "personId": "p22"
+                },
+                {
+                  "kind": "interest",
+                  "quote": "Baking on Sundays and cooking for friends on Sundays.",
+                  "source": "instagram",
+                  "line": 2,
+                  "personId": "p22"
+                },
+                {
+                  "kind": "interest",
+                  "quote": "Cooking, natural wine, and a small espresso setup at home.",
+                  "source": "instagram",
+                  "line": 3,
+                  "personId": "p22"
                 }
               ]
             },
@@ -72200,8 +72396,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768568,
-          "finishedAt": 1790785768568
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         }
       ]
     },
@@ -72549,7 +72745,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/sarah-whitlock",
             "status": "captured",
-            "capturedAt": 1790785768548,
+            "capturedAt": 1790854838972,
             "lines": [
               "Sarah Whitlock",
               "Occupational Therapist, Norfolk Community Health",
@@ -72564,7 +72760,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/sarah-whitlock",
             "status": "captured",
-            "capturedAt": 1790785768548,
+            "capturedAt": 1790854838972,
             "lines": [
               "sarahot",
               "OT. Cold water swimmer. Garden in progress.",
@@ -72575,9 +72771,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768549
+        "analysedAt": 1790854838973
       },
-      "createdAt": 1790785768527,
+      "createdAt": 1790854838951,
       "matches": [
         {
           "personId": "p23",
@@ -75672,8 +75868,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768569,
-          "finishedAt": 1790785768569
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         }
       ]
     },
@@ -76050,7 +76246,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/mateo-alvarez",
             "status": "captured",
-            "capturedAt": 1790785768549,
+            "capturedAt": 1790854838973,
             "lines": [
               "Mateo Alvarez",
               "Founder of a climate tech startup, pre-seed to Series A",
@@ -76065,7 +76261,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/mateo-alvarez",
             "status": "captured",
-            "capturedAt": 1790785768549,
+            "capturedAt": 1790854838973,
             "lines": [
               "mateobuilds",
               "Founder. Climbs when stressed, which is always.",
@@ -76076,9 +76272,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768550
+        "analysedAt": 1790854838974
       },
-      "createdAt": 1790785768527,
+      "createdAt": 1790854838951,
       "matches": [
         {
           "personId": "p24",
@@ -79011,8 +79207,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768569,
-          "finishedAt": 1790785768569
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         }
       ]
     },
@@ -79339,7 +79535,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/nina-okafor",
             "status": "captured",
-            "capturedAt": 1790785768550,
+            "capturedAt": 1790854838974,
             "lines": [
               "Nina Okafor",
               "Specialist Nurse in paediatric intensive care",
@@ -79354,7 +79550,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/nina-okafor",
             "status": "captured",
-            "capturedAt": 1790785768550,
+            "capturedAt": 1790854838974,
             "lines": [
               "ninaonadshift",
               "Nurse. Amateur boxer. Exhausted.",
@@ -79365,9 +79561,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768551
+        "analysedAt": 1790854838975
       },
-      "createdAt": 1790785768527,
+      "createdAt": 1790854838951,
       "matches": [
         {
           "personId": "p25",
@@ -82196,8 +82392,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768569,
-          "finishedAt": 1790785768569
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         },
         {
           "id": "date_p19_p25",
@@ -82410,8 +82606,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768569,
-          "finishedAt": 1790785768569
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         }
       ]
     },
@@ -82844,7 +83040,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/callum-fraser",
             "status": "captured",
-            "capturedAt": 1790785768551,
+            "capturedAt": 1790854838975,
             "lines": [
               "Callum Fraser",
               "Mountain Rescue volunteer, 14 years of service",
@@ -82859,7 +83055,7 @@
             "kind": "instagram",
             "url": "https://www.instagram.com/callum-fraser",
             "status": "captured",
-            "capturedAt": 1790785768551,
+            "capturedAt": 1790854838975,
             "lines": [
               "callumhill",
               "Mountain rescue. Hill walking. Tea, mainly.",
@@ -82870,9 +83066,9 @@
             "provider": "demo-seed"
           }
         },
-        "analysedAt": 1790785768552
+        "analysedAt": 1790854838976
       },
-      "createdAt": 1790785768527,
+      "createdAt": 1790854838951,
       "matches": [
         {
           "personId": "p26",
@@ -85348,14 +85544,14 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790785768569,
-          "finishedAt": 1790785768569
+          "startedAt": 1790854838994,
+          "finishedAt": 1790854838994
         }
       ]
     }
   ],
-  "createdAt": 1790785768552,
-  "updatedAt": 1790785768552,
+  "createdAt": 1790854838976,
+  "updatedAt": 1790854838976,
   "notes": [
     "This demo run uses 26 clearly-labelled synthetic personas, not real people's profiles. LinkedIn blocks anonymous reads and Instagram serves a client-only page, so real capture needs an Apify token. The pipeline is identical: add your own links on the start page to read real profiles."
   ]

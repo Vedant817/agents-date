@@ -78,16 +78,26 @@ function isPlaceholderHandle(handle: string | undefined): boolean {
   return Boolean(handle && PLACEHOLDER_HANDLES.has(handle.toLowerCase()));
 }
 
+/** True when BOTH of one person's links are example handles. */
+export function isSampleEntry(entry: { linkedin?: string; instagram?: string }): boolean {
+  const li = parseLinkedIn(entry.linkedin ?? "");
+  const ig = parseInstagram(entry.instagram ?? "");
+  return isPlaceholderHandle(li.handle) && isPlaceholderHandle(ig.handle);
+}
+
 /** True when every submitted person used an example handle. */
 export function isSampleSubmission(
   entries: readonly { linkedin?: string; instagram?: string }[],
 ): boolean {
   if (entries.length === 0) return false;
-  return entries.every((entry) => {
-    const li = parseLinkedIn(entry.linkedin ?? "");
-    const ig = parseInstagram(entry.instagram ?? "");
-    return isPlaceholderHandle(li.handle) && isPlaceholderHandle(ig.handle);
-  });
+  return entries.every((entry) => isSampleEntry(entry));
+}
+
+/** True when ANY submitted person used example handles, so the run is mixed. */
+export function hasSampleEntry(
+  entries: readonly { linkedin?: string; instagram?: string }[],
+): boolean {
+  return entries.some((entry) => isSampleEntry(entry));
 }
 
 /** Validates a whole submission before any network work begins. */
@@ -182,6 +192,9 @@ export async function processPerson(
     linkedinUrl: li.url!,
     instagramUrl: ig.url!,
     status: readable ? "ready" : "failed",
+    // Set per person so a run that mixes example and real people still marks
+    // the example ones instead of presenting them as a real capture.
+    isSample: isSampleEntry(entry),
     error: bothUnread
       ? "Neither source could be read, so no analysis was produced. Add an Apify token, or paste the visible profile text."
       : undefined,
