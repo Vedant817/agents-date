@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import type { PersonRecord, Run } from "@/core/types";
 
 interface Entry {
   key: number;
@@ -24,6 +25,25 @@ const blank = (showText = false): Entry => ({
   instagramText: "",
   showText,
 });
+
+/**
+ * Rebuilds form rows from a run that already exists, so "Add more people"
+ * resumes it instead of discarding it. The stored text comes back from
+ * SourceRecord.lines, which was already normalised (whitespace collapsed,
+ * capped at 60 lines / 220 characters), so a restored paste is slightly
+ * tidier than what was originally typed. That is stated in the UI.
+ */
+function entryFromPerson(person: PersonRecord, showText: boolean): Entry {
+  const sources = person.analysis?.sources;
+  return {
+    ...blank(showText),
+    name: person.displayName ?? "",
+    linkedin: person.linkedinUrl.replace(/^https?:\/\/(www\.)?/, ""),
+    instagram: person.instagramUrl.replace(/^https?:\/\/(www\.)?/, ""),
+    linkedinText: (sources?.linkedin.lines ?? []).join("\n"),
+    instagramText: (sources?.instagram.lines ?? []).join("\n"),
+  };
+}
 
 /**
  * Two example people, not one. A single-person run produces no dates and no
@@ -67,16 +87,33 @@ const SAMPLE_PEOPLE = [
   },
 ] as const;
 
-/** Must match the zod cap in src/app/api/runs/route.ts. */
+/** Must match the zod cap in src/app/api/runs/schema.ts. */
 const MAX_PEOPLE = 20;
 
-export default function StartForm({ captureEnabled }: { captureEnabled: boolean }) {
+export default function StartForm({
+  captureEnabled,
+  extendRun = null,
+}: {
+  captureEnabled: boolean;
+  /** A run to resume, when the visitor arrived via "Add more people". */
+  extendRun?: Run | null;
+}) {
   const router = useRouter();
   // When automatic capture is off, pasted text is the ONLY way a profile gets
   // read. The notice told users to paste, but the textareas were hidden behind
   // a ghost "Add profile text" button, so the working path needed a click to
   // discover. Open them by default in that case.
-  const [entries, setEntries] = useState<Entry[]>(() => [blank(!captureEnabled)]);
+  const [entries, setEntries] = useState<Entry[]>(() => {
+    if (extendRun && extendRun.people.length > 0) {
+      // Restored rows open, so the restored text is visible and editable
+      // rather than hidden behind a disclosure.
+      return [
+        ...extendRun.people.map((p) => entryFromPerson(p, true)),
+        blank(!captureEnabled || extendRun.people.every((p) => p.analysis)),
+      ];
+    }
+    return [blank(!captureEnabled)];
+  });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [issues, setIssues] = useState<{ index: number; field: string; message: string }[]>([]);
@@ -118,6 +155,20 @@ export default function StartForm({ captureEnabled }: { captureEnabled: boolean 
     );
   }
 
+  // A run with many people takes real seconds, and a button that just changes
+  // its label reads as "frozen". Show what is actually happening, plus how
+  // long it has been going, so a slow capture looks slow rather than broken.
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    if (!busy) {
+      setElapsed(0);
+      return;
+    }
+    const started = Date.now();
+    const timer = setInterval(() => setElapsed(Math.floor((Date.now() - started) / 1000)), 1000);
+    return () => clearInterval(timer);
+  }, [busy]);
+
   async function submit() {
     setBusy(true);
     setError(null);
@@ -132,7 +183,10 @@ export default function StartForm({ captureEnabled }: { captureEnabled: boolean 
           instagramText: e.instagramText || undefined,
         })),
       };
-      const res = await fetch("/api/runs", {
+      // Resuming a run posts to the extend endpoint, which merges into the
+      // existing run instead of creating a second one and orphaning the first.
+      const endpoint = extendRun ? `/api/runs/${extendRun.id}/people` : "/api/runs";
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(payload),
@@ -166,6 +220,18 @@ export default function StartForm({ captureEnabled }: { captureEnabled: boolean 
         hobbies and interests with citations, and then dates the other agents. You get a profile page per person and a
         ranked shortlist of who fits them best.
       </p>
+
+      {extendRun && (
+        <div className="notice notice-info">
+          <b>
+            Adding to your run of {extendRun.people.length} {extendRun.people.length === 1 ? "person" : "people"}.
+          </b>{" "}
+          Their profiles, dates and rankings are kept — submitting here adds the people below to that same run rather than
+          starting a new one. Restored profile text is tidied slightly (whitespace collapsed, long lines shortened), so
+          check it still reads the way you expect.{" "}
+          <Link href={`/run/${extendRun.id}`}>Open the run as it stands</Link>.
+        </div>
+      )}
 
       {!captureEnabled && (
         <div className="notice notice-warn">
@@ -211,9 +277,14 @@ export default function StartForm({ captureEnabled }: { captureEnabled: boolean 
         <div className="entry-head">
           <h2 className="mb0">Add people</h2>
           <div className="cluster">
-            <button className="btn btn-sm" onClick={loadSample} type="button">
-              Fill example
-            </button>
+            {/* Hidden while resuming: replacing a restored run with the
+                built-in example is the same data loss "Add more people" had,
+                just reached from the other direction. */}
+            {!extendRun && (
+              <button className="btn btn-sm" onClick={loadSample} type="button">
+                Fill example
+              </button>
+            )}
             <button className="btn btn-sm" onClick={add} type="button" disabled={entries.length >= MAX_PEOPLE}>
               + Add person
             </button>
@@ -322,9 +393,28 @@ export default function StartForm({ captureEnabled }: { captureEnabled: boolean 
 
         <div className="cluster mt16">
           <button className="btn btn-primary" type="submit" disabled={busy}>
-            {busy ? "Reading profiles…" : "Read profiles and start dating"}
+            {busy
+              ? extendRun
+                ? "Adding to your run…"
+                : "Reading profiles…"
+              : extendRun
+                ? "Add these people to the run"
+                : "Read profiles and start dating"}
           </button>
-          <span className="small dim">Add 2+ people to get rankings. A single person still gets a profile page.</span>
+          <span className="small dim">
+            {busy ? (
+              <>
+                Reading {entries.length} {entries.length === 1 ? "profile" : "profiles"} and running the dates
+                {elapsed > 0 ? ` — ${elapsed}s so far` : " — this can take a few seconds"}.
+                <span className="mono" aria-hidden="true">
+                  {" "}
+                  {"·".repeat((elapsed % 3) + 1)}
+                </span>
+              </>
+            ) : (
+              <>Add 2+ people to get rankings. A single person still gets a profile page.</>
+            )}
+          </span>
         </div>
       </form>
 

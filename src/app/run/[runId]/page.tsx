@@ -42,9 +42,18 @@ export default async function RunPage(props: {
           </p>
         </div>
         <div className="cluster">
-          <Link className="btn btn-sm" href="/">
-            Add more people
-          </Link>
+          {/* This linked to / which started a fresh run, so the button threw
+              away every profile, date and ranking already captured. It now
+              resumes the same run, and the start form restores its people. */}
+          {run.isDemo ? (
+            <Link className="btn btn-sm" href="/">
+              Start your own run
+            </Link>
+          ) : (
+            <Link className="btn btn-sm" href={`/?from=${run.id}`}>
+              Add more people to this run
+            </Link>
+          )}
         </div>
       </div>
 
