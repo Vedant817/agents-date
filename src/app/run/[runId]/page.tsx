@@ -1,7 +1,7 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { getStore } from "@/store/runs";
-import { summarise } from "@/pipeline/run";
+import { DEMO_RUN_ID, summarise } from "@/pipeline/run";
 import RunClient from "./client";
 
 export const runtime = "nodejs";
@@ -13,8 +13,46 @@ export default async function RunPage(props: {
 }) {
   const { runId } = await props.params;
   const store = getStore();
-  const run = await store.get(runId);
-  if (!run) notFound();
+  let run;
+  try {
+    run = await store.get(runId);
+  } catch (error) {
+    // A corrupt or unreadable run must not crash through to Next's raw 500
+    // page, which drops the visitor outside the site. Say what happened and
+    // keep the frame, exactly as the API route already does.
+    return (
+      <main>
+        <div className="page-head">
+          <p className="eyebrow">Run could not be read</p>
+          <h1>This run exists, but its data is unreadable on this server.</h1>
+        </div>
+        <p className="lede">
+          The stored run file is corrupt or incomplete, so it cannot be shown. Nothing was ranked against anyone else as
+          a result.
+        </p>
+        <div className="notice notice-error">
+          <b>Server detail:</b> {error instanceof Error ? error.message : "unknown error"}
+        </div>
+        <div className="cluster">
+          <Link className="btn btn-primary" href="/">
+            Add profiles
+          </Link>
+          <Link className="btn" href="/demo">
+            Open the live demo
+          </Link>
+        </div>
+      </main>
+    );
+  }
+  if (!run) {
+    // /run/demo is the obvious thing to type, but the demo lives at /demo and
+    // is not in the store. Sending that visitor to the generic "expired" page
+    // told them their data was lost when it was not.
+    if (runId === DEMO_RUN_ID) {
+      redirect("/demo");
+    }
+    notFound();
+  }
 
   const summary = summarise(run);
   // Read the deep link on the server. Doing it in the client only meant the
@@ -89,8 +127,9 @@ export default async function RunPage(props: {
 
       <p className="small dim">
         <b>How dates are chosen:</b> each agent dates the person it ranks first, and two agents who choose each other
-        share one date, so the pair count is never the same as the agent count. Where a pair is left over, the strongest
-        remaining matches are added until the run reaches its target of 14 dates.
+        share one date, so the pair count is never the same as the agent count. The strongest remaining matches are then
+        added until the run reaches 14 dates. Coverage comes first, so a run with many agents can have more dates than
+        that target.
       </p>
 
       {run.isSample && (

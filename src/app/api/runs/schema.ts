@@ -42,9 +42,35 @@ export function zodIssues(error: z.ZodError): PersonIssue[] {
   for (const iss of error.issues) {
     const [, index, field] = iss.path;
     if (typeof index !== "number") continue;
-    out.push({ index, field: typeof field === "string" ? field : "linkedin", message: iss.message });
+    out.push({ index, field: typeof field === "string" ? field : "linkedin", message: friendlyMessage(iss) });
   }
   return out;
+}
+
+/**
+ * Zod's own wording is for developers ("Expected string, received number"),
+ * and it reached end users verbatim on the most common malformed-payload
+ * paths. Translate the recurring ones into something actionable, and keep the
+ * field name so the message still points somewhere.
+ */
+function friendlyMessage(iss: z.ZodIssue): string {
+  const field = String(iss.path[iss.path.length - 1] ?? "this field");
+  const label = field === "linkedin" ? "the LinkedIn link" : field === "instagram" ? "the Instagram link" : field;
+  const raw = iss.message ?? "";
+
+  if (/Expected string, received/.test(raw)) return `${capitalise(label)} must be text.`;
+  if (/must contain at most (\d+) character/.test(raw)) {
+    const max = raw.match(/must contain at most (\d+) character/)?.[1];
+    return max ? `Keep ${label} under ${max} characters.` : `${capitalise(label)} is too long.`;
+  }
+  if (/Expected object, received/.test(raw)) return "Send a JSON object with an entries list of people.";
+  if (/Expected array/.test(raw)) return "Send the people as a list under entries.";
+  if (/Required|required/.test(raw)) return `Add ${label}.`;
+  return raw;
+}
+
+function capitalise(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 /**
@@ -83,7 +109,14 @@ export function readEntries(raw: unknown):
     // shape error first meant one missing field hid every other problem, so
     // the user fixed one thing, resubmitted, and only then found the next.
     const issues = [...zodIssues(shape.error), ...linkIssuesFromUnknown(raw)];
-    const message = issues[0]?.message ?? shape.error.issues[0]?.message ?? "Invalid request.";
+    // Whole-body errors (null, an array, a missing entries list) have no
+    // person index to attach to, so they surface as the headline instead.
+    const topLevel = shape.error.issues.filter((i) => !Array.isArray(i.path) || i.path.length === 0);
+    const message =
+      (topLevel.length > 0 ? friendlyMessage(topLevel[0]!) : undefined) ??
+      issues[0]?.message ??
+      shape.error.issues[0]?.message ??
+      "Invalid request.";
     return { ok: false, message, issues };
   }
   const issues = validateSubmission(shape.data.entries);

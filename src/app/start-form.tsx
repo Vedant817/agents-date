@@ -13,6 +13,12 @@ interface Entry {
   linkedinText: string;
   instagramText: string;
   showText: boolean;
+  /**
+   * Where this row came from. A restored row is already in the run, so it is
+   * context, not payload: re-submitting it is exactly what the duplicate guard
+   * rejects, which is why the resume path could never succeed.
+   */
+  origin: "new" | "in-run";
 }
 
 let seq = 0;
@@ -24,6 +30,7 @@ const blank = (showText = false): Entry => ({
   linkedinText: "",
   instagramText: "",
   showText,
+  origin: "new",
 });
 
 /**
@@ -42,6 +49,7 @@ function entryFromPerson(person: PersonRecord, showText: boolean): Entry {
     instagram: person.instagramUrl.replace(/^https?:\/\/(www\.)?/, ""),
     linkedinText: (sources?.linkedin.lines ?? []).join("\n"),
     instagramText: (sources?.instagram.lines ?? []).join("\n"),
+    origin: "in-run",
   };
 }
 
@@ -105,17 +113,18 @@ export default function StartForm({
   // discover. Open them by default in that case.
   const [entries, setEntries] = useState<Entry[]>(() => {
     if (extendRun && extendRun.people.length > 0) {
-      // Restored rows open, so the restored text is visible and editable
-      // rather than hidden behind a disclosure.
-      return [
-        ...extendRun.people.map((p) => entryFromPerson(p, true)),
-        blank(!captureEnabled || extendRun.people.every((p) => p.analysis)),
-      ];
+      // Restored rows are read-only context, so they never need their text
+      // exposed. Only add the blank row if the run still has room.
+      const restored = extendRun.people.map((p) => entryFromPerson(p, false));
+      if (restored.length >= MAX_PEOPLE) return restored;
+      return [...restored, blank(!captureEnabled)];
     }
     return [blank(!captureEnabled)];
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Shown instead of an error when there is simply nothing new to send. */
+  const [submitNotice, setSubmitNotice] = useState<string | null>(null);
   const [issues, setIssues] = useState<{ index: number; field: string; message: string }[]>([]);
   const [showMethod, setShowMethod] = useState(false);
   const errorRef = useRef<HTMLDivElement | null>(null);
@@ -131,10 +140,16 @@ export default function StartForm({
     setEntries((prev) => prev.map((e) => (e.key === key ? { ...e, ...patch } : e)));
   }
 
+  // A person can only be added while there is room in the run, so the blank
+  // row disappears at the cap instead of producing a doomed 21st row.
+  const newCount = entries.filter((e) => e.origin === "new").length;
+  const room = MAX_PEOPLE - entries.length;
+
   function add() {
     // The API caps a run at 20; do not let a user build a form that is
     // guaranteed to be rejected on submit.
-    setEntries((prev) => (prev.length >= MAX_PEOPLE ? prev : [...prev, blank(!captureEnabled)]));
+    if (entries.length >= MAX_PEOPLE) return;
+    setEntries((prev) => [...prev, blank(!captureEnabled)]);
   }
 
   function remove(key: number) {
@@ -170,12 +185,24 @@ export default function StartForm({
   }, [busy]);
 
   async function submit() {
+    // Only NEW rows are payload. Restored rows already exist in the run, so
+    // sending them is rejected as duplicates — and that is what made the resume
+    // path unusable.
+    const newEntries = entries.filter((e) => e.origin === "new");
+    if (extendRun && newEntries.length === 0) {
+      setError(null);
+      setIssues([]);
+      setBusy(false);
+      setSubmitNotice("Nothing to add yet. Fill in the details of at least one new person below.");
+      return;
+    }
+    setSubmitNotice(null);
     setBusy(true);
     setError(null);
     setIssues([]);
     try {
       const payload = {
-        entries: entries.map((e) => ({
+        entries: newEntries.map((e) => ({
           name: e.name || undefined,
           linkedin: e.linkedin,
           instagram: e.instagram,
@@ -226,9 +253,8 @@ export default function StartForm({
           <b>
             Adding to your run of {extendRun.people.length} {extendRun.people.length === 1 ? "person" : "people"}.
           </b>{" "}
-          Their profiles, dates and rankings are kept — submitting here adds the people below to that same run rather than
-          starting a new one. Restored profile text is tidied slightly (whitespace collapsed, long lines shortened), so
-          check it still reads the way you expect.{" "}
+          Their profiles, dates and rankings are kept, and submitting adds the new people below to that same run rather
+          than starting another one. People already in the run are shown as they stand and cannot be edited here.{" "}
           <Link href={`/run/${extendRun.id}`}>Open the run as it stands</Link>.
         </div>
       )}
@@ -293,8 +319,15 @@ export default function StartForm({
         {entries.length >= MAX_PEOPLE && (
           <p className="small dim mb0">
             {MAX_PEOPLE} people is the per-run limit.
+            {extendRun ? " This run is already full, so no new people can be added to it." : ""}
           </p>
         )}
+
+        {submitNotice ? (
+          <div className="notice notice-info" role="status">
+            {submitNotice}
+          </div>
+        ) : null}
 
         {error ? (
           <div className="notice notice-error" role="alert" ref={errorRef}>
@@ -311,88 +344,120 @@ export default function StartForm({
           </div>
         ) : null}
 
-        {entries.map((entry, index) => (
-          <div className="entry" key={entry.key}>
-            <div className="entry-head">
-              <b>Person {index + 1}</b>
-              {entries.length > 1 ? (
-                <button className="btn btn-sm btn-ghost" onClick={() => remove(entry.key)} type="button">
-                  Remove
-                </button>
-              ) : null}
-            </div>
-
-            <div className="row">
-              <label className="field">
-                <span>Name (optional)</span>
-                <input
-                  type="text"
-                  value={entry.name}
-                  placeholder="Their first and last name"
-                  onChange={(ev) => update(entry.key, { name: ev.target.value })}
-                />
-              </label>
-              <label className="field">
-                <span>LinkedIn profile URL</span>
-                <input
-                  type="text"
-                  value={entry.linkedin}
-                  placeholder="linkedin.com/in/username"
-                  onChange={(ev) => update(entry.key, { linkedin: ev.target.value })}
-                />
-              </label>
-            </div>
-            <label className="field">
-              <span>Instagram profile URL</span>
-              <input
-                type="text"
-                value={entry.instagram}
-                placeholder="instagram.com/username"
-                onChange={(ev) => update(entry.key, { instagram: ev.target.value })}
-              />
-            </label>
-
-            <button
-              className="btn btn-sm btn-ghost"
-              type="button"
-              aria-expanded={entry.showText}
-              aria-controls={`person-${entry.key}-text`}
-              onClick={() => update(entry.key, { showText: !entry.showText })}
-            >
-              {entry.showText ? "Hide" : "Add"} profile text {entry.showText ? "▲" : "▼"}
-            </button>
-
-            {entry.showText && (
-              <div id={`person-${entry.key}-text`} className="mt16">
-                <p className="small dim">
-                  Both platforms block anonymous automated reads, so pasting the visible profile text is how a person
-                  consents to being read. Paste only what their profile already shows publicly.
-                </p>
-                <div className="row">
-                  <label className="field">
-                    <span>LinkedIn — visible profile text</span>
-                    <textarea
-                      value={entry.linkedinText}
-                      placeholder={"Name\nHeadline\nAbout / experience / skills"}
-                      onChange={(ev) => update(entry.key, { linkedinText: ev.target.value })}
-                    />
-                  </label>
-                  <label className="field">
-                    <span>Instagram — bio and captions</span>
-                    <textarea
-                      value={entry.instagramText}
-                      placeholder={"Display name\nBio\nRecent captions"}
-                      onChange={(ev) => update(entry.key, { instagramText: ev.target.value })}
-                    />
-                  </label>
-                </div>
+        {entries.map((entry, index) =>
+          entry.origin === "in-run" ? (
+            // Restored rows are read-only context. Letting them look editable
+            // invited a paste that the server then rejects, because there is no
+            // way to update a person already in a run — the endpoint only adds.
+            <div className="entry entry-restored" key={entry.key}>
+              <div className="entry-head">
+                <b>
+                  Person {index + 1} — already in this run
+                </b>
+                <span className="chip">kept</span>
               </div>
-            )}
-          </div>
-        ))}
+              <p className="small dim mb0">
+                {entry.name || "This person"} stays exactly as it is, with their analysis, dates and rankings. Editing a
+                person already in a run is not supported — add new people below.
+              </p>
+              <div className="row">
+                <label className="field">
+                  <span>LinkedIn profile URL</span>
+                  <input type="text" value={entry.linkedin} readOnly />
+                </label>
+                <label className="field">
+                  <span>Instagram profile URL</span>
+                  <input type="text" value={entry.instagram} readOnly />
+                </label>
+              </div>
+            </div>
+          ) : (
+            <div className="entry" key={entry.key}>
+              <div className="entry-head">
+                <b>Person {index + 1}</b>
+                {entries.length > 1 ? (
+                  <button className="btn btn-sm btn-ghost" onClick={() => remove(entry.key)} type="button">
+                    Remove
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="row">
+                <label className="field">
+                  <span>Name (optional)</span>
+                  <input
+                    type="text"
+                    value={entry.name}
+                    placeholder="Their first and last name"
+                    onChange={(ev) => update(entry.key, { name: ev.target.value })}
+                  />
+                </label>
+                <label className="field">
+                  <span>LinkedIn profile URL</span>
+                  <input
+                    type="text"
+                    value={entry.linkedin}
+                    placeholder="linkedin.com/in/username"
+                    onChange={(ev) => update(entry.key, { linkedin: ev.target.value })}
+                  />
+                </label>
+              </div>
+              <label className="field">
+                <span>Instagram profile URL</span>
+                <input
+                  type="text"
+                  value={entry.instagram}
+                  placeholder="instagram.com/username"
+                  onChange={(ev) => update(entry.key, { instagram: ev.target.value })}
+                />
+              </label>
+
+              <button
+                className="btn btn-sm btn-ghost"
+                type="button"
+                aria-expanded={entry.showText}
+                aria-controls={`person-${entry.key}-text`}
+                onClick={() => update(entry.key, { showText: !entry.showText })}
+              >
+                {entry.showText ? "Hide" : "Add"} profile text {entry.showText ? "▲" : "▼"}
+              </button>
+
+              {entry.showText && (
+                <div id={`person-${entry.key}-text`} className="mt16">
+                  <p className="small dim">
+                    Both platforms block anonymous automated reads, so pasting the visible profile text is how a person
+                    consents to being read. Paste only what their profile already shows publicly.
+                  </p>
+                  <div className="row">
+                    <label className="field">
+                      <span>LinkedIn — visible profile text</span>
+                      <textarea
+                        value={entry.linkedinText}
+                        placeholder={"Name\nHeadline\nAbout / experience / skills"}
+                        onChange={(ev) => update(entry.key, { linkedinText: ev.target.value })}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Instagram — bio and captions</span>
+                      <textarea
+                        value={entry.instagramText}
+                        placeholder={"Display name\nBio\nRecent captions"}
+                        onChange={(ev) => update(entry.key, { instagramText: ev.target.value })}
+                      />
+                    </label>
+                  </div>
+                </div>
+              )}
+            </div>
+          ),
+        )}
 
         <div className="cluster mt16">
-          <button className="btn btn-primary" type="submit" disabled={busy}>
+          <button
+            className="btn btn-primary"
+            type="submit"
+            disabled={busy || (extendRun !== null && newCount === 0)}
+          >
             {busy
               ? extendRun
                 ? "Adding to your run…"
@@ -404,12 +469,19 @@ export default function StartForm({
           <span className="small dim">
             {busy ? (
               <>
-                Reading {entries.length} {entries.length === 1 ? "profile" : "profiles"} and running the dates
+                Reading {newCount} {newCount === 1 ? "profile" : "profiles"} and running the dates
                 {elapsed > 0 ? ` — ${elapsed}s so far` : " — this can take a few seconds"}.
                 <span className="mono" aria-hidden="true">
                   {" "}
                   {"·".repeat((elapsed % 3) + 1)}
                 </span>
+              </>
+            ) : extendRun ? (
+              <>
+                {room > 0
+                  ? `${room} more ${room === 1 ? "person" : "people"} can be added to this run.`
+                  : "This run is full."}{" "}
+                The people above are kept as they are.
               </>
             ) : (
               <>Add 2+ people to get rankings. A single person still gets a profile page.</>

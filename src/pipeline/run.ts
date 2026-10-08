@@ -262,8 +262,9 @@ export function planSessions(
   return [...sessions.values()];
 }
 
-/** Recomputes rankings and dates for a fully-analysed set of people. */
-export function computeNetwork(people: PersonRecord[]): PersonRecord[] {  const analyses = new Map<string, PersonAnalysis>();
+/** Recomputes rankings and dates for a set of people, readable ones only. */
+export function computeNetwork(people: PersonRecord[]): PersonRecord[] {
+  const analyses = new Map<string, PersonAnalysis>();
   for (const p of people) {
     // ONLY readable people enter the pool. A person whose sources could not be
     // read used to be ranked and dated, producing transcripts about someone
@@ -291,12 +292,14 @@ export function computeNetwork(people: PersonRecord[]): PersonRecord[] {  const 
   }
 
   // Attach each session to both participants so either profile page can show it.
-  return withMatches.map((p) => {
-    const mine = sessions.filter((s) => s.personAId === p.id || s.personBId === p.id);
-    const merged = [...(p.sessions ?? []), ...mine];
-    const byId = new Map(merged.map((s) => [s.id, s]));
-    return { ...p, sessions: [...byId.values()] };
-  });
+  // REPLACE, do not union with p.sessions: the plan is recomputed from scratch
+  // each time, so a pair chosen by an earlier plan but not the current one would
+  // otherwise linger forever. That is exactly what happened when a run was
+  // extended — the page then stated a date rule that the run did not follow.
+  return withMatches.map((p) => ({
+    ...p,
+    sessions: sessions.filter((s) => s.personAId === p.id || s.personBId === p.id),
+  }));
 }
 
 export function summarise(run: Run): { total: number; ready: number; failed: number; sessions: number } {

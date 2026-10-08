@@ -37,7 +37,12 @@ export function parseLinkedIn(input: string): ParseResult {
   }
 
   const segments = parsed.pathname.split("/").filter(Boolean);
-  if (segments[0] !== "in" || !segments[1]) {
+  // Handles are case-insensitive on both platforms, so a URL pasted in capitals
+  // is the same profile as the lowercase one. Comparing the raw segment made
+  // "LINKEDIN.COM/IN/NAME" a company-page error, and let a case variant of an
+  // existing person back in as a second, separately-ranked copy.
+  const handle = segments[1]?.toLowerCase() ?? "";
+  if (segments[0]?.toLowerCase() !== "in" || !handle) {
     return {
       ok: false,
       error: "Use a personal profile link (linkedin.com/in/yourname), not a company or school page.",
@@ -46,8 +51,8 @@ export function parseLinkedIn(input: string): ParseResult {
 
   return {
     ok: true,
-    url: `https://www.linkedin.com/in/${segments[1]}`,
-    handle: segments[1],
+    url: `https://www.linkedin.com/in/${handle}`,
+    handle,
   };
 }
 
@@ -92,7 +97,10 @@ export function parseInstagram(input: string): ParseResult {
     return { ok: false, error: "That Instagram username contains unsupported characters." };
   }
 
-  return { ok: true, url: `https://www.instagram.com/${first}`, handle: first };
+  // Canonical lowercase handle: Instagram names are case-insensitive, so a
+  // capitalised paste must resolve to the same profile, not a second person.
+  const handle = first.toLowerCase();
+  return { ok: true, url: `https://www.instagram.com/${handle}`, handle };
 }
 
 export function parseSource(kind: SourceKind, input: string): ParseResult {

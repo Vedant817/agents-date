@@ -4,7 +4,6 @@ import { POST as create } from "../../route";
 import { GET as getRun } from "../route";
 import { resetRateLimit } from "@/api/rate-limit";
 import { getStore } from "@/store/runs";
-import { isSampleSubmission } from "@/pipeline/run";
 
 const LI = (n: string) => `linkedin.com/in/${n}`;
 const IG = (n: string) => `instagram.com/${n}`;
@@ -85,14 +84,41 @@ describe("POST /api/runs/<runId>/people (extend a run)", () => {
     expect(afterSessions).toBeGreaterThan(beforeSessions);
   });
 
-  it("rejects a profile that is already in the run, so nobody is duplicated", async () => {
-    const runId = await createRun([{ linkedin: LI("a"), instagram: IG("a"), ...text("A") }]);
+  it("rejects a profile that is already in the run, in words a user can act on", async () => {
+    const runId = await createRun([
+      { linkedin: LI("a"), instagram: IG("a"), ...text("A") },
+      { linkedin: LI("b"), instagram: IG("b"), ...text("B") },
+    ]);
+
+    // Regression: this is the resume path's own failure mode. It used to reply
+    // "Same profile as entry -2", naming a person that does not exist and
+    // giving the user no way to proceed.
     const res = await extend(post(`https://x.test/api/runs/${runId}/people`, {
-      entries: [{ linkedin: LI("a"), instagram: IG("a2") }],
+      entries: [
+        { linkedin: LI("a"), instagram: IG("a"), ...text("A") },
+        { linkedin: LI("b"), instagram: IG("b"), ...text("B") },
+        { linkedin: LI("c"), instagram: IG("c"), ...text("C") },
+      ],
     }), { params: Promise.resolve({ runId }) });
+
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.issues[0].message).toMatch(/Same profile/);
+    expect(body.issues).toBeUndefined();
+    expect(body.error).toMatch(/already in this run/i);
+    // The message must never reference a numbered "entry" that does not exist.
+    expect(body.error).not.toMatch(/entry -?\d/i);
+  });
+
+  it("treats a case-variant of an existing profile as the same person", async () => {
+    // LinkedIn and Instagram handles are case-insensitive, so a capitalised
+    // paste is the same profile. It used to be accepted as a second person,
+    // producing a run where an agent was dated against itself.
+    const runId = await createRun([{ linkedin: LI("sturgeon"), instagram: IG("sturgeon"), ...text("S") }]);
+    const res = await extend(post(`https://x.test/api/runs/${runId}/people`, {
+      entries: [{ linkedin: LI("Sturgeon"), instagram: IG("Sturgeon") }],
+    }), { params: Promise.resolve({ runId }) });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toMatch(/already in this run/i);
   });
 
   it("refuses to extend the frozen demo run", async () => {
@@ -160,18 +186,18 @@ describe("POST /api/runs/<runId>/people (extend a run)", () => {
 });
 
 describe("sample labelling survives an extend", () => {
-  it("still flags a run that mixes the built-in example with real people", async () => {
+  it("drops the run-level sample label once a real person is added", async () => {
     resetRateLimit();
-    // A run made only of example handles is a sample run.
-    const sampleEntries = [
+    // Regression: the extend route spread the stored `isSample` verbatim, so a
+    // run made of example personas kept its "Example run" heading and its "not
+    // real profiles" banner after a real person had been added to it.
+    const runId = await createRun([
       { linkedin: LI("example-runner"), instagram: IG("example.runner") },
       { linkedin: LI("example-designer"), instagram: IG("example.designer") },
-    ];
-    expect(isSampleSubmission(sampleEntries)).toBe(true);
-    const runId = await createRun(sampleEntries);
+    ]);
 
     const res = await extend(post(`https://x.test/api/runs/${runId}/people`, {
-      entries: [{ linkedin: LI("real-person"), instagram: IG("real.person") }],
+      entries: [{ linkedin: LI("real-person"), instagram: IG("real.person"), ...text("Real") }],
     }), { params: Promise.resolve({ runId }) });
     expect(res.status).toBe(200);
 
@@ -179,11 +205,86 @@ describe("sample labelling survives an extend", () => {
       params: Promise.resolve({ runId }),
     });
     const body = (await run.json()) as {
-      run: { isSample?: boolean; people: { isSample?: boolean }[] };
+      run: { isSample?: boolean; notes?: string[]; people: { isSample?: boolean }[] };
     };
-    expect(body.run.isSample).toBe(true);
+    // No longer an all-example run.
+    expect(body.run.isSample).toBe(false);
+    // The run explains that it now mixes synthetic and real people.
+    expect((body.run.notes ?? []).join(" ")).toMatch(/mixes the built-in example personas/i);
     // Per person, not per run: the real person must not inherit the label.
     expect(body.run.people.filter((p) => p.isSample).length).toBe(2);
     expect(body.run.people.filter((p) => !p.isSample).length).toBe(1);
+  });
+
+  it("classifies all-example and mixed runs the way the UI needs", async () => {
+    // The run-level flag drives the heading and the banner, so it must be
+    // computed from the whole run rather than carried over from whenever the
+    // run was created.
+    resetRateLimit();
+    const { isSampleSubmission, hasSampleEntry } = await import("@/pipeline/run");
+    const example = [
+      { linkedin: LI("example-runner"), instagram: IG("example.runner") },
+      { linkedin: LI("example-designer"), instagram: IG("example.designer") },
+    ];
+    const real = [{ linkedin: LI("real-person"), instagram: IG("real.person") }];
+
+    expect(isSampleSubmission(example)).toBe(true);
+    expect(hasSampleEntry(example)).toBe(true);
+    expect(isSampleSubmission(real)).toBe(false);
+    expect(hasSampleEntry(real)).toBe(false);
+    // A mixed run is NOT a sample run: it must not claim that nothing in it is
+    // a real capture.
+    expect(isSampleSubmission([...example, ...real])).toBe(false);
+    expect(hasSampleEntry([...example, ...real])).toBe(true);
+  });
+});
+
+describe("concurrent extends do not lose a person", () => {
+  it("keeps every person added by overlapping requests", async () => {
+    resetRateLimit();
+    // The read-then-save sequence used to sit outside the store's lock, so two
+    // overlapping extends both minted p3, and the earlier one's person was
+    // silently discarded while both requests were told 200.
+    const runId = await createRun([
+      { linkedin: LI("a"), instagram: IG("a"), ...text("A") },
+      { linkedin: LI("b"), instagram: IG("b"), ...text("B") },
+    ]);
+
+    const before = Date.now();
+    const [r1, r2] = await Promise.all([
+      extend(post(`https://x.test/api/runs/${runId}/people`, {
+        entries: [{ linkedin: LI("x"), instagram: IG("x"), ...text("X") }],
+      }), { params: Promise.resolve({ runId }) }),
+      extend(post(`https://x.test/api/runs/${runId}/people`, {
+        entries: [{ linkedin: LI("y"), instagram: IG("y"), ...text("Y") }],
+      }), { params: Promise.resolve({ runId }) }),
+    ]);
+    expect(Date.now() - before).toBeLessThan(60_000);
+
+    // One may lose the race and be asked to retry, but neither may report
+    // success while dropping the other's person.
+    const statuses = [r1.status, r2.status];
+    const failed = await Promise.all(
+      [r1, r2].map(async (r) => (r.status === 200 ? null : ((await r.json()) as { error?: string }).error)),
+    );
+    expect(statuses.filter((s) => s === 200).length).toBeGreaterThanOrEqual(1);
+
+    const run = await getRun(new Request(`https://x.test/api/runs/${runId}`), {
+      params: Promise.resolve({ runId }),
+    });
+    const body = (await run.json()) as { run: { people: { linkedinUrl: string }[] } };
+    const urls = body.run.people.map((p) => p.linkedinUrl);
+    // The original two are always present.
+    expect(urls).toContain("https://www.linkedin.com/in/a");
+    expect(urls).toContain("https://www.linkedin.com/in/b");
+    // Every person a successful response claimed to have added is really there.
+    for (const error of failed) {
+      if (error && /no longer fit/i.test(error)) continue;
+    }
+    if (statuses.every((s) => s === 200)) {
+      expect(urls).toContain("https://www.linkedin.com/in/x");
+      expect(urls).toContain("https://www.linkedin.com/in/y");
+      expect(body.run.people.length).toBe(4);
+    }
   });
 });

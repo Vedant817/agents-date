@@ -22,6 +22,13 @@ import type { Run } from "@/core/types";
 export interface RunStore {
   get(runId: string): Promise<Run | null>;
   save(run: Run): Promise<Run>;
+  /**
+   * Read-modify-write under the run's own lock. `save` alone only serialises
+   * writes, so a handler that reads, does slow work elsewhere, then saves can
+   * still clobber another writer's changes — which is exactly what the extend
+   * endpoint did, silently dropping a person while both requests said 200.
+   */
+  update(runId: string, fn: (run: Run) => Run | null): Promise<Run | null>;
   list(): Promise<Run[]>;
   delete(runId: string): Promise<void>;
   /** True when writes do not survive a restart. */
@@ -88,15 +95,41 @@ export class FileRunStore implements RunStore {
     if (!file) throw new Error(`Invalid run id: ${run.id}`);
     // Lock on the same key used for the file, so two ids that map to one file
     // can never take different locks.
-    return withLock(run.id, async () => {
-      await mkdir(DATA_DIR, { recursive: true });
-      const tmp = `${file}.${process.pid}.${Date.now()}.tmp`;
-      const payload: Run = { ...run, updatedAt: Date.now() };
-      await writeFile(tmp, JSON.stringify(payload, null, 2), "utf8");
-      const { rename } = await import("node:fs/promises");
-      await rename(tmp, file);
-      return payload;
+    return withLock(run.id, () => this.write(file, run));
+  }
+
+  async update(runId: string, fn: (run: Run) => Run | null): Promise<Run | null> {
+    // Hold the lock across the read AND the write, so a concurrent writer
+    // cannot interleave. The capture work happens outside this call, so a slow
+    // network request never blocks another run's write.
+    return withLock(runId, async () => {
+      let run: Run | null;
+      try {
+        run = await this.get(runId);
+      } catch {
+        // A corrupt run stays corrupt rather than being silently overwritten.
+        throw new Error(`Run ${runId} exists but could not be read.`);
+      }
+      if (!run) return null;
+      const next = fn(run);
+      if (!next) return run;
+      const file = runPath(runId);
+      if (!file) throw new Error(`Invalid run id: ${runId}`);
+      // Must NOT go through save(): the lock is not reentrant, and taking it
+      // again from inside here would deadlock this call against itself.
+      return this.write(file, next);
     });
+  }
+
+  /** The actual write. The caller is responsible for holding the run's lock. */
+  private async write(file: string, run: Run): Promise<Run> {
+    await mkdir(DATA_DIR, { recursive: true });
+    const tmp = `${file}.${process.pid}.${Date.now()}.tmp`;
+    const payload: Run = { ...run, updatedAt: Date.now() };
+    await writeFile(tmp, JSON.stringify(payload, null, 2), "utf8");
+    const { rename } = await import("node:fs/promises");
+    await rename(tmp, file);
+    return payload;
   }
 
   async list(): Promise<Run[]> {

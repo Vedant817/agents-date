@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import Link from "next/link";
-import { provenanceLabel } from "@/ingest/adapter";
+import { provenanceLabel, provenanceTag } from "@/ingest/adapter";
 import type { DateSession, MatchScore, PersonRecord, Run } from "@/core/types";
 
 type Tab = "profiles" | "dates" | "rankings";
@@ -90,6 +90,12 @@ export default function RunClient({
 
   const active = ready.find((p) => p.id === selected) ?? ready[0]!;
   const nameOf = (id: string) => ready.find((p) => p.id === id)?.displayName ?? "this person";
+  /**
+   * How a quoted line was obtained, so a transcript citation cannot read like
+   * a live read when the text was pasted or seeded.
+   */
+  const modeOf = (personId: string, source: string): string | undefined =>
+    ready.find((p) => p.id === personId)?.analysis?.sources[source as "linkedin" | "instagram"]?.readMode;
 
   const unreadableBlock = unreadable.length > 0 && (
     <section className="panel warn-card" aria-label="Unreadable profiles">
@@ -168,7 +174,7 @@ export default function RunClient({
           ) : (
             <div className="session-list">
               {sessions.map((s) => (
-                <SessionPanel key={s.id} session={s} nameOf={nameOf} />
+                <SessionPanel key={s.id} session={s} nameOf={nameOf} modeOf={modeOf} />
               ))}
             </div>
           )}
@@ -318,9 +324,10 @@ function TraitList({
                       &ldquo;{e.quote}&rdquo;{" "}
                       <span className="src">
                         {e.source} · line {(e.line ?? 0) + 1}
-                        {modes && (modes[e.source as "linkedin" | "instagram"] ?? "") === "pasted" && (
-                          <> · pasted</>
-                        )}
+                        {(() => {
+                          const tag = provenanceTag(modes?.[e.source as "linkedin" | "instagram"]);
+                          return tag ? ` · ${tag}` : null;
+                        })()}
                       </span>
                     </div>
                   ))}
@@ -455,7 +462,15 @@ function PersonPanel({ person, nameOf }: { person: PersonRecord; nameOf: (id: st
   );
 }
 
-function SessionPanel({ session, nameOf }: { session: DateSession; nameOf: (id: string) => string }) {
+function SessionPanel({
+  session,
+  nameOf,
+  modeOf,
+}: {
+  session: DateSession;
+  nameOf: (id: string) => string;
+  modeOf: (personId: string, source: string) => string | undefined;
+}) {
   const aName = nameOf(session.personAId);
   const bName = nameOf(session.personBId);
   return (
@@ -489,6 +504,12 @@ function SessionPanel({ session, nameOf }: { session: DateSession; nameOf: (id: 
                     {e.quote.length > 90 ? "…" : ""}&rdquo;{" "}
                     <span className="src">
                       {nameOf(e.personId)} · {e.source} · line {(e.line ?? 0) + 1}
+                      {/* A transcript quote looked exactly like a live read even
+                          in the seeded demo. Mark anything not read live. */}
+                      {(() => {
+                        const tag = provenanceTag(modeOf(e.personId, e.source));
+                        return tag ? ` · ${tag}` : null;
+                      })()}
                     </span>
                   </div>
                 ))}

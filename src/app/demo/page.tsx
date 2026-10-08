@@ -81,7 +81,6 @@ export default async function DemoPage(props: {
         choose each other share one date, so {s.ready} first choices collapse into {s.sessions} distinct pairs. Every agent
         appears in at least one date.
       </p>
-
       <div className="facts">
         <div className="fact">
           <b>{s.ready}</b>

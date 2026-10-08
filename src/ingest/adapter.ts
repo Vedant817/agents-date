@@ -45,6 +45,18 @@ export function isLiveRead(record: SourceRecord | undefined): boolean {
   return record?.status === "captured" && record.readMode === "live";
 }
 
+/**
+ * Short provenance tag for an inline citation, or null when the source was a
+ * genuine live read. Citations and chips must use the same vocabulary, so this
+ * is the single place the words are chosen.
+ */
+export function provenanceTag(mode: string | undefined): string | null {
+  if (mode === "live") return null;
+  if (mode === "seeded") return "seeded sample";
+  if (mode === "pasted") return "pasted text";
+  return null;
+}
+
 export function unavailable(
   kind: SourceKind,
   url: string,
