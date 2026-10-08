@@ -69,12 +69,29 @@ export default async function RunPage(props: {
         <div className="fact">
           <b>{summary.sessions}</b>
           <span>dates completed</span>
+          {/* The count was a bare number with no stated rule, so a reader
+              could not tell whether it was arbitrary, capped, or a bug.
+              It is derived: every agent's first-choice partner, with mutual
+              choices sharing one date. */}
+          <span className="fact-sub">
+            {summary.ready < 2
+              ? "a date needs two readable profiles"
+              : summary.sessions >= Math.ceil(summary.ready / 2)
+                ? `${summary.ready} first choices, ${summary.sessions} distinct pairs`
+                : "every agent's first-choice partner"}
+          </span>
         </div>
         <div className="fact">
           <b>{summary.failed}</b>
           <span>unreadable</span>
         </div>
       </div>
+
+      <p className="small dim">
+        <b>How dates are chosen:</b> each agent dates the person it ranks first, and two agents who choose each other
+        share one date, so the pair count is never the same as the agent count. Where a pair is left over, the strongest
+        remaining matches are added until the run reaches its target of 14 dates.
+      </p>
 
       {run.isSample && (
         <div className="notice notice-warn">

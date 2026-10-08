@@ -204,8 +204,23 @@ export async function processPerson(
 }
 
 /**
- * Chooses date sessions so every agent appears in at least one, then adds the
- * highest-ranked pairs. 26 people need at least 13 sessions for coverage.
+ * Chooses date sessions in two passes.
+ *
+ * Pass 1 gives every agent a date with the person THEY rank first. That is
+ * the honest reading of "the agents date on their behalf": each agent's
+ * opening date is its own first choice, not a pairing imposed centrally.
+ * Two agents who choose each other share one session, and a popular partner
+ * can pull in several otherwise-uncovered agents, so pass 1 is not simply
+ * n/2 sessions.
+ *
+ * Pass 2 then adds the strongest remaining pairs until the run reaches
+ * `target` dates. It only ever adds, never removes, because a removal could
+ * leave an agent with no date at all — and coverage is the invariant that
+ * matters more than hitting a round number.
+ *
+ * The resulting count is therefore derived rather than arbitrary: with 26
+ * agents, 26 first choices collapse into 19 distinct pairs, and pass 2 has
+ * nothing to add because coverage already exceeded the target.
  */
 export function planSessions(
   people: readonly { id: string; matches?: readonly { candidateId: string; overall: number }[] }[],

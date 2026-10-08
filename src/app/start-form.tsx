@@ -262,8 +262,8 @@ export default function StartForm({
         </div>
         <div className="fact">
           <b>0</b>
-          <span>No sensitive guesses</span>
-          <span className="fact-sub">age, orientation or status</span>
+          <span>sensitive guesses</span>
+          <span className="fact-sub">age, orientation or relationship status</span>
         </div>
       </div>
 

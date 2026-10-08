@@ -76,6 +76,12 @@ export default async function DemoPage(props: {
         justified it, and {Math.round((citedTurns / Math.max(1, allTurns)) * 100)}% of date turns carry a citation.
       </p>
 
+      <p className="small dim">
+        <b>Why {s.sessions} dates and not {s.ready}:</b> each agent dates the person it ranks first, and two agents who
+        choose each other share one date, so {s.ready} first choices collapse into {s.sessions} distinct pairs. Every agent
+        appears in at least one date.
+      </p>
+
       <div className="facts">
         <div className="fact">
           <b>{s.ready}</b>
@@ -84,6 +90,9 @@ export default async function DemoPage(props: {
         <div className="fact">
           <b>{s.sessions}</b>
           <span>agent dates</span>
+          {/* State the rule, not just the number: 26 first choices collapse
+              into 19 distinct pairs, because mutual choices share a date. */}
+          <span className="fact-sub">{s.ready} first choices, {s.sessions} pairs</span>
         </div>
         <div className="fact">
           <b>{citedTraits}</b>
