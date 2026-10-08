@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import Link from "next/link";
+import { provenanceLabel } from "@/ingest/adapter";
 import type { DateSession, MatchScore, PersonRecord, Run } from "@/core/types";
 
 type Tab = "profiles" | "dates" | "rankings";
@@ -245,7 +246,37 @@ function SourceLinks({ person }: { person: PersonRecord }) {
           Instagram unread
         </span>
       )}
-      {li?.provider && <span className="chip">via {li.provider}</span>}
+      {/* Provenance must be explicit. "via consented-text" was a chip identical
+          in weight to a real read, so pasted text looked like a verified
+          capture. Live, pasted and seeded are now visually distinct. */}
+      {li?.status === "captured" && (
+        <span
+          className={li.readMode === "live" ? "chip" : "chip chip-warn"}
+          title={
+            li.readMode === "live"
+              ? "This system read the public LinkedIn profile."
+              : li.readMode === "seeded"
+                ? "Authored sample data shipped with the demo, never a capture of a real person."
+                : "This text was pasted from the profile by whoever started the run, not read from LinkedIn by this system."
+          }
+        >
+          LinkedIn: {provenanceLabel(li)}
+        </span>
+      )}
+      {ig?.status === "captured" && (
+        <span
+          className={ig.readMode === "live" ? "chip" : "chip chip-warn"}
+          title={
+            ig.readMode === "live"
+              ? "This system read the public Instagram profile."
+              : ig.readMode === "seeded"
+                ? "Authored sample data shipped with the demo, never a capture of a real person."
+                : "This text was pasted from the profile by whoever started the run, not read from Instagram by this system."
+          }
+        >
+          Instagram: {provenanceLabel(ig)}
+        </span>
+      )}
       {person.isSample && (
         <span className="chip chip-warn" title="Both links are the built-in example, so this profile is sample data.">
           Example persona
@@ -259,10 +290,13 @@ function TraitList({
   title,
   items,
   empty,
+  modes,
 }: {
   title: string;
   items: readonly { key: string; label: string; confidence: number; evidence: readonly { source: string; quote: string; line?: number }[] }[];
   empty: string;
+  /** Provenance per source kind, so a citation shows whether it was read live or pasted. */
+  modes?: { linkedin?: string; instagram?: string };
 }) {
   return (
     <div className="panel">
@@ -284,6 +318,9 @@ function TraitList({
                       &ldquo;{e.quote}&rdquo;{" "}
                       <span className="src">
                         {e.source} · line {(e.line ?? 0) + 1}
+                        {modes && (modes[e.source as "linkedin" | "instagram"] ?? "") === "pasted" && (
+                          <> · pasted</>
+                        )}
                       </span>
                     </div>
                   ))}
@@ -318,16 +355,45 @@ function PersonPanel({ person, nameOf }: { person: PersonRecord; nameOf: (id: st
           <SourceLinks person={person} />
         </div>
         <p className="small dim mt16 mb0">
-          Analysed from {a.sources.linkedin.status === "captured" ? "LinkedIn" : "no LinkedIn data"} +{" "}
-          {a.sources.instagram.status === "captured" ? "Instagram" : "no Instagram data"} · {a.traits.length} cited
-          traits · engine: {a.engine}
+          {/* Say what was actually read. "Analysed from LinkedIn + Instagram"
+              was true of neither source when the text was pasted, so it
+              claimed an authority the pipeline never had. */}
+          Read {a.sources.linkedin.status === "captured" ? `LinkedIn (${provenanceLabel(a.sources.linkedin)})` : "no LinkedIn"} +{" "}
+          {a.sources.instagram.status === "captured"
+            ? `Instagram (${provenanceLabel(a.sources.instagram)})`
+            : "no Instagram"}{" "}
+          · {a.traits.length} cited traits · engine: {a.engine}
         </p>
       </section>
 
       <div className="grid grid-2 mt16">
-        <TraitList title="Hobbies" items={a.hobbies} empty="Neither profile states a hobby." />
-        <TraitList title="Interests" items={a.interests} empty="Neither profile names an interest." />
-        <TraitList title="Values" items={a.values} empty="Neither profile states a value." />
+        <TraitList
+          title="Hobbies"
+          items={a.hobbies}
+          empty="Neither profile states a hobby."
+          modes={{
+            linkedin: a.sources.linkedin.readMode,
+            instagram: a.sources.instagram.readMode,
+          }}
+        />
+        <TraitList
+          title="Interests"
+          items={a.interests}
+          empty="Neither profile names an interest."
+          modes={{
+            linkedin: a.sources.linkedin.readMode,
+            instagram: a.sources.instagram.readMode,
+          }}
+        />
+        <TraitList
+          title="Values"
+          items={a.values}
+          empty="Neither profile states a value."
+          modes={{
+            linkedin: a.sources.linkedin.readMode,
+            instagram: a.sources.instagram.readMode,
+          }}
+        />
         <div className="panel">
           <h3>What the agent is looking for</h3>
           {a.needs.length === 0 ? (

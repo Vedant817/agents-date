@@ -326,7 +326,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/amara-okonkwo",
             "status": "captured",
-            "capturedAt": 1790854838946,
+            "capturedAt": 1791483880030,
             "lines": [
               "Amara Okonkwo",
               "Staff Backend Engineer at Monzo",
@@ -335,13 +335,14 @@
               "Mentoring two junior engineers through a local tech programme.",
               "BSc Computer Science, Imperial College London."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/amara-okonkwo",
             "status": "captured",
-            "capturedAt": 1790854838946,
+            "capturedAt": 1791483880030,
             "lines": [
               "Amara",
               "Engineer. Long distance runner. Coffee first.",
@@ -349,12 +350,13 @@
               "Trail running at sunrise is the only reliable way I think.",
               "Natural wine on a Friday, every Friday."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838949
+        "analysedAt": 1791483880131
       },
-      "createdAt": 1790854838949,
+      "createdAt": 1791483880145,
       "matches": [
         {
           "personId": "p1",
@@ -3352,8 +3354,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838993,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880683,
+          "finishedAt": 1791483880688
         },
         {
           "id": "date_p1_p8",
@@ -3595,8 +3597,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880694,
+          "finishedAt": 1791483880694
         },
         {
           "id": "date_p1_p13",
@@ -3851,8 +3853,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880706,
+          "finishedAt": 1791483880706
         }
       ]
     },
@@ -4213,7 +4215,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/tobias-lindqvist",
             "status": "captured",
-            "capturedAt": 1790854838949,
+            "capturedAt": 1791483880145,
             "lines": [
               "Tobias Lindqvist",
               "Bouldering instructor and outdoor guide",
@@ -4222,13 +4224,14 @@
               "I run an inclusive climbing club for beginners every Saturday.",
               "Community work is the part of the job I care about most."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/tobias-lindqvist",
             "status": "captured",
-            "capturedAt": 1790854838949,
+            "capturedAt": 1791483880145,
             "lines": [
               "tobiasclimbs",
               "Climbing. Coffee. Bad puns about crimps.",
@@ -4236,12 +4239,13 @@
               "Weekends are for coaching new climbers, not for resting.",
               "Espresso before every session, non-negotiable."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838951
+        "analysedAt": 1791483880176
       },
-      "createdAt": 1790854838950,
+      "createdAt": 1791483880175,
       "matches": [
         {
           "personId": "p2",
@@ -7528,8 +7532,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880688,
+          "finishedAt": 1791483880689
         }
       ]
     },
@@ -7826,7 +7830,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/yusuf-demir",
             "status": "captured",
-            "capturedAt": 1790854838951,
+            "capturedAt": 1791483880176,
             "lines": [
               "Yusuf Demir",
               "Documentary filmmaker",
@@ -7835,13 +7839,14 @@
               "Films about communities holding on to places that are changing.",
               "BA Film Studies, University of Glasgow."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/yusuf-demir",
             "status": "captured",
-            "capturedAt": 1790854838951,
+            "capturedAt": 1791483880176,
             "lines": [
               "yusufcameras",
               "Filmmaker. Film camera apologist.",
@@ -7849,12 +7854,13 @@
               "Natural wine, arthouse cinema, and long walks to find locations.",
               "Arthouse film festivals are the only ones worth the queue."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838952
+        "analysedAt": 1791483880192
       },
-      "createdAt": 1790854838950,
+      "createdAt": 1791483880190,
       "matches": [
         {
           "personId": "p3",
@@ -10099,8 +10105,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880689,
+          "finishedAt": 1791483880689
         }
       ]
     },
@@ -10499,7 +10505,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/chloe-bennett",
             "status": "captured",
-            "capturedAt": 1790854838952,
+            "capturedAt": 1791483880192,
             "lines": [
               "Chloe Bennett",
               "Sustainability Manager at IKEA",
@@ -10508,13 +10514,14 @@
               "Volunteering with a community garden and a repair café.",
               "MSc Environmental Engineering, University of Leeds."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/chloe-bennett",
             "status": "captured",
-            "capturedAt": 1790854838952,
+            "capturedAt": 1791483880192,
             "lines": [
               "chloegrows",
               "Sustainability, allotments, and slow mornings.",
@@ -10522,12 +10529,13 @@
               "Natural wine, cooking, and repairing rather than replacing.",
               "Running slowly is the only pace I enjoy."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838953
+        "analysedAt": 1791483880217
       },
-      "createdAt": 1790854838950,
+      "createdAt": 1791483880214,
       "matches": [
         {
           "personId": "p4",
@@ -13430,8 +13438,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880689,
+          "finishedAt": 1791483880689
         },
         {
           "id": "date_p10_p4",
@@ -13743,8 +13751,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880694,
+          "finishedAt": 1791483880705
         }
       ]
     },
@@ -14062,7 +14070,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/marcus-oliveira",
             "status": "captured",
-            "capturedAt": 1790854838953,
+            "capturedAt": 1791483880217,
             "lines": [
               "Marcus Oliveira",
               "Head Chef at Ember & Oak",
@@ -14071,13 +14079,14 @@
               "I cook dinner parties for friends most weekends.",
               "Level 3 Professional Cookery, Bristol College."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/marcus-oliveira",
             "status": "captured",
-            "capturedAt": 1790854838953,
+            "capturedAt": 1791483880217,
             "lines": [
               "marcuscooks",
               "Chef. Sourdough obsessive.",
@@ -14085,12 +14094,13 @@
               "Cooking for friends is the actual job; the restaurant pays for it.",
               "Natural wine, farmers markets, and a very small coffee setup."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838954
+        "analysedAt": 1791483880237
       },
-      "createdAt": 1790854838950,
+      "createdAt": 1791483880233,
       "matches": [
         {
           "personId": "p5",
@@ -16917,8 +16927,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880689,
+          "finishedAt": 1791483880689
         }
       ]
     },
@@ -17213,7 +17223,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/priya-raman",
             "status": "captured",
-            "capturedAt": 1790854838954,
+            "capturedAt": 1791483880237,
             "lines": [
               "Priya Raman",
               "Data Scientist at DeepMind",
@@ -17223,13 +17233,14 @@
               "Bouldering four times a week and volunteering at a community climbing wall.",
               "DPhil Statistics, University of Oxford."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/priya-raman",
             "status": "captured",
-            "capturedAt": 1790854838954,
+            "capturedAt": 1791483880237,
             "lines": [
               "priyaruns",
               "New to the city. Bouldering four times a week.",
@@ -17238,12 +17249,13 @@
               "Espresso, pastry bakeries, and far too many notebooks.",
               "Long walk along the river when the algorithm refuses to converge."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838955
+        "analysedAt": 1791483880249
       },
-      "createdAt": 1790854838950,
+      "createdAt": 1791483880244,
       "matches": [
         {
           "personId": "p6",
@@ -20305,8 +20317,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880689,
+          "finishedAt": 1791483880693
         }
       ]
     },
@@ -20705,7 +20717,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/hana-kimura",
             "status": "captured",
-            "capturedAt": 1790854838955,
+            "capturedAt": 1791483880249,
             "lines": [
               "Hana Kimura",
               "Product Designer at Figma",
@@ -20714,13 +20726,14 @@
               "Mentoring designers moving from agency to product work.",
               "BFA Interaction Design, RISD."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/hana-kimura",
             "status": "captured",
-            "capturedAt": 1790854838955,
+            "capturedAt": 1791483880249,
             "lines": [
               "hanadesigns",
               "Designer. Bouldering beginner, enthusiast otherwise.",
@@ -20728,12 +20741,13 @@
               "Film photography on 35mm, arthouse cinema, terrible espresso at home.",
               "Berlin climbing gyms are all equally freezing."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838957
+        "analysedAt": 1791483880256
       },
-      "createdAt": 1790854838951,
+      "createdAt": 1791483880250,
       "matches": [
         {
           "personId": "p7",
@@ -23705,8 +23719,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880693,
+          "finishedAt": 1791483880694
         },
         {
           "id": "date_p24_p7",
@@ -23948,8 +23962,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880706,
+          "finishedAt": 1791483880710
         }
       ]
     },
@@ -24318,7 +24332,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/daniel-mensah",
             "status": "captured",
-            "capturedAt": 1790854838957,
+            "capturedAt": 1791483880256,
             "lines": [
               "Daniel Mensah",
               "Civil Engineer on the HS2 programme",
@@ -24328,13 +24342,14 @@
               "Mentoring two graduate engineers through the ICE scheme.",
               "MEng Civil Engineering, University of Nottingham."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/daniel-mensah",
             "status": "captured",
-            "capturedAt": 1790854838957,
+            "capturedAt": 1791483880256,
             "lines": [
               "dannybuilds",
               "Engineer. Weekend football. Dad of one.",
@@ -24343,12 +24358,13 @@
               "Craft beer after the game, never before.",
               "Cycling to site most days and running when the light is good."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838958
+        "analysedAt": 1791483880269
       },
-      "createdAt": 1790854838951,
+      "createdAt": 1791483880262,
       "matches": [
         {
           "personId": "p8",
@@ -26711,8 +26727,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880694,
+          "finishedAt": 1791483880694
         }
       ]
     },
@@ -27030,7 +27046,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/sofia-ricci",
             "status": "captured",
-            "capturedAt": 1790854838958,
+            "capturedAt": 1791483880269,
             "lines": [
               "Sofia Ricci",
               "Curator at a contemporary gallery in Milan",
@@ -27039,13 +27055,14 @@
               "Organising a monthly artist studio open-house.",
               "MA Art History, Università degli Studi di Milano."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/sofia-ricci",
             "status": "captured",
-            "capturedAt": 1790854838958,
+            "capturedAt": 1791483880269,
             "lines": [
               "sofia.muse",
               "Curator. Gallery hours are the good hours.",
@@ -27053,12 +27070,13 @@
               "Arthouse cinema, modern art, and walking tours with no schedule.",
               "Bouldering got me through a difficult year, honestly."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838959
+        "analysedAt": 1791483880272
       },
-      "createdAt": 1790854838951,
+      "createdAt": 1791483880264,
       "matches": [
         {
           "personId": "p9",
@@ -29594,8 +29612,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880694,
+          "finishedAt": 1791483880694
         }
       ]
     },
@@ -30048,7 +30066,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/owen-blackwell",
             "status": "captured",
-            "capturedAt": 1790854838959,
+            "capturedAt": 1791483880272,
             "lines": [
               "Owen Blackwell",
               "Head Brewer at a small Bristol brewery",
@@ -30057,13 +30075,14 @@
               "Volunteer at a community kitchen teaching people to cook cheaply.",
               "BSc Brewing Science, Heriot-Watt."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/owen-blackwell",
             "status": "captured",
-            "capturedAt": 1790854838959,
+            "capturedAt": 1791483880272,
             "lines": [
               "owenbrews",
               "Brewer. Fermentation is the whole hobby.",
@@ -30071,12 +30090,13 @@
               "Craft beer, natural wine, and cooking for far too many friends.",
               "Bouldering in the morning, brewery in the afternoon."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838961
+        "analysedAt": 1791483880287
       },
-      "createdAt": 1790854838952,
+      "createdAt": 1791483880278,
       "matches": [
         {
           "personId": "p10",
@@ -33192,8 +33212,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880694,
+          "finishedAt": 1791483880705
         }
       ]
     },
@@ -33462,7 +33482,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/grace-nkemelu",
             "status": "captured",
-            "capturedAt": 1790854838961,
+            "capturedAt": 1791483880287,
             "lines": [
               "Grace Nkemelu",
               "Emergency Medicine Registrar, Wales",
@@ -33471,13 +33491,14 @@
               "Mentoring final-year students through their first ED placement.",
               "MBBS, Cardiff University."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/grace-nkemelu",
             "status": "captured",
-            "capturedAt": 1790854838961,
+            "capturedAt": 1791483880287,
             "lines": [
               "drgrace",
               "Registrar. Shift worker. Chronically tired.",
@@ -33485,12 +33506,13 @@
               "Long distance running, trail running when days off line up.",
               "Espresso, early nights, and a lot of planning to see friends."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838961
+        "analysedAt": 1791483880306
       },
-      "createdAt": 1790854838951,
+      "createdAt": 1791483880296,
       "matches": [
         {
           "personId": "p11",
@@ -36215,8 +36237,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838993,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880683,
+          "finishedAt": 1791483880688
         }
       ]
     },
@@ -36447,7 +36469,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/lars-andersen",
             "status": "captured",
-            "capturedAt": 1790854838961,
+            "capturedAt": 1791483880306,
             "lines": [
               "Lars Andersen",
               "Marine Biologist, Scottish Marine Institute",
@@ -36456,13 +36478,14 @@
               "Dive weekends are research, which makes them feel like holidays.",
               "PhD Marine Biology, University of St Andrews."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/lars-andersen",
             "status": "captured",
-            "capturedAt": 1790854838961,
+            "capturedAt": 1791483880306,
             "lines": [
               "larsdives",
               "Marine biologist. Most of my photos are at 15 metres.",
@@ -36470,12 +36493,13 @@
               "Surfing, open water, and cold water that does not feel cold after a minute.",
               "Coffee on the boat, espresso never."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838962
+        "analysedAt": 1791483880320
       },
-      "createdAt": 1790854838951,
+      "createdAt": 1791483880309,
       "matches": [
         {
           "personId": "p12",
@@ -39014,8 +39038,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880705,
+          "finishedAt": 1791483880706
         }
       ]
     },
@@ -39347,7 +39371,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/fatima-al-rashid",
             "status": "captured",
-            "capturedAt": 1790854838962,
+            "capturedAt": 1791483880320,
             "lines": [
               "Fatima Al-Rashid",
               "Founder of Second Serve, a community tennis programme",
@@ -39356,13 +39380,14 @@
               "Organising 14 community tennis events a year.",
               "BSc Business, University of Salford."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/fatima-al-rashid",
             "status": "captured",
-            "capturedAt": 1790854838962,
+            "capturedAt": 1791483880320,
             "lines": [
               "fatimaplays",
               "Tennis. Community. Extremely competitive about both.",
@@ -39370,12 +39395,13 @@
               "Tennis, pickleball, and a lot of running between matches.",
               "Espresso before play, always."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838963
+        "analysedAt": 1791483880339
       },
-      "createdAt": 1790854838951,
+      "createdAt": 1791483880327,
       "matches": [
         {
           "personId": "p13",
@@ -42150,8 +42176,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880706,
+          "finishedAt": 1791483880706
         }
       ]
     },
@@ -42647,7 +42673,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/tom-whitfield",
             "status": "captured",
-            "capturedAt": 1790854838963,
+            "capturedAt": 1791483880339,
             "lines": [
               "Tom Whitfield",
               "Documentary photographer, The Slow Coast",
@@ -42656,13 +42682,14 @@
               "Volunteering with a local surf lifesaving club.",
               "BA Photography, Falmouth University."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/tom-whitfield",
             "status": "captured",
-            "capturedAt": 1790854838963,
+            "capturedAt": 1791483880339,
             "lines": [
               "tomslowcoast",
               "Photographer. Film only, digital only for clients.",
@@ -42670,12 +42697,13 @@
               "Surfing, cold water, and printing my own black and white film.",
               "Bouldering when the tide is out. Coffee always."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838964
+        "analysedAt": 1791483880355
       },
-      "createdAt": 1790854838951,
+      "createdAt": 1791483880342,
       "matches": [
         {
           "personId": "p14",
@@ -45893,8 +45921,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880688,
+          "finishedAt": 1791483880689
         },
         {
           "id": "date_p14_p6",
@@ -46212,8 +46240,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880689,
+          "finishedAt": 1791483880693
         },
         {
           "id": "date_p14_p7",
@@ -46468,8 +46496,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880693,
+          "finishedAt": 1791483880694
         },
         {
           "id": "date_p14_p16",
@@ -46731,8 +46759,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880706,
+          "finishedAt": 1791483880706
         },
         {
           "id": "date_p14_p18",
@@ -47009,8 +47037,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880706,
+          "finishedAt": 1791483880706
         },
         {
           "id": "date_p14_p26",
@@ -47273,8 +47301,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880710,
+          "finishedAt": 1791483880711
         }
       ]
     },
@@ -47564,7 +47592,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/aisha-mbeki",
             "status": "captured",
-            "capturedAt": 1790854838964,
+            "capturedAt": 1791483880355,
             "lines": [
               "Aisha Mbeki",
               "Policy Advisor on education access",
@@ -47573,13 +47601,14 @@
               "Chairing a community access group for first-generation students.",
               "MSc Policy, London School of Economics."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/aisha-mbeki",
             "status": "captured",
-            "capturedAt": 1790854838964,
+            "capturedAt": 1791483880355,
             "lines": [
               "aishapolicy",
               "Policy nerd. Marathon hopeful.",
@@ -47587,12 +47616,13 @@
               "Running, then long walks, then reading policy papers badly at night.",
               "Coffee is the real policy instrument."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838965
+        "analysedAt": 1791483880363
       },
-      "createdAt": 1790854838951,
+      "createdAt": 1791483880349,
       "matches": [
         {
           "personId": "p15",
@@ -50647,8 +50677,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880706,
+          "finishedAt": 1791483880706
         }
       ]
     },
@@ -50980,7 +51010,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/ben-halvorsen",
             "status": "captured",
-            "capturedAt": 1790854838965,
+            "capturedAt": 1791483880363,
             "lines": [
               "Ben Halvorsen",
               "Software Engineer at an independent games studio",
@@ -50989,13 +51019,14 @@
               "Volunteering as a mentor for Code Your Future.",
               "BSc Computer Science, University of Strathclyde."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/ben-halvorsen",
             "status": "captured",
-            "capturedAt": 1790854838965,
+            "capturedAt": 1791483880363,
             "lines": [
               "benmakesgames",
               "Games, bouldering, and too much coffee.",
@@ -51003,12 +51034,13 @@
               "Climbing, tabletop games, and chasing good espresso.",
               "Comics, mostly the art."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838966
+        "analysedAt": 1791483880374
       },
-      "createdAt": 1790854838951,
+      "createdAt": 1791483880359,
       "matches": [
         {
           "personId": "p16",
@@ -54006,8 +54038,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880706,
+          "finishedAt": 1791483880706
         }
       ]
     },
@@ -54482,7 +54514,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/zoe-papadopoulos",
             "status": "captured",
-            "capturedAt": 1790854838966,
+            "capturedAt": 1791483880374,
             "lines": [
               "Zoe Papadopoulos",
               "Yoga teacher and breathwork coach",
@@ -54491,13 +54523,14 @@
               "Volunteering teaching yoga in a women's centre.",
               "BA Theatre Studies, University of Brighton."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/zoe-papadopoulos",
             "status": "captured",
-            "capturedAt": 1790854838966,
+            "capturedAt": 1791483880374,
             "lines": [
               "zoeyoga",
               "Yoga, breathwork, swimming in cold water when brave.",
@@ -54505,12 +54538,13 @@
               "Swimming, open water, and slow stretching before coffee.",
               "Surfing badly in Brighton, enthusiastically."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838967
+        "analysedAt": 1791483880387
       },
-      "createdAt": 1790854838951,
+      "createdAt": 1791483880371,
       "matches": [
         {
           "personId": "p17",
@@ -57396,8 +57430,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880705,
+          "finishedAt": 1791483880706
         },
         {
           "id": "date_p17_p23",
@@ -57632,8 +57666,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880706,
+          "finishedAt": 1791483880706
         }
       ]
     },
@@ -57848,7 +57882,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/nathan-cole",
             "status": "captured",
-            "capturedAt": 1790854838967,
+            "capturedAt": 1791483880387,
             "lines": [
               "Nathan Cole",
               "Furniture maker and workshop owner",
@@ -57857,13 +57891,14 @@
               "Teaching a woodworking evening class at the community college.",
               "BSc Furniture Design, Sheffield Hallam."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/nathan-cole",
             "status": "captured",
-            "capturedAt": 1790854838967,
+            "capturedAt": 1791483880387,
             "lines": [
               "nathanwoodworks",
               "Woodworker. Sawdust is a lifestyle.",
@@ -57871,12 +57906,13 @@
               "Woodworking, canoeing on the rivers, and very strong coffee.",
               "Camping, mostly, and the smell of shavings."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838968
+        "analysedAt": 1791483880407
       },
-      "createdAt": 1790854838951,
+      "createdAt": 1791483880390,
       "matches": [
         {
           "personId": "p18",
@@ -60200,8 +60236,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880706,
+          "finishedAt": 1791483880706
         }
       ]
     },
@@ -60520,7 +60556,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/isla-murray",
             "status": "captured",
-            "capturedAt": 1790854838968,
+            "capturedAt": 1791483880407,
             "lines": [
               "Isla Murray",
               "Clinical Psychologist, NHS",
@@ -60529,13 +60565,14 @@
               "Supervising trainee psychologists and running a peer support group.",
               "DClinPsy, University of Edinburgh."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/isla-murray",
             "status": "captured",
-            "capturedAt": 1790854838968,
+            "capturedAt": 1791483880407,
             "lines": [
               "islamurray",
               "Psychologist. Runner. Learning to be a person outdoors.",
@@ -60543,12 +60580,13 @@
               "Running, climbing, and a lot of cold water swimming in Scotland.",
               "Reading, mostly non-fiction, and bad podcasts."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838969
+        "analysedAt": 1791483880419
       },
-      "createdAt": 1790854838951,
+      "createdAt": 1791483880402,
       "matches": [
         {
           "personId": "p19",
@@ -63062,8 +63100,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880706,
+          "finishedAt": 1791483880706
         }
       ]
     },
@@ -63432,7 +63470,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/kofi-mensah",
             "status": "captured",
-            "capturedAt": 1790854838969,
+            "capturedAt": 1791483880420,
             "lines": [
               "Kofi Mensah",
               "Urban beekeeper running 14 hives across the city",
@@ -63441,13 +63479,14 @@
               "Volunteering with a community allotment and a wildlife trust.",
               "BSc Biology, University of Nottingham."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/kofi-mensah",
             "status": "captured",
-            "capturedAt": 1790854838969,
+            "capturedAt": 1791483880420,
             "lines": [
               "kofibees",
               "Beekeeper in a city that should not have this many bees.",
@@ -63455,12 +63494,13 @@
               "Gardening, cycling everywhere, and cooking what I grow.",
               "Natural wine, and farmers markets at weekends."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838970
+        "analysedAt": 1791483880430
       },
-      "createdAt": 1790854838951,
+      "createdAt": 1791483880411,
       "matches": [
         {
           "personId": "p20",
@@ -66247,8 +66287,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880689,
+          "finishedAt": 1791483880689
         }
       ]
     },
@@ -66545,7 +66585,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/elena-vasquez",
             "status": "captured",
-            "capturedAt": 1790854838970,
+            "capturedAt": 1791483880430,
             "lines": [
               "Elena Vasquez",
               "Creative Director of an independent magazine",
@@ -66554,13 +66594,14 @@
               "Organising an annual zine fair with 60 contributors.",
               "MA Communication Design, Royal College of Art."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/elena-vasquez",
             "status": "captured",
-            "capturedAt": 1790854838970,
+            "capturedAt": 1791483880430,
             "lines": [
               "elenavq",
               "Art director. Prints on every wall.",
@@ -66568,12 +66609,13 @@
               "Film photography, arthouse cinema, and printing my own work.",
               "Galleries, wine, and collecting things I cannot afford."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838971
+        "analysedAt": 1791483880448
       },
-      "createdAt": 1790854838951,
+      "createdAt": 1791483880428,
       "matches": [
         {
           "personId": "p21",
@@ -68825,8 +68867,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880689,
+          "finishedAt": 1791483880689
         },
         {
           "id": "date_p21_p9",
@@ -69095,8 +69137,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880694,
+          "finishedAt": 1791483880694
         }
       ]
     },
@@ -69451,7 +69493,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/ravi-prasad",
             "status": "captured",
-            "capturedAt": 1790854838971,
+            "capturedAt": 1791483880448,
             "lines": [
               "Ravi Prasad",
               "Chef de Partie in a two-star kitchen",
@@ -69460,13 +69502,14 @@
               "I cook a big dinner for friends the first Sunday of every month.",
               "Level 3 Professional Cookery, Dublin Institute of Technology."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/ravi-prasad",
             "status": "captured",
-            "capturedAt": 1790854838971,
+            "capturedAt": 1791483880448,
             "lines": [
               "ravicooks",
               "Pastry chef. Sourdough when days off allow it.",
@@ -69474,12 +69517,13 @@
               "Cooking, natural wine, and a small espresso setup at home.",
               "Surfing badly but enthusiastically, twice a year."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838972
+        "analysedAt": 1791483880456
       },
-      "createdAt": 1790854838951,
+      "createdAt": 1791483880435,
       "matches": [
         {
           "personId": "p22",
@@ -72396,8 +72440,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880689,
+          "finishedAt": 1791483880689
         }
       ]
     },
@@ -72745,7 +72789,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/sarah-whitlock",
             "status": "captured",
-            "capturedAt": 1790854838972,
+            "capturedAt": 1791483880456,
             "lines": [
               "Sarah Whitlock",
               "Occupational Therapist, Norfolk Community Health",
@@ -72754,13 +72798,14 @@
               "Volunteering with a dementia befriending charity.",
               "BSc Occupational Therapy, University of East Anglia."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/sarah-whitlock",
             "status": "captured",
-            "capturedAt": 1790854838972,
+            "capturedAt": 1791483880456,
             "lines": [
               "sarahot",
               "OT. Cold water swimmer. Garden in progress.",
@@ -72768,12 +72813,13 @@
               "Swimming, gardening, and a slow Sunday cooking habit.",
               "Long walks, a big coffee, and a good crime novel."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838973
+        "analysedAt": 1791483880468
       },
-      "createdAt": 1790854838951,
+      "createdAt": 1791483880446,
       "matches": [
         {
           "personId": "p23",
@@ -75868,8 +75914,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880706,
+          "finishedAt": 1791483880706
         }
       ]
     },
@@ -76246,7 +76292,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/mateo-alvarez",
             "status": "captured",
-            "capturedAt": 1790854838973,
+            "capturedAt": 1791483880468,
             "lines": [
               "Mateo Alvarez",
               "Founder of a climate tech startup, pre-seed to Series A",
@@ -76255,13 +76301,14 @@
               "Mentoring two founders through a climate incubator.",
               "MSc Environmental Policy, Imperial College London."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/mateo-alvarez",
             "status": "captured",
-            "capturedAt": 1790854838973,
+            "capturedAt": 1791483880468,
             "lines": [
               "mateobuilds",
               "Founder. Climbs when stressed, which is always.",
@@ -76269,12 +76316,13 @@
               "Climbing, cycling, and thinking about carbon a bit too much.",
               "Espresso, podcast interviews, and very early starts."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838974
+        "analysedAt": 1791483880482
       },
-      "createdAt": 1790854838951,
+      "createdAt": 1791483880459,
       "matches": [
         {
           "personId": "p24",
@@ -79207,8 +79255,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880706,
+          "finishedAt": 1791483880710
         }
       ]
     },
@@ -79535,7 +79583,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/nina-okafor",
             "status": "captured",
-            "capturedAt": 1790854838974,
+            "capturedAt": 1791483880482,
             "lines": [
               "Nina Okafor",
               "Specialist Nurse in paediatric intensive care",
@@ -79544,13 +79592,14 @@
               "Volunteering with a children's charity hospital play team.",
               "BSc Nursing, University of Sheffield."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/nina-okafor",
             "status": "captured",
-            "capturedAt": 1790854838974,
+            "capturedAt": 1791483880482,
             "lines": [
               "ninaonadshift",
               "Nurse. Amateur boxer. Exhausted.",
@@ -79558,12 +79607,13 @@
               "Boxing, running, and a very cold gym in February.",
               "Reading crime novels and cooking when I get a weekend."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838975
+        "analysedAt": 1791483880493
       },
-      "createdAt": 1790854838951,
+      "createdAt": 1791483880469,
       "matches": [
         {
           "personId": "p25",
@@ -82392,8 +82442,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880706,
+          "finishedAt": 1791483880706
         },
         {
           "id": "date_p19_p25",
@@ -82606,8 +82656,8 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880706,
+          "finishedAt": 1791483880706
         }
       ]
     },
@@ -83040,7 +83090,7 @@
             "kind": "linkedin",
             "url": "https://www.linkedin.com/in/callum-fraser",
             "status": "captured",
-            "capturedAt": 1790854838975,
+            "capturedAt": 1791483880493,
             "lines": [
               "Callum Fraser",
               "Mountain Rescue volunteer, 14 years of service",
@@ -83049,13 +83099,14 @@
               "On call 4 weeks a year for the Highlands team.",
               "MEng Civil Engineering, University of Glasgow."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           },
           "instagram": {
             "kind": "instagram",
             "url": "https://www.instagram.com/callum-fraser",
             "status": "captured",
-            "capturedAt": 1790854838975,
+            "capturedAt": 1791483880493,
             "lines": [
               "callumhill",
               "Mountain rescue. Hill walking. Tea, mainly.",
@@ -83063,12 +83114,13 @@
               "Hiking, mountaineering, and a lot of driving to reach both.",
               "Skiing in winter, climbing in summer, tea all year."
             ],
-            "provider": "demo-seed"
+            "provider": "demo-seed",
+            "readMode": "seeded"
           }
         },
-        "analysedAt": 1790854838976
+        "analysedAt": 1791483880502
       },
-      "createdAt": 1790854838951,
+      "createdAt": 1791483880477,
       "matches": [
         {
           "personId": "p26",
@@ -85544,14 +85596,14 @@
             ]
           },
           "status": "complete",
-          "startedAt": 1790854838994,
-          "finishedAt": 1790854838994
+          "startedAt": 1791483880710,
+          "finishedAt": 1791483880711
         }
       ]
     }
   ],
-  "createdAt": 1790854838976,
-  "updatedAt": 1790854838976,
+  "createdAt": 1791483880507,
+  "updatedAt": 1791483880507,
   "notes": [
     "This demo run uses 26 clearly-labelled synthetic personas, not real people's profiles. LinkedIn blocks anonymous reads and Instagram serves a client-only page, so real capture needs an Apify token. The pipeline is identical: add your own links on the start page to read real profiles."
   ]

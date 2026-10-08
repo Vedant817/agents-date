@@ -566,6 +566,9 @@ function src(kind: "linkedin" | "instagram", handle: string, lines: string[]): S
     capturedAt: Date.now(),
     lines,
     provider: "demo-seed",
+    // Explicit, so the profile chips cannot read this authored data as a live
+    // capture of a real person.
+    readMode: "seeded",
   };
 }
 

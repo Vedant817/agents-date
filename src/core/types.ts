@@ -9,6 +9,21 @@
 
 export type SourceKind = "linkedin" | "instagram";
 
+/**
+ * How a source's text was actually obtained. A record with status "captured"
+ * can still be untrustworthy-looking: text the submitter pasted is not the
+ * same as text this system read off the platform. Collapsing the two made a
+ * pasted profile render with the same authority as a live capture, so every
+ * captured record carries its read mode and the UI must show it.
+ */
+export type ReadMode =
+  /** Text read from the platform itself, by a real capture adapter. */
+  | "live"
+  /** Text the submitter pasted from what the profile shows in public. */
+  | "pasted"
+  /** Authored sample data shipped with the demo, never a capture of a person. */
+  | "seeded";
+
 /** The two sources for a person are both required and both fixed in shape. */
 export interface SourcePair {
   readonly linkedin: SourceRecord;
@@ -42,6 +57,12 @@ export interface SourceRecord {
    * profile came from a live provider or the offline snapshot path.
    */
   readonly provider?: string;
+  /**
+   * How the text was obtained. Required on "captured" records: without it the
+   * UI cannot tell a real read of the platform from text the submitter typed,
+   * and pasted text was being rendered with the same authority as a capture.
+   */
+  readonly readMode?: ReadMode;
 }
 
 export type EvidenceKind = "headline" | "about" | "experience" | "education" | "skill" | "post" | "bio" | "interest" | "location";
