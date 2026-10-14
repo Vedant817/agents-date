@@ -28,6 +28,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </Link>
             <nav className="nav" aria-label="Primary">
               <Link href="/">Start</Link>
+              <Link href="/runs">Runs</Link>
+              <Link href="/date">Instant date</Link>
               <Link href="/demo">Live demo</Link>
               <Link href="/method">How it works</Link>
             </nav>
