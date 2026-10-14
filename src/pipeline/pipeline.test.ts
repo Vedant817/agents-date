@@ -624,6 +624,51 @@ describe("processPerson (consented text, no network)", () => {
       expect(p.status, `Instagram form: ${instagram}`).toBe("ready");
     }
   });
+
+  it("excludes a school-age profile instead of dating it", async () => {
+    // A dating product must refuse minors on content, not on attestation.
+    // The exclusion is a visible failure with a fix path, never silent, and
+    // the person carries no analysis into the pool.
+    const cases = [
+      "Casey Rivera\nHigh school student\nBasketball and gaming.",
+      "Jo Kim\nJunior at Lincoln High\nClass of 2028. Soccer and art.",
+      "Alex Morgan\n16 years old\nSwimming and music.",
+    ];
+    for (const linkedinText of cases) {
+      const adapter = new ConsentedTextAdapter();
+      adapter.supply("linkedin", "https://www.linkedin.com/in/minor-case", linkedinText);
+      adapter.supply("instagram", "https://www.instagram.com/minor.case", "Just a kid.");
+      const p = await processPerson(
+        "r",
+        { linkedin: "https://linkedin.com/in/minor-case", instagram: "https://instagram.com/minor.case" },
+        [adapter],
+        "m",
+      );
+      expect(p.status, linkedinText).toBe("failed");
+      expect(p.error, linkedinText).toMatch(/18 or older/);
+      expect(p.analysis, linkedinText).toBeUndefined();
+    }
+  });
+
+  it("does not mistake an educator for a student", async () => {
+    // "High school teacher" and "coaching middle schoolers" mark the writer
+    // as the adult in the room. A backstop that refuses them would punish
+    // exactly the mentors the product wants.
+    const adapter = new ConsentedTextAdapter();
+    adapter.supply(
+      "linkedin",
+      "https://www.linkedin.com/in/mentor-case",
+      "Robin Sage\nHigh school teacher and robotics coach.\nMentoring students in engineering.",
+    );
+    adapter.supply("instagram", "https://www.instagram.com/mentor.case", "Coach. Robotics. Coffee.");
+    const p = await processPerson(
+      "r",
+      { linkedin: "https://linkedin.com/in/mentor-case", instagram: "https://instagram.com/mentor.case" },
+      [adapter],
+      "m",
+    );
+    expect(p.status).toBe("ready");
+  });
 });
 
 describe("summarise", () => {  it("counts people and unique sessions", () => {

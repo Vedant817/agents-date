@@ -93,6 +93,50 @@ export function validateSubmission(
 }
 
 /**
+ * School-age cues that mark a profile as underage. Deliberately student-side
+ * phrasing only: "high school teacher" or "back in high school" must not
+ * refuse an adult, so bare "high school" is not a cue — but reminiscence
+ * without an educator word ("back in high school, I ran track") still
+ * refuses, because a missed minor is worse than a false refusal the error
+ * message tells the user how to fix.
+ */
+const MINOR_PATTERNS: { pattern: RegExp; label: string }[] = [
+  { pattern: /\bhigh school (student|senior|junior|sophomore|freshman)\b/i, label: "high school student" },
+  { pattern: /\bmiddle school\b/i, label: "middle school" },
+  { pattern: /\bsecondary school\b/i, label: "secondary school" },
+  { pattern: /\bclass of 20(2[7-9]|3\d)\b/i, label: "upcoming graduating class" },
+  { pattern: /\bgrade (9|10|11)\b/i, label: "school grade" },
+  { pattern: /\b(9|10|11)th grade\b/i, label: "school grade" },
+  { pattern: /\byear (7|8|9|10|11)\b/i, label: "school year" },
+  { pattern: /\bform (1|2|3|4|5)\b/i, label: "school form" },
+  { pattern: /\bunder (1[0-7])\b/i, label: "underage" },
+  { pattern: /\b(1[0-7]) years old\b/i, label: "underage" },
+  { pattern: /\bin high school\b/i, label: "in high school" },
+];
+
+/** Words that mark the writer as the adult in the room, not the student. */
+const EDUCATOR_WORDS = /\b(teacher|coach|mentor|tutor|professor|lecturer|graduated|alumni|reunion|principal)\b/i;
+
+/**
+ * Returns the matched cue label when captured profile text reads as
+ * school-age, else null. Runs on captured lines only — never on links.
+ */
+export function findMinorCue(lines: readonly string[]): string | null {
+  for (const line of lines) {
+    for (const { pattern, label } of MINOR_PATTERNS) {
+      if (!pattern.test(line)) continue;
+      // "High school teacher", "coaching middle schoolers", "back in high
+      // school at the reunion": the educator word clears the line.
+      if (label === "in high school" || label === "secondary school") {
+        if (EDUCATOR_WORDS.test(line)) continue;
+      }
+      return label;
+    }
+  }
+  return null;
+}
+
+/**
  * Runs capture -> analysis -> ranking for one person.
  * Never throws: an unreadable source becomes a recorded gap, not a crash.
  */
@@ -133,6 +177,24 @@ export async function processPerson(
   };
 
   const [linkedin, instagram] = await Promise.all([capture("linkedin"), capture("instagram")]);
+
+  // Age gate, enforced on content rather than claimed links. A dating product
+  // must refuse school-age profiles even when the submitter attested
+  // otherwise: attestations are cheap, pasted text is evidence.
+  const capturedLines = [...(linkedin.lines ?? []), ...(instagram.lines ?? [])];
+  const minorCue = findMinorCue(capturedLines);
+  if (minorCue) {
+    return {
+      id,
+      runId,
+      displayName: entry.name || "This person",
+      linkedinUrl: li.url!,
+      instagramUrl: ig.url!,
+      status: "failed",
+      error: `This profile mentions ${minorCue}, so it was excluded: everyone in a run must be 18 or older. If that reading is wrong, remove the line and resubmit.`,
+      createdAt: Date.now(),
+    };
+  }
 
   const analysis = analyse(id, { linkedin, instagram }, entry.name);
   const bothUnread = linkedin.status !== "captured" && instagram.status !== "captured";

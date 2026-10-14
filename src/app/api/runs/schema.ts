@@ -19,8 +19,8 @@ export const EntrySchema = z.object({
 });
 
 export const BodySchema = z.object({
-  // 20 people = at most 40 paid captures in one request. The demo is a
-  // prebuilt file, so this cap does not limit what can be *viewed*.
+  // 20 people = at most 40 paid captures in one request. The showcase is a
+  // committed file, so this cap does not limit what can be *viewed*.
   entries: z
     .array(EntrySchema, {
       required_error: "Add at least one person.",
@@ -28,6 +28,15 @@ export const BodySchema = z.object({
     })
     .min(1, "Add at least one person.")
     .max(MAX_PEOPLE, `${MAX_PEOPLE} people per run is the limit.`),
+  // Trust gates, not paperwork. Anyone can paste anyone's bio with any URLs,
+  // so the submitter must attest consent and adulthood explicitly — the
+  // honor system is stated as a fact nowhere in this product.
+  consent: z.literal(true, {
+    errorMap: () => ({ message: "Confirm every person in this run consented to being included." }),
+  }),
+  adult: z.literal(true, {
+    errorMap: () => ({ message: "Confirm everyone in this run is 18 or older." }),
+  }),
 });
 
 export interface PersonIssue {
@@ -109,10 +118,16 @@ export function readEntries(raw: unknown):
     // shape error first meant one missing field hid every other problem, so
     // the user fixed one thing, resubmitted, and only then found the next.
     const issues = [...zodIssues(shape.error), ...linkIssuesFromUnknown(raw)];
-    // Whole-body errors (null, an array, a missing entries list) have no
-    // person index to attach to, so they surface as the headline instead.
+    // Whole-body errors (null, an array, a missing entries list, or an
+    // unchecked attestation box) have no person index to attach to, so they
+    // surface as the headline instead. Attestations come first: refusing to
+    // confirm consent dwarfs any link typo.
+    const bodyLevel = shape.error.issues.filter(
+      (i) => Array.isArray(i.path) && i.path.length === 1 && typeof i.path[0] === "string",
+    );
     const topLevel = shape.error.issues.filter((i) => !Array.isArray(i.path) || i.path.length === 0);
     const message =
+      (bodyLevel.length > 0 ? friendlyMessage(bodyLevel[0]!) : undefined) ??
       (topLevel.length > 0 ? friendlyMessage(topLevel[0]!) : undefined) ??
       issues[0]?.message ??
       shape.error.issues[0]?.message ??

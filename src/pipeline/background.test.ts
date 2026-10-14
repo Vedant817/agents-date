@@ -8,10 +8,16 @@ import { getStore } from "@/store/runs";
 import { emptyRun, newRunId } from "@/pipeline/run";
 
 function post(body: unknown) {
+  // Trust attestations travel on every submission; the helper adds them so
+  // these tests exercise processing rather than the checkbox gate.
+  const withTrust =
+    typeof body === "object" && body !== null && !Array.isArray(body)
+      ? { consent: true, adult: true, ...body }
+      : body;
   return new Request("https://x.test/api/runs", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify(withTrust),
   });
 }
 

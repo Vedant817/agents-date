@@ -15,11 +15,18 @@ const text = (name: string) => ({
   instagramText: [`${name} Example`, "Runner. Coffee obsessive.", "Six weeks to a sub-3 marathon."].join("\n"),
 });
 
+function withTrust(body: unknown): unknown {
+  if (typeof body === "object" && body !== null && !Array.isArray(body)) {
+    return { consent: true, adult: true, ...body };
+  }
+  return body;
+}
+
 function post(url: string, body: unknown, contentType = "application/json") {
   return new Request(url, {
     method: "POST",
     headers: { "content-type": contentType },
-    body: typeof body === "string" ? body : JSON.stringify(body),
+    body: typeof body === "string" ? body : JSON.stringify(withTrust(body)),
   });
 }
 

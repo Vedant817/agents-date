@@ -4,11 +4,32 @@ import { resetRateLimit } from "@/api/rate-limit";
 import { waitForRun } from "@/pipeline/background";
 import { getStore } from "@/store/runs";
 
+/**
+ * Trust attestations are required on every submission. The helper adds them
+ * so each test exercises what it names (validation, caps, creation) rather
+ * than tripping on a missing checkbox. Tests for the attestations themselves
+ * build their requests by hand, below.
+ */
+function withTrust(body: unknown): unknown {
+  if (typeof body === "object" && body !== null && !Array.isArray(body)) {
+    return { consent: true, adult: true, ...body };
+  }
+  return body;
+}
+
 function post(body: unknown, contentType = "application/json") {
   return new Request("https://x.test/api/runs", {
     method: "POST",
     headers: { "content-type": contentType },
-    body: typeof body === "string" ? body : JSON.stringify(body),
+    body: typeof body === "string" ? body : JSON.stringify(withTrust(body)),
+  });
+}
+
+function rawPost(body: unknown) {
+  return new Request("https://x.test/api/runs", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
   });
 }
 
@@ -74,6 +95,42 @@ describe("POST /api/runs validation", () => {
     // Nothing in a live run is sample data: the flag no longer exists.
     expect(saved).not.toHaveProperty("isSample");
     expect(saved?.people.every((p) => !("isSample" in p))).toBe(true);
+  });
+
+  it("refuses a submission without the consent attestation", async () => {
+    // Anyone can paste anyone's bio, so the attestation is the consent gate.
+    // A missing checkbox must fail loudly even when the links are perfect.
+    const good = {
+      entries: [
+        {
+          name: "Ari Vance",
+          linkedin: "linkedin.com/in/ari-vance",
+          instagram: "instagram.com/ari.vance",
+          linkedinText: "Ari Vance\nEngineer.",
+          instagramText: "Ari Vance\nRunner.",
+        },
+      ],
+      adult: true,
+    };
+    const res = await POST(rawPost(good));
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toMatch(/consented to being included/i);
+  });
+
+  it("refuses a submission without the adult attestation", async () => {
+    const good = {
+      entries: [
+        {
+          name: "Ari Vance",
+          linkedin: "linkedin.com/in/ari-vance",
+          instagram: "instagram.com/ari.vance",
+        },
+      ],
+      consent: true,
+    };
+    const res = await POST(rawPost(good));
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toMatch(/18 or older/i);
   });
 
   it("does not burn the rate budget on invalid requests", async () => {

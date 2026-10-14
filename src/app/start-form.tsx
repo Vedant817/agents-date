@@ -138,6 +138,11 @@ export default function StartForm({
     [router],
   );
 
+  // Trust attestations. Anyone can paste anyone's bio, so the submitter must
+  // confirm consent and adulthood explicitly — no pre-checked boxes, ever.
+  const [consent, setConsent] = useState(false);
+  const [adult, setAdult] = useState(false);
+
   async function submit() {    // Only NEW rows are payload. Restored rows already exist in the run, so
     // sending them is rejected as duplicates — and that is what made the resume
     // path unusable.
@@ -162,6 +167,8 @@ export default function StartForm({
           linkedinText: e.linkedinText || undefined,
           instagramText: e.instagramText || undefined,
         })),
+        consent,
+        adult,
       };
       // Resuming a run posts to the extend endpoint, which merges into the
       // existing run instead of creating a second one and orphaning the first.
@@ -404,6 +411,24 @@ export default function StartForm({
             </div>
           ),
         )}
+
+        <fieldset className="consent">
+          <legend className="small dim">Before this runs on anyone</legend>
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+            />
+            <span>
+              Every person in this run consented to being included — I pasted my own profile, or they asked me to.
+            </span>
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} />
+            <span>Everyone in this run is 18 or older. Profiles that read as school-age are refused automatically.</span>
+          </label>
+        </fieldset>
 
         <div className="cluster mt16">
           <button

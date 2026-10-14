@@ -23,6 +23,8 @@ async function createRun(): Promise<string> {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
+        consent: true,
+        adult: true,
         entries: [
           { linkedin: "linkedin.com/in/a", instagram: "instagram.com/a", ...text("A") },
           { linkedin: "linkedin.com/in/b", instagram: "instagram.com/b", ...text("B") },

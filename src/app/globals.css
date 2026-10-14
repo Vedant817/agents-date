@@ -286,6 +286,43 @@ p {
   margin-top: 18px;
 }
 
+.consent {
+  margin: 18px 0 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.consent legend {
+  padding: 0 8px;
+  font-weight: 650;
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 7px 0;
+  cursor: pointer;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.check + .check {
+  border-top: 1px dashed var(--line);
+}
+
+.check input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  flex: none;
+  margin-top: 2px;
+  accent-color: var(--accent-strong);
+  cursor: pointer;
+}
+
 .cluster {
   display: flex;
   flex-wrap: wrap;
