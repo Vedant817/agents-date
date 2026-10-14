@@ -967,6 +967,24 @@ ul.clean b {
   text-transform: uppercase;
 }
 
+.hero-date {
+  margin-top: 0;
+  margin-bottom: 26px;
+  border-left: 4px solid var(--rose);
+}
+
+.trailer {
+  margin: 10px 0 4px;
+  padding: 10px 12px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
+  background: var(--paper);
+}
+
+.trailer p {
+  margin-top: 6px;
+}
+
 .eval-chips {
   margin-top: 0;
   margin-bottom: 10px;

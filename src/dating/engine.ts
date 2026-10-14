@@ -308,6 +308,42 @@ function evaluate(
   };
 }
 
+export type DateVerdict = "Second date" | "Maybe" | "Skip";
+
+/**
+ * The trailer verdict: a calibrated reading of the score, not the score
+ * itself. "0.72 vs 0.68" means nothing to a visitor; the verdict plus the
+ * best line and the tension is what makes a date skimmable — reading the
+ * full transcript becomes optional instead of mandatory.
+ */
+export function dateVerdict(overall: number): DateVerdict {
+  if (overall >= 0.7) return "Second date";
+  if (overall >= 0.5) return "Maybe";
+  return "Skip";
+}
+
+export interface DateTrailer {
+  readonly verdict: DateVerdict;
+  readonly overall: number;
+  /** First shared-ground turn, if the date found any. */
+  readonly bestLine: string | null;
+  /** First mismatch turn, if anything grated. */
+  readonly tension: string | null;
+}
+
+/** Picks the two skimmable moments out of a finished date. Pure readout. */
+export function trailerFor(session: DateSession): DateTrailer | null {
+  if (!session.evaluation) return null;
+  const best = session.turns.find((t) => t.move === "shared_ground") ?? null;
+  const tension = session.turns.find((t) => t.move === "mismatch") ?? null;
+  return {
+    verdict: dateVerdict(session.evaluation.overall),
+    overall: session.evaluation.overall,
+    bestLine: best ? best.text : null,
+    tension: tension ? tension.text : null,
+  };
+}
+
 /**
  * A person's short, safe label for use inside a sentence.
  *

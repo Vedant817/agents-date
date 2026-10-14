@@ -1,6 +1,10 @@
 import StartForm from "./start-form";
+import HeroDate from "./hero-date";
 import { getStore } from "@/store/runs";
-import type { Run } from "@/core/types";
+import { SHOWCASE_RUN_ID } from "@/pipeline/run";
+import type { DateSession, Run } from "@/core/types";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 
 /**
  * Server component: the ONLY place that may read server-only env. The form
@@ -28,5 +32,48 @@ export default async function StartPage(props: { searchParams: Promise<{ from?: 
     }
   }
 
-  return <StartForm captureEnabled={captureEnabled} extendRun={extendRun} />;
+  return (
+    <main>
+      <HeroSlot />
+      <StartForm captureEnabled={captureEnabled} extendRun={extendRun} />
+    </main>
+  );
+}
+
+/**
+ * The ten-second hook lives here, on the server: the showcase's best date
+ * plays itself above the form, so a stranger sees value before any labor.
+ * No showcase file, no hero — the form stands alone rather than faking one.
+ */
+async function HeroSlot() {
+  let run: Run | null = null;
+  try {
+    run = JSON.parse(
+      await readFile(path.join(process.cwd(), "data", `${SHOWCASE_RUN_ID}.json`), "utf8"),
+    ) as Run;
+  } catch {
+    return null;
+  }
+  const seen = new Map<string, DateSession>();
+  for (const p of run.people) {
+    for (const s of p.sessions ?? []) {
+      if (!seen.has(s.id)) seen.set(s.id, s);
+    }
+  }
+  let best: DateSession | null = null;
+  for (const s of seen.values()) {
+    if (!best || (s.evaluation?.overall ?? 0) > (best.evaluation?.overall ?? 0)) best = s;
+  }
+  if (!best) return null;
+  const names = new Map(run.people.map((p) => [p.id, p.displayName ?? p.id]));
+  const aName = names.get(best.personAId) ?? "this person";
+  const bName = names.get(best.personBId) ?? "this person";
+  return (
+    <HeroDate
+      session={best}
+      aName={aName}
+      bName={bName}
+      dateUrl={`/date?run=${run.id}&a=${best.personAId}&b=${best.personBId}`}
+    />
+  );
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { analyse } from "@/analysis/analyse";
-import { runDate } from "@/dating/engine";
+import { dateVerdict, runDate, trailerFor } from "@/dating/engine";
 import { rankCandidates, scoreMatch, MATCH_WEIGHTS, MATCH_COMPONENTS } from "@/matching/rank";
 import { computeNetwork, planSessions, summarise, validateSubmission, emptyRun } from "@/pipeline/run";
 import { ConsentedTextAdapter } from "@/ingest/public";
@@ -317,8 +317,7 @@ describe("dating", () => {
     expect(s.evaluation?.sharedGround ?? 1).toBeLessThan(0.3);
   });
 
-  it("varies the reflection closer with the outcome instead of repeating one line", () => {
-    // Every date used to end on the same boilerplate sentence, which made
+  it("varies the reflection closer with the outcome instead of repeating one line", () => {    // Every date used to end on the same boilerplate sentence, which made
     // unrelated pairs read identically. The closer is a suggestion, never a
     // claim, and follows the overlap.
     const reflectionText = (s: ReturnType<typeof runDate>) =>
@@ -327,6 +326,25 @@ describe("dating", () => {
     const disjoint = reflectionText(runDate("r", a, d));
     expect(overlapping.some((t) => /low-stakes meeting/.test(t))).toBe(false);
     expect(disjoint.some((t) => /low-stakes meeting/.test(t))).toBe(true);
+  });
+
+  it("summarises a date as a skimmable trailer with a calibrated verdict", () => {
+    expect(dateVerdict(0.94)).toBe("Second date");
+    expect(dateVerdict(0.7)).toBe("Second date");
+    expect(dateVerdict(0.69)).toBe("Maybe");
+    expect(dateVerdict(0.5)).toBe("Maybe");
+    expect(dateVerdict(0.49)).toBe("Skip");
+    expect(dateVerdict(0)).toBe("Skip");
+
+    const dated = runDate("r", a, c);
+    const trailer = trailerFor(dated)!;
+    expect(trailer).not.toBeNull();
+    expect(trailer.overall).toBe(dated.evaluation!.overall);
+    expect(trailer.verdict).toBe(dateVerdict(dated.evaluation!.overall));
+    // Best line is the shared-ground turn when the date found ground.
+    expect(trailer.bestLine).toBe(
+      dated.turns.find((t) => t.move === "shared_ground")?.text ?? null,
+    );
   });
 
   it("ends with both agents reflecting", () => {

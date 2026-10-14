@@ -220,7 +220,7 @@ export default function StartForm({
   }
 
   return (
-    <main>
+    <>
       <div className="page-head">
         <p className="eyebrow">Start a run</p>
         <h1>
@@ -565,6 +565,6 @@ export default function StartForm({
           Open the showcase run
         </Link>
       </section>
-    </main>
+    </>
   );
 }

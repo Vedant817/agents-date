@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { provenanceLabel, provenanceTag } from "@/ingest/adapter";
+import { trailerFor } from "@/dating/engine";
+import ShareVerdict from "../../share-verdict";
 import type { DateSession, MatchScore, PersonRecord, Run } from "@/core/types";
 
 type Tab = "profiles" | "dates" | "rankings";
@@ -480,7 +482,15 @@ function SessionPanel({
         <h3 className="mb0">
           {aVoice} <span className="dim">×</span> {bVoice}
         </h3>
-        {session.evaluation && <span className="score-pill">{session.evaluation.overall}</span>}
+        <div className="cluster">
+          {session.evaluation && <span className="score-pill">{session.evaluation.overall}</span>}
+          <ShareVerdict
+            session={session}
+            aName={aName}
+            bName={bName}
+            url={typeof window !== "undefined" ? window.location.href : ""}
+          />
+        </div>
       </div>
       {session.evaluation && (
         <div className="tag-row eval-chips">
@@ -489,6 +499,19 @@ function SessionPanel({
           <span className="chip">mismatch risk {Math.round(session.evaluation.mismatchRisk * 100)}%</span>
         </div>
       )}
+      {(() => {
+        const trailer = trailerFor(session);
+        if (!trailer) return null;
+        return (
+          <div className="trailer" aria-label="Date trailer">
+            <span className="chip chip-accent">
+              {trailer.verdict} · {trailer.overall.toFixed(2)}
+            </span>
+            {trailer.bestLine && <p className="small mb0">Best line: {trailer.bestLine}</p>}
+            {trailer.tension && <p className="small dim mb0">Tension: {trailer.tension}</p>}
+          </div>
+        );
+      })()}
       <div className="transcript">
         {session.turns.map((t) => (
           <div key={t.seq} className={`turn ${t.role === "A" ? "a" : "b"}`}>

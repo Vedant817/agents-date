@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { DateSession } from "@/core/types";
 import { provenanceTag } from "@/ingest/adapter";
+import { trailerFor } from "@/dating/engine";
+import ShareVerdict from "../share-verdict";
 import type { DateRunOption } from "./page";
 
 const TURN_MS = 1600;
@@ -165,6 +167,22 @@ export default function DatePlayer({
           <button className="btn btn-primary" type="button" onClick={() => void start()} disabled={loading || !a || !b}>
             {loading ? "Asking their agents…" : session ? "Date again" : "Start the date"}
           </button>
+          <button
+            className="btn btn-sm"
+            type="button"
+            disabled={loading || people.length < 2}
+            onClick={() => {
+              // Zero-homework entry: two strangers, right now. The pairing
+              // change invalidates any previous date via the effect below.
+              const first = people[Math.floor(Math.random() * people.length)]!;
+              const rest = people.filter((p) => p.id !== first.id);
+              const second = rest[Math.floor(Math.random() * rest.length)]!;
+              setA(first.id);
+              setB(second.id);
+            }}
+          >
+            ♥ Surprise me
+          </button>
           {session && !playing && !finished && (
             <button className="btn btn-sm" type="button" onClick={() => setPlaying(true)}>
               Resume
@@ -287,6 +305,24 @@ export default function DatePlayer({
                 <span className="chip">shared ground {Math.round(session.evaluation.sharedGround * 100)}%</span>
                 <span className="chip">reciprocity {Math.round(session.evaluation.reciprocity * 100)}%</span>
                 <span className="chip">mismatch risk {Math.round(session.evaluation.mismatchRisk * 100)}%</span>
+              </div>
+              {(() => {
+                const trailer = trailerFor(session);
+                if (!trailer) return null;
+                return (
+                  <p className="small mb0">
+                    Verdict: <b>{trailer.verdict}</b> · {trailer.overall.toFixed(2)}
+                    {trailer.bestLine ? ` — "${trailer.bestLine}"` : ""}
+                  </p>
+                );
+              })()}
+              <div className="cluster mt8">
+                <ShareVerdict
+                  session={session}
+                  aName={nameOf(session.personAId)}
+                  bName={nameOf(session.personBId)}
+                  url={typeof window !== "undefined" ? window.location.href : ""}
+                />
               </div>
               {session.evaluation.notes.length > 0 && (
                 <details className="disclose">
