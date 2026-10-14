@@ -1,14 +1,7 @@
 import { NextResponse } from "next/server";
-import { ConsentedTextAdapter } from "@/ingest/public";
-import { buildAdapters, normaliseInstagramUrl, normaliseLinkedInUrl } from "@/ingest/setup";
 import type { Run } from "@/core/types";
-import {
-  computeNetwork,
-  emptyRun,
-  newRunId,
-  processPerson,
-  summarise,
-} from "@/pipeline/run";
+import { emptyRun, newRunId } from "@/pipeline/run";
+import { startCreateRun } from "@/pipeline/background";
 import { getStore } from "@/store/runs";
 import { rateLimit } from "@/api/rate-limit";
 import { readEntries } from "./schema";
@@ -59,34 +52,21 @@ export async function POST(request: Request) {
   run.status = "running";
   await store.save(run);
 
-  const adapters = buildAdapters();
-  const supplied = adapters.find((a): a is ConsentedTextAdapter => a instanceof ConsentedTextAdapter);
-  entries.forEach((entry) => {
-    if (!supplied) return;
-    if (entry.linkedinText?.trim()) supplied.supply("linkedin", normaliseLinkedInUrl(entry.linkedin), entry.linkedinText);
-    if (entry.instagramText?.trim()) supplied.supply("instagram", normaliseInstagramUrl(entry.instagram), entry.instagramText);
-  });
+  // The slow work — capture per person, then dating and ranking — runs in the
+  // background. The client follows progress over SSE and opens the run when
+  // it completes, instead of holding this connection open for the whole job.
+  startCreateRun(
+    runId,
+    entries.map((entry) => ({
+      linkedin: entry.linkedin,
+      instagram: entry.instagram,
+      name: entry.name,
+      linkedinText: entry.linkedinText,
+      instagramText: entry.instagramText,
+    })),
+  );
 
-  const people = [];
-  for (const [i, entry] of entries.entries()) {
-    const person = await processPerson(
-      runId,
-      { linkedin: entry.linkedin, instagram: entry.instagram, name: entry.name },
-      adapters,
-      `p${i + 1}`,
-    );
-    people.push(person);
-  }
-
-  const computed = computeNetwork(people);
-  const finalRun: Run = {
-    ...run,
-    people: computed,
-    status: computed.some((p) => p.status === "ready") ? "complete" : "failed",
-  };
-  const saved = await store.save(finalRun);
-
-  return NextResponse.json({ runId: saved.id, summary: summarise(saved) }, { status: 201 });
+  return NextResponse.json({ runId }, { status: 202 });
 }
 
 // Runs are created with POST only. Answer other methods with JSON rather

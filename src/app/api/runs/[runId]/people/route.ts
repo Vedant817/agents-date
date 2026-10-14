@@ -1,13 +1,8 @@
 import { NextResponse } from "next/server";
-import { ConsentedTextAdapter } from "@/ingest/public";
-import { buildAdapters, normaliseInstagramUrl, normaliseLinkedInUrl } from "@/ingest/setup";
-import type { PersonRecord, Run } from "@/core/types";
-import {
-  computeNetwork,
-  processPerson,
-  summarise,
-  DEMO_RUN_ID,
-} from "@/pipeline/run";
+import { normaliseInstagramUrl, normaliseLinkedInUrl } from "@/ingest/setup";
+import type { Run } from "@/core/types";
+import { DEMO_RUN_ID } from "@/pipeline/run";
+import { startExtendRun } from "@/pipeline/background";
 import { getStore } from "@/store/runs";
 import { RATE_ACTIONS, rateLimit } from "@/api/rate-limit";
 import { MAX_PEOPLE, readEntries } from "../../schema";
@@ -112,103 +107,21 @@ export async function POST(request: Request, context: { params: Promise<{ runId:
     );
   }
 
-  const adapters = buildAdapters();
-  const supplied = adapters.find((a): a is ConsentedTextAdapter => a instanceof ConsentedTextAdapter);
-  entries.forEach((entry) => {
-    if (!supplied) return;
-    if (entry.linkedinText?.trim()) supplied.supply("linkedin", normaliseLinkedInUrl(entry.linkedin), entry.linkedinText);
-    if (entry.instagramText?.trim()) supplied.supply("instagram", normaliseInstagramUrl(entry.instagram), entry.instagramText);
-  });
+  // Validation, capacity and duplicate checks above are synchronous, so a
+  // doomed request is refused before any capture. The slow work runs in the
+  // background; the client follows progress over SSE on the same run id.
+  startExtendRun(
+    runId,
+    entries.map((entry) => ({
+      linkedin: entry.linkedin,
+      instagram: entry.instagram,
+      name: entry.name,
+      linkedinText: entry.linkedinText,
+      instagramText: entry.instagramText,
+    })),
+  );
 
-  // Capture outside the lock: this is the slow part, and holding the lock
-  // across it would serialise every other writer on this run for nothing.
-  const added: PersonRecord[] = [];
-  for (const [i, entry] of entries.entries()) {
-    added.push(
-      await processPerson(
-        runId,
-        { linkedin: entry.linkedin, instagram: entry.instagram, name: entry.name },
-        adapters,
-        // Placeholder id; the real one is assigned under the lock, where the
-        // authoritative people count is known. Two concurrent extends would
-        // otherwise both mint p4/p5/p6 and one batch would be lost.
-        `tmp_${i + 1}`,
-      ),
-    );
-  }
-
-  // Merge under the run's lock, re-reading the run, so a concurrent extend
-  // cannot be clobbered and both callers cannot be told 200 while one person
-  // silently disappears.
-  let saved: Run | null = null;
-  let conflict: string | null = null;
-  let addedCount = 0;
-  try {
-    const result = await store.update(runId, (fresh) => {
-      // Re-check the cap against the fresh copy.
-      if (fresh.people.length + added.length > MAX_PEOPLE) {
-        conflict = `This run already has ${fresh.people.length} ${peopleWord(fresh.people.length)}, so these people no longer fit. Try again.`;
-        return null;
-      }
-      // Re-check duplicates against the fresh copy. Doing this only before the
-      // capture let a case-variant or a concurrent upload through.
-      const known = new Set<string>([
-        ...fresh.people.map((p) => p.linkedinUrl.toLowerCase()),
-        ...fresh.people.map((p) => p.instagramUrl.toLowerCase()),
-      ]);
-      for (const person of added) {
-        if (known.has(person.linkedinUrl.toLowerCase()) || known.has(person.instagramUrl.toLowerCase())) {
-          conflict =
-            conflict ??
-            `${person.displayName ?? "One of these people"} is already in this run, so nothing new would be added.`;
-          return null;
-        }
-      }
-
-      // Continue the run's numbering from the authoritative count.
-      const firstIndex = fresh.people.length + 1;
-      const numbered = added.map((person, i) => ({ ...person, id: `p${firstIndex + i}` }));
-      addedCount = numbered.length;
-
-      // Recompute across everyone so the existing profiles gain the new
-      // candidates in their rankings and the new dates on their pages.
-      const recomputed = computeNetwork([...fresh.people, ...numbered]);
-      const notes = new Set([...(fresh.notes ?? [])]);
-      const ready = numbered.filter((p) => p.status === "ready").length;
-      if (numbered.length > 0) {
-        notes.add(
-          `Extended with ${ready} more ${ready === 1 ? "person" : "people"}${
-            numbered.length - ready > 0 ? ` (${numbered.length - ready} could not be read)` : ""
-          }.`,
-        );
-      }
-
-      if (!process.env.APIFY_TOKEN) {
-        notes.add(
-          "APIFY_TOKEN is not configured, so only pasted profile text could be read. Add the token to capture public profiles automatically.",
-        );
-      }
-
-      return {
-        ...fresh,
-        people: recomputed,
-        notes: [...notes],
-        status: recomputed.some((p) => p.status === "ready") ? "complete" : fresh.status,
-      };
-    });
-    saved = result;
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "The run could not be read." },
-      { status: 500 },
-    );
-  }
-
-  if (conflict || !saved) {
-    return NextResponse.json({ error: conflict ?? "That run does not exist or has expired." }, { status: 400 });
-  }
-
-  return NextResponse.json({ runId: saved.id, summary: summarise(saved), added: addedCount }, { status: 200 });
+  return NextResponse.json({ runId }, { status: 202 });
 }
 
 function peopleWord(n: number): string {

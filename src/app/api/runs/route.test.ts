@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { GET, POST } from "./route";
 import { resetRateLimit } from "@/api/rate-limit";
+import { waitForRun } from "@/pipeline/background";
 import { getStore } from "@/store/runs";
 
 function post(body: unknown, contentType = "application/json") {
@@ -58,12 +59,16 @@ describe("POST /api/runs validation", () => {
         ],
       }),
     );
-    expect(res.status).toBe(201);
+    expect(res.status).toBe(202);
     const body = await res.json();
     expect(typeof body.runId).toBe("string");
 
+    // 202 means accepted, not done: await the background job the way the
+    // browser follows the event stream.
+    await waitForRun(body.runId);
     const store = await getStore();
     const saved = await store.get(body.runId);
+    expect(saved?.status).toBe("complete");
     expect(saved?.people.length).toBe(2);
     expect(saved?.people.every((p) => p.status === "ready")).toBe(true);
     // Nothing in a live run is sample data: the flag no longer exists.

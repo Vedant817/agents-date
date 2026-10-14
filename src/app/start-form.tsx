@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import RunProgress from "./run-progress";
 import type { PersonRecord, Run } from "@/core/types";
 
 interface Entry {
@@ -83,6 +84,8 @@ export default function StartForm({
   const [error, setError] = useState<string | null>(null);
   /** Shown instead of an error when there is simply nothing new to send. */
   const [submitNotice, setSubmitNotice] = useState<string | null>(null);
+  /** Set when the server accepts the run and processes it live. */
+  const [pendingRunId, setPendingRunId] = useState<string | null>(null);
   const [issues, setIssues] = useState<{ index: number; field: string; message: string }[]>([]);
   const [showMethod, setShowMethod] = useState(false);
   const errorRef = useRef<HTMLDivElement | null>(null);
@@ -128,8 +131,14 @@ export default function StartForm({
     return () => clearInterval(timer);
   }, [busy]);
 
-  async function submit() {
-    // Only NEW rows are payload. Restored rows already exist in the run, so
+  const goToRun = useCallback(
+    (id: string) => {
+      router.push(`/run/${id}`);
+    },
+    [router],
+  );
+
+  async function submit() {    // Only NEW rows are payload. Restored rows already exist in the run, so
     // sending them is rejected as duplicates — and that is what made the resume
     // path unusable.
     const newEntries = entries.filter((e) => e.origin === "new");
@@ -169,7 +178,15 @@ export default function StartForm({
         setBusy(false);
         return;
       }
-      router.push(`/run/${data.runId}`);
+      // 202: the run is accepted and processing live. Watch it instead of
+      // navigating to a half-empty page — the progress component takes the
+      // visitor to the finished run.
+      if (!data.runId) {
+        setError("The server accepted the run but did not return its id.");
+        setBusy(false);
+        return;
+      }
+      setPendingRunId(data.runId as string);
     } catch {
       setError("Could not reach the server. Check your connection and try again.");
       setBusy(false);
@@ -425,6 +442,16 @@ export default function StartForm({
           </span>
         </div>
       </form>
+
+      {pendingRunId && (
+        <div className="mt16">
+          <RunProgress runId={pendingRunId} onDone={goToRun} />
+          <p className="small dim">
+            This page follows the run live. You can also{" "}
+            <Link href={`/run/${pendingRunId}`}>open the run page</Link>, which shows the same progress.
+          </p>
+        </div>
+      )}
 
       <section className="panel">
         <button

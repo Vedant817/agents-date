@@ -3,6 +3,7 @@ import { POST as extend } from "./route";
 import { POST as create } from "../../route";
 import { GET as getRun } from "../route";
 import { resetRateLimit } from "@/api/rate-limit";
+import { waitForRun } from "@/pipeline/background";
 import { getStore } from "@/store/runs";
 
 const LI = (n: string) => `linkedin.com/in/${n}`;
@@ -24,8 +25,21 @@ function post(url: string, body: unknown, contentType = "application/json") {
 
 async function createRun(entries: unknown[]): Promise<string> {
   const res = await create(post("https://x.test/api/runs", { entries }));
-  expect(res.status).toBe(201);
-  return ((await res.json()) as { runId: string }).runId;
+  // 202: accepted, processing live. Tests await the in-process job instead
+  // of holding the request open, exactly like the browser follows SSE.
+  expect(res.status).toBe(202);
+  const runId = ((await res.json()) as { runId: string }).runId;
+  await waitForRun(runId);
+  return runId;
+}
+
+async function extendRun(runId: string, entries: unknown[]): Promise<number> {
+  const res = await extend(post(`https://x.test/api/runs/${runId}/people`, { entries }), {
+    params: Promise.resolve({ runId }),
+  });
+  expect(res.status).toBe(202);
+  await waitForRun(runId);
+  return res.status;
 }
 
 describe("POST /api/runs/<runId>/people (extend a run)", () => {
@@ -42,7 +56,8 @@ describe("POST /api/runs/<runId>/people (extend a run)", () => {
     const res = await extend(post(`https://x.test/api/runs/${runId}/people`, {
       entries: [{ linkedin: LI("c"), instagram: IG("c"), ...text("C") }],
     }), { params: Promise.resolve({ runId }) });
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(202);
+    await waitForRun(runId);
 
     const run = await getRun(new Request(`https://x.test/api/runs/${runId}`), {
       params: Promise.resolve({ runId }),
@@ -70,6 +85,7 @@ describe("POST /api/runs/<runId>/people (extend a run)", () => {
     await extend(post(`https://x.test/api/runs/${runId}/people`, {
       entries: [{ linkedin: LI("c"), instagram: IG("c"), ...text("C") }],
     }), { params: Promise.resolve({ runId }) });
+    await waitForRun(runId);
 
     const after = await getRun(new Request(`https://x.test/api/runs/${runId}`), {
       params: Promise.resolve({ runId }),
@@ -181,7 +197,8 @@ describe("POST /api/runs/<runId>/people (extend a run)", () => {
     const good = await extend(post(`https://x.test/api/runs/${runId}/people`, {
       entries: [{ linkedin: LI("b"), instagram: IG("b"), ...text("B") }],
     }), { params: Promise.resolve({ runId }) });
-    expect(good.status).toBe(200);
+    expect(good.status).toBe(202);
+    await waitForRun(runId);
   });
 });
 
@@ -198,7 +215,8 @@ describe("live runs carry no sample labelling", () => {
     const res = await extend(post(`https://x.test/api/runs/${runId}/people`, {
       entries: [{ linkedin: LI("cleo-marchetti"), instagram: IG("cleo.marchetti"), ...text("Cleo") }],
     }), { params: Promise.resolve({ runId }) });
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(202);
+    await waitForRun(runId);
 
     const run = await getRun(new Request(`https://x.test/api/runs/${runId}`), {
       params: Promise.resolve({ runId }),
@@ -235,31 +253,23 @@ describe("concurrent extends do not lose a person", () => {
       }), { params: Promise.resolve({ runId }) }),
     ]);
     expect(Date.now() - before).toBeLessThan(60_000);
-
-    // One may lose the race and be asked to retry, but neither may report
-    // success while dropping the other's person.
-    const statuses = [r1.status, r2.status];
-    const failed = await Promise.all(
-      [r1, r2].map(async (r) => (r.status === 200 ? null : ((await r.json()) as { error?: string }).error)),
-    );
-    expect(statuses.filter((s) => s === 200).length).toBeGreaterThanOrEqual(1);
+    // 202 is acceptance, not completion: both jobs merge under the run's lock,
+    // so both people land with distinct ids.
+    expect(r1.status).toBe(202);
+    expect(r2.status).toBe(202);
+    await waitForRun(runId);
 
     const run = await getRun(new Request(`https://x.test/api/runs/${runId}`), {
       params: Promise.resolve({ runId }),
     });
-    const body = (await run.json()) as { run: { people: { linkedinUrl: string }[] } };
+    const body = (await run.json()) as { run: { people: { linkedinUrl: string; id: string }[] } };
     const urls = body.run.people.map((p) => p.linkedinUrl);
-    // The original two are always present.
     expect(urls).toContain("https://www.linkedin.com/in/a");
     expect(urls).toContain("https://www.linkedin.com/in/b");
-    // Every person a successful response claimed to have added is really there.
-    for (const error of failed) {
-      if (error && /no longer fit/i.test(error)) continue;
-    }
-    if (statuses.every((s) => s === 200)) {
-      expect(urls).toContain("https://www.linkedin.com/in/x");
-      expect(urls).toContain("https://www.linkedin.com/in/y");
-      expect(body.run.people.length).toBe(4);
-    }
+    expect(urls).toContain("https://www.linkedin.com/in/x");
+    expect(urls).toContain("https://www.linkedin.com/in/y");
+    expect(body.run.people.length).toBe(4);
+    // Distinct ids: the old bug minted p3 twice and lost one batch.
+    expect(new Set(body.run.people.map((p) => p.id)).size).toBe(4);
   });
 });

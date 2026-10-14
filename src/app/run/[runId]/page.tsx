@@ -1,8 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { getStore } from "@/store/runs";
+import { isRunActive } from "@/pipeline/background";
 import { DEMO_RUN_ID, summarise } from "@/pipeline/run";
 import RunClient from "./client";
+import RunLive from "./live";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -150,7 +152,31 @@ export default async function RunPage(props: {
         </div>
       )}
 
-      {summary.ready === 0 ? (
+      {run.status === "running" && isRunActive(run.id) ? (
+        <RunLive runId={run.id} />
+      ) : run.status === "running" ? (
+        // The job is gone but the run never finished: the server restarted
+        // mid-run. Say so plainly and show what was read so far, instead of
+        // spinning forever or pretending the run is complete.
+        <>
+          <div className="notice notice-warn">
+            <b>Processing stopped before this run finished.</b> The server restarted while these profiles were being
+            read. Everything below is what had been captured so far — nothing was invented for the rest.{" "}
+            <Link href={`/?from=${run.id}`}>Add the remaining people</Link> to finish it.
+          </div>
+          {summary.ready === 0 ? (
+            <section className="panel empty">
+              <h2>Nothing had been read yet</h2>
+              <p>Start again from the beginning — nothing from this run survived the restart.</p>
+              <Link className="btn btn-primary" href="/">
+                Back to start
+              </Link>
+            </section>
+          ) : (
+            <RunClient run={run} initialView={initialView} initialPerson={initialPerson} />
+          )}
+        </>
+      ) : summary.ready === 0 ? (
         <section className="panel empty">
           <h2>No profile could be read</h2>
           <p>
