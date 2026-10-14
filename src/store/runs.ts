@@ -127,9 +127,25 @@ export class FileRunStore implements RunStore {
     const tmp = `${file}.${process.pid}.${Date.now()}.tmp`;
     const payload: Run = { ...run, updatedAt: Date.now() };
     await writeFile(tmp, JSON.stringify(payload, null, 2), "utf8");
-    const { rename } = await import("node:fs/promises");
-    await rename(tmp, file);
-    return payload;
+    const { rename, unlink } = await import("node:fs/promises");
+    // On Windows the rename can fail with EPERM when a scanner (antivirus,
+    // indexer) briefly holds the just-written tmp file. Retry a few times
+    // before giving up, or a healthy save looks like a product defect.
+    let lastError: unknown = null;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        await rename(tmp, file);
+        return payload;
+      } catch (error) {
+        lastError = error;
+        const code = (error as NodeJS.ErrnoException | undefined)?.code;
+        if (code !== "EPERM" && code !== "EBUSY" && code !== "ENOTEMPTY") throw error;
+        await new Promise((resolve) => setTimeout(resolve, 10 * (attempt + 1)));
+      }
+    }
+    // Best effort: do not leave the tmp file behind for list() to trip over.
+    await unlink(tmp).catch(() => undefined);
+    throw lastError;
   }
 
   async list(): Promise<Run[]> {

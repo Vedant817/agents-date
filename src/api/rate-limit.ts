@@ -36,8 +36,28 @@ export interface RateResult {
   retryAfterSeconds: number;
 }
 
-export function rateLimit(request: Request, now = Date.now()): RateResult {
-  const key = clientKey(request);
+/**
+ * Separate budgets for separate actions.
+ *
+ * The extend endpoint used to share the run-creation budget, so adding people
+ * to a run could be blocked by other visitors' activity on a shared bucket —
+ * and the failure then said "too many runs started", which is not what the
+ * user was doing. Each action gets its own bucket so neither can starve the
+ * other.
+ */
+export const RATE_ACTIONS = {
+  createRun: "create-run",
+  extendRun: "extend-run",
+} as const;
+
+export type RateAction = (typeof RATE_ACTIONS)[keyof typeof RATE_ACTIONS];
+
+export function rateLimit(
+  request: Request,
+  now = Date.now(),
+  action: RateAction = RATE_ACTIONS.createRun,
+): RateResult {
+  const key = `${action}:${clientKey(request)}`;
 
   for (const [k, w] of windows) {
     if (w.resetAt <= now) windows.delete(k);

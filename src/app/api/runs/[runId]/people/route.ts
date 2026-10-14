@@ -11,7 +11,7 @@ import {
   DEMO_RUN_ID,
 } from "@/pipeline/run";
 import { getStore } from "@/store/runs";
-import { rateLimit } from "@/api/rate-limit";
+import { RATE_ACTIONS, rateLimit } from "@/api/rate-limit";
 import { MAX_PEOPLE, readEntries } from "../../schema";
 
 export const runtime = "nodejs";
@@ -92,11 +92,23 @@ export async function POST(request: Request, context: { params: Promise<{ runId:
     );
   }
 
-  const limit = rateLimit(request);
+  // Cheap duplicate rejection BEFORE any capture. The authoritative check runs
+  // again under the lock, because the run can change while we capture, but
+  // skipping this one meant a doomed request spent seconds of capture first —
+  // and on a deployment with an Apify token, real money.
+  const alreadyInRun = findDuplicate(entries, existing);
+  if (alreadyInRun) {
+    return NextResponse.json(
+      { error: `${alreadyInRun} is already in this run, so nothing new would be added.` },
+      { status: 400 },
+    );
+  }
+
+  const limit = rateLimit(request, Date.now(), RATE_ACTIONS.extendRun);
   if (!limit.allowed) {
     return NextResponse.json(
       {
-        error: `Too many runs started from this network in the last minute. Try again in ${limit.retryAfterSeconds}s.`,
+        error: `Too many people added to runs from this network in the last minute. Try again in ${limit.retryAfterSeconds}s.`,
       },
       { status: 429, headers: { "retry-after": String(limit.retryAfterSeconds) } },
     );
@@ -219,6 +231,34 @@ export async function POST(request: Request, context: { params: Promise<{ runId:
 
 function peopleWord(n: number): string {
   return n === 1 ? "person" : "people";
+}
+
+/**
+ * Names the first submitted person whose profile is already in the run, or
+ * null. Handles are case-insensitive on both platforms, so comparison is
+ * lowercased. Used as a cheap pre-capture check; the in-lock re-check is the
+ * authoritative one.
+ */
+function findDuplicate(
+  entries: readonly { linkedin: string; instagram: string }[],
+  run: Run,
+): string | null {
+  const known = new Set<string>([
+    ...run.people.map((p) => p.linkedinUrl.toLowerCase()),
+    ...run.people.map((p) => p.instagramUrl.toLowerCase()),
+  ]);
+  for (const entry of entries) {
+    const li = normaliseLinkedInUrl(entry.linkedin).toLowerCase();
+    const ig = normaliseInstagramUrl(entry.instagram).toLowerCase();
+    // Report the name the run already holds, so the message names the person
+    // the user is trying to add again rather than the new row.
+    const clash = run.people.find(
+      (p) => p.linkedinUrl.toLowerCase() === li || p.instagramUrl.toLowerCase() === ig,
+    );
+    if (clash) return clash.displayName ?? entry.linkedin;
+    if (known.has(li) || known.has(ig)) return entry.linkedin;
+  }
+  return null;
 }
 
 // Runs are extended with POST only. Answer other methods with JSON next to

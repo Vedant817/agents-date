@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { rateLimit, resetRateLimit } from "./rate-limit";
+import { RATE_ACTIONS, rateLimit, resetRateLimit } from "./rate-limit";
 
 /**
  * NOTE: these tests must NOT set x-real-ip. The limiter deliberately ignores
@@ -54,5 +54,27 @@ describe("rateLimit", () => {
     // After the window rolls over the caller has a fresh budget. That is the
     // correct behaviour and it must hold whether or not the prune loop exists.
     expect(rateLimit(req(), 62_000).allowed).toBe(true);
+  });
+
+  it("gives extending a run its own budget, so it cannot be starved by creates", () => {
+    // Regression: extends shared the create-run bucket. Spending it on run
+    // creation then blocked adding people, and replied "too many runs started"
+    // to somebody who was not starting a run at all.
+    for (let i = 0; i < 5; i++) expect(rateLimit(req(), 1_000, RATE_ACTIONS.createRun).allowed).toBe(true);
+    expect(rateLimit(req(), 1_000, RATE_ACTIONS.createRun).allowed).toBe(false);
+    // The extend action still has its full budget.
+    expect(rateLimit(req(), 1_000, RATE_ACTIONS.extendRun).allowed).toBe(true);
+  });
+
+  it("blocks extends on their own budget too", () => {
+    for (let i = 0; i < 5; i++) expect(rateLimit(req(), 1_000, RATE_ACTIONS.extendRun).allowed).toBe(true);
+    expect(rateLimit(req(), 1_000, RATE_ACTIONS.extendRun).allowed).toBe(false);
+  });
+
+  it("still shares one bucket between all anonymous callers of the same action", () => {
+    // Without a trusted proxy the budget is shared, deliberately: it is a spend
+    // cap, not an auth system.
+    for (let i = 0; i < 6; i++) rateLimit(new Request("https://x.test/api/runs"), 1_000, RATE_ACTIONS.extendRun);
+    expect(rateLimit(new Request("https://x.test/other"), 1_000, RATE_ACTIONS.extendRun).allowed).toBe(false);
   });
 });

@@ -43,9 +43,7 @@ export async function POST(request: Request) {
   const limit = rateLimit(request);
   if (!limit.allowed) {
     return NextResponse.json(
-      {
-        error: `Too many runs started from this network in the last minute. Try again in ${limit.retryAfterSeconds}s.`,
-      },
+      { error: `Too many runs started from this network in the last minute. Try again in ${limit.retryAfterSeconds}s.` },
       { status: 429, headers: { "retry-after": String(limit.retryAfterSeconds) } },
     );
   }

@@ -7,6 +7,11 @@ import { parseInstagram, parseLinkedIn } from "@/core/urls";
  * Adapter order matters: try the strongest source of truth first, then fall
  * back. The consented-text adapter is always last so that a genuine automated
  * capture is never shadowed by pasted text.
+ *
+ * TESTS: set AGENTS_DATE_TEST_NO_NETWORK=1 to drop the anonymous adapter. Those
+ * tests exercise the pipeline's own logic, and hitting the live network for
+ * every person made them slow and timing-dependent, which produced a flake
+ * that looked like a product defect.
  */
 export function buildAdapters(): CaptureAdapter[] {
   const adapters: CaptureAdapter[] = [];
@@ -21,7 +26,12 @@ export function buildAdapters(): CaptureAdapter[] {
       }),
     );
   }
-  adapters.push(new AnonymousWebAdapter());
+  // Only when pasted text is the intended path; a real deployment always tries
+  // the anonymous read, because a page that genuinely exposes text is the best
+  // evidence available.
+  if (process.env.AGENTS_DATE_TEST_NO_NETWORK !== "1") {
+    adapters.push(new AnonymousWebAdapter());
+  }
   adapters.push(new ConsentedTextAdapter());
   return adapters;
 }
