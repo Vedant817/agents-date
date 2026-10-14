@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export interface DateRunOption {
   id: string;
   label: string;
-  people: { id: string; name: string }[];
+  people: { id: string; name: string; modes: { linkedin?: string; instagram?: string } }[];
 }
 
 async function loadShowcase(): Promise<Run | null> {
@@ -28,7 +28,14 @@ function toOption(run: Run, label: string): DateRunOption {
     label,
     people: run.people
       .filter((p) => p.status === "ready" && p.analysis)
-      .map((p) => ({ id: p.id, name: p.displayName ?? p.id }))
+      .map((p) => ({
+        id: p.id,
+        name: p.displayName ?? p.id,
+        modes: {
+          linkedin: p.analysis?.sources.linkedin.readMode,
+          instagram: p.analysis?.sources.instagram.readMode,
+        },
+      }))
       .sort((x, y) => x.name.localeCompare(y.name)),
   };
 }

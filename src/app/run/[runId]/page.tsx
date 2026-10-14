@@ -5,6 +5,7 @@ import { isRunActive } from "@/pipeline/background";
 import { summarise } from "@/pipeline/run";
 import RunClient from "./client";
 import RunLive from "./live";
+import RunManage from "./manage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -80,6 +81,10 @@ export default async function RunPage(props: {
             Add more people to this run
           </Link>
         </div>
+      </div>
+
+      <div className="panel mt16">
+        <RunManage runId={run.id} listed={run.listed ?? false} />
       </div>
 
       <div className="facts">

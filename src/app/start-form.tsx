@@ -86,8 +86,18 @@ export default function StartForm({
   const [submitNotice, setSubmitNotice] = useState<string | null>(null);
   /** Set when the server accepts the run and processes it live. */
   const [pendingRunId, setPendingRunId] = useState<string | null>(null);
-  const [issues, setIssues] = useState<{ index: number; field: string; message: string }[]>([]);
-  const [showMethod, setShowMethod] = useState(false);
+  /**
+   * The manage token for the run being extended. Kept in session storage so
+   * a refresh does not strand the creator; pasted by hand when arriving via
+   * ?from= from another browser.
+   */
+  const [manageToken, setManageToken] = useState<string | null>(null);
+  useEffect(() => {
+    if (extendRun && typeof window !== "undefined") {
+      setManageToken(window.sessionStorage.getItem(`ad-manage-${extendRun.id}`));
+    }
+  }, [extendRun]);
+  const [issues, setIssues] = useState<{ index: number; field: string; message: string }[]>([]);  const [showMethod, setShowMethod] = useState(false);
   const errorRef = useRef<HTMLDivElement | null>(null);
 
   // The error used to render at the top of a panel that grows with each person
@@ -169,6 +179,9 @@ export default function StartForm({
         })),
         consent,
         adult,
+        // Owned runs require the token to extend. Absent on first create;
+        // required (by the server) when resuming a managed run.
+        manageToken: manageToken || undefined,
       };
       // Resuming a run posts to the extend endpoint, which merges into the
       // existing run instead of creating a second one and orphaning the first.
@@ -192,6 +205,12 @@ export default function StartForm({
         setError("The server accepted the run but did not return its id.");
         setBusy(false);
         return;
+      }
+      // The manage token arrives once, here only. Keep it for extending,
+      // listing and deleting later in this browser.
+      if (typeof data.manageToken === "string" && typeof window !== "undefined") {
+        window.sessionStorage.setItem(`ad-manage-${data.runId}`, data.manageToken);
+        setManageToken(data.manageToken);
       }
       setPendingRunId(data.runId as string);
     } catch {
@@ -224,6 +243,30 @@ export default function StartForm({
           Their profiles, dates and rankings are kept, and submitting adds the new people below to that same run rather
           than starting another one. People already in the run are shown as they stand and cannot be edited here.{" "}
           <Link href={`/run/${extendRun.id}`}>Open the run as it stands</Link>.
+        </div>
+      )}
+
+      {extendRun && !manageToken && (
+        <div className="panel">
+          <label className="field">
+            <span>Manage token for this run</span>
+            <input
+              type="password"
+              autoComplete="off"
+              placeholder="Pasted from when the run was created"
+              onChange={(e) => {
+                const value = e.target.value.trim();
+                setManageToken(value || null);
+                if (typeof window !== "undefined" && value) {
+                  window.sessionStorage.setItem(`ad-manage-${extendRun.id}`, value);
+                }
+              }}
+            />
+          </label>
+          <p className="small dim mb0">
+            Managed runs only accept additions with their token — otherwise anyone could add strangers to
+            anyone&apos;s run. It was shown once, right after this run was created, in this browser.
+          </p>
         </div>
       )}
 
@@ -471,6 +514,13 @@ export default function StartForm({
       {pendingRunId && (
         <div className="mt16">
           <RunProgress runId={pendingRunId} onDone={goToRun} />
+          {manageToken && !extendRun && (
+            <div className="notice notice-warn" role="status">
+              <b>Save this manage token — it is shown once.</b> Adding people later, listing this run in the gallery,
+              or deleting it all require it, and the server keeps only a hash.{" "}
+              <span className="mono">{manageToken}</span>
+            </div>
+          )}
           <p className="small dim">
             This page follows the run live. You can also{" "}
             <Link href={`/run/${pendingRunId}`}>open the run page</Link>, which shows the same progress.

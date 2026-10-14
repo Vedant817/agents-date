@@ -22,11 +22,21 @@ function withTrust(body: unknown): unknown {
   return body;
 }
 
+const tokens = new Map<string, string>();
+
 function post(url: string, body: unknown, contentType = "application/json") {
+  let payload = withTrust(body);
+  // Extend posts carry the run's manage token, exactly like the browser
+  // sends it. Tests for the 403 path build their requests by hand.
+  if (typeof payload === "object" && payload !== null && !Array.isArray(payload)) {
+    const match = /\/api\/runs\/([^/]+)\/people$/.exec(url);
+    const token = match && tokens.get(match[1]!);
+    if (token) payload = { ...payload, manageToken: token };
+  }
   return new Request(url, {
     method: "POST",
     headers: { "content-type": contentType },
-    body: typeof body === "string" ? body : JSON.stringify(withTrust(body)),
+    body: typeof payload === "string" ? payload : JSON.stringify(payload),
   });
 }
 
@@ -35,9 +45,11 @@ async function createRun(entries: unknown[]): Promise<string> {
   // 202: accepted, processing live. Tests await the in-process job instead
   // of holding the request open, exactly like the browser follows SSE.
   expect(res.status).toBe(202);
-  const runId = ((await res.json()) as { runId: string }).runId;
-  await waitForRun(runId);
-  return runId;
+  const body = (await res.json()) as { runId: string; manageToken: string };
+  expect(typeof body.manageToken).toBe("string");
+  tokens.set(body.runId, body.manageToken);
+  await waitForRun(body.runId);
+  return body.runId;
 }
 
 async function extendRun(runId: string, entries: unknown[]): Promise<number> {
@@ -202,6 +214,27 @@ describe("POST /api/runs/<runId>/people (extend a run)", () => {
     }), { params: Promise.resolve({ runId }) });
     expect(res.status).toBe(400);
     expect((await res.json()).error).toMatch(/already in this run/i);
+  });
+
+  it("refuses to extend a managed run without its token", async () => {
+    // Without ownership, anyone could add strangers to anyone's run. The
+    // post() helper attaches the token like the browser does; this builds
+    // the request by hand to prove the gate exists.
+    const runId = await createRun([{ linkedin: LI("a"), instagram: IG("a"), ...text("A") }]);
+    const res = await extend(
+      new Request(`https://x.test/api/runs/${runId}/people`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          consent: true,
+          adult: true,
+          entries: [{ linkedin: LI("b"), instagram: IG("b"), ...text("B") }],
+        }),
+      }),
+      { params: Promise.resolve({ runId }) },
+    );
+    expect(res.status).toBe(403);
+    expect((await res.json()).error).toMatch(/manage token/i);
   });
 
   it("refuses to extend the fixed showcase run", async () => {

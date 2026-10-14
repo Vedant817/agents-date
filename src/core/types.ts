@@ -250,4 +250,15 @@ export interface Run {
   updatedAt: number;
   /** Human-readable notes about degraded capability, e.g. no live ingest. */
   readonly notes?: readonly string[];
+  /**
+   * SHA-256 of the manage token returned once at creation. Extending,
+   * listing, unlisting and deleting require the token. Absent on runs
+   * created before ownership existed: those stay open.
+   */
+  readonly manageTokenHash?: string;
+  /**
+   * Listed runs appear in the public gallery. Absent or false means unlisted:
+   * openable by direct link, invisible everywhere else. Private by default.
+   */
+  readonly listed?: boolean;
 }

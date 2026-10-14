@@ -4,6 +4,13 @@ import { validateSubmission } from "@/pipeline/run";
 /** Must match MAX_PEOPLE in src/app/start-form.tsx. */
 export const MAX_PEOPLE = 20;
 
+/** The manage token travels in the body next to the entries. */
+export function manageTokenFrom(raw: unknown): string | null {
+  if (typeof raw !== "object" || raw === null) return null;
+  const token = (raw as { manageToken?: unknown }).manageToken;
+  return typeof token === "string" && token.length > 0 ? token : null;
+}
+
 export const EntrySchema = z.object({
   name: z.string().max(120).optional(),
   linkedin: z

@@ -3,6 +3,7 @@ import type { Run } from "@/core/types";
 import { emptyRun, newRunId } from "@/pipeline/run";
 import { startCreateRun } from "@/pipeline/background";
 import { getStore } from "@/store/runs";
+import { newManageToken } from "@/api/manage-token";
 import { rateLimit } from "@/api/rate-limit";
 import { readEntries } from "./schema";
 
@@ -48,7 +49,11 @@ export async function POST(request: Request) {
     );
   }
 
-  const run: Run = { ...emptyRun(runId, notes) };
+  // Ownership without accounts: the raw token goes back once, in this
+  // response only. The server keeps the hash. Lose the token and nobody —
+  // including us — can extend, list, unlist or delete the run.
+  const { token: manageToken, hash: manageTokenHash } = newManageToken();
+  const run: Run = { ...emptyRun(runId, notes), manageTokenHash };
   run.status = "running";
   await store.save(run);
 
@@ -66,7 +71,7 @@ export async function POST(request: Request) {
     })),
   );
 
-  return NextResponse.json({ runId }, { status: 202 });
+  return NextResponse.json({ runId, manageToken }, { status: 202 });
 }
 
 // Runs are created with POST only. Answer other methods with JSON rather

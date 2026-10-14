@@ -4,8 +4,9 @@ import type { Run } from "@/core/types";
 import { SHOWCASE_RUN_ID } from "@/pipeline/run";
 import { startExtendRun } from "@/pipeline/background";
 import { getStore } from "@/store/runs";
+import { verifyToken } from "@/api/manage-token";
 import { RATE_ACTIONS, rateLimit } from "@/api/rate-limit";
-import { MAX_PEOPLE, readEntries } from "../../schema";
+import { MAX_PEOPLE, manageTokenFrom, readEntries } from "../../schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,6 +58,19 @@ export async function POST(request: Request, context: { params: Promise<{ runId:
   }
   if (!existing) {
     return NextResponse.json({ error: "That run does not exist or has expired." }, { status: 404 });
+  }
+
+  // Ownership: anyone could otherwise add strangers to anyone's run. Runs
+  // that carry a manage-token hash require the token; pre-token runs stay
+  // open (documented in manage-token.ts).
+  if (existing.manageTokenHash) {
+    const token = manageTokenFrom(raw);
+    if (!token || !verifyToken(token, existing.manageTokenHash)) {
+      return NextResponse.json(
+        { error: "This run is managed. Provide its manage token to add people." },
+        { status: 403 },
+      );
+    }
   }
 
   // Every stored person counts against the cap, not just the readable ones.

@@ -8,22 +8,23 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Every run on this server, newest first. Runs are shareable by link, so
- * this is also the directory people pass around: each card links straight
- * to the finished run.
+ * Every run on this server that its creator chose to list — plus the pinned
+ * showcase. Runs are UNLISTED by default: a direct link always opens, but
+ * only opt-in runs appear here. That is what makes the footer ("do not
+ * share without permission") coherent instead of decorative.
  */
 export default async function RunsPage() {
   const store = getStore();
   let runs: Run[] = [];
   try {
-    runs = await store.list();
+    runs = (await store.list()).filter((run) => run.listed === true);
   } catch {
     runs = [];
   }
   const summaries = runs.map((run) => ({ run, summary: summarise(run) }));
-  // The gallery is a directory, not an archive: test and verification runs
-  // pile up on a long-lived server (hundreds), and rendering all of them
-  // buries the runs a visitor actually wants. Latest 30, newest first.
+  // The gallery is a directory, not an archive: runs pile up on a long-lived
+  // server, and rendering all of them buries the ones a visitor wants.
+  // Latest 30, newest first.
   const GALLERY_LIMIT = 30;
   const visible = summaries.slice(0, GALLERY_LIMIT);
   const hidden = summaries.length - visible.length;
@@ -33,12 +34,13 @@ export default async function RunsPage() {
       <div className="page-head">
         <p className="eyebrow">Runs on this server</p>
         <h1>
-          {summaries.length > 0 ? `${summaries.length} run${summaries.length === 1 ? "" : "s"}` : "No runs yet"} — and
-          the demo that never expires.
+          {summaries.length > 0 ? `${summaries.length} run${summaries.length === 1 ? "" : "s"} creators chose to
+          share` : "No shared runs yet"} — and the showcase that never expires.
         </h1>
       </div>
       <p className="lede">
-        Every run has its own link. Open one to read the profiles, watch the dates, and see each shortlist ranked.
+        These are the runs their creators chose to list. Every run also has its own link, shared privately by its
+        creator — unlisted runs open fine, they just never appear here.
       </p>
 
       <div className="grid grid-2 mt16">
@@ -101,8 +103,11 @@ export default async function RunsPage() {
 
       {summaries.length === 0 && (
         <section className="panel empty">
-          <h2>No runs on this server yet</h2>
-          <p>Yours will appear here the moment you start one — each with a link you can share.</p>
+          <h2>No shared runs yet</h2>
+          <p>
+            Runs stay unlisted unless their creator shares them. Start one of your own — it stays private to its link
+            unless you list it.
+          </p>
           <Link className="btn btn-primary" href="/">
             Add profiles
           </Link>
