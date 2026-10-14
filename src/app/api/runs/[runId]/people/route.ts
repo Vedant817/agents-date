@@ -124,7 +124,7 @@ export async function POST(request: Request, context: { params: Promise<{ runId:
   // Validation, capacity and duplicate checks above are synchronous, so a
   // doomed request is refused before any capture. The slow work runs in the
   // background; the client follows progress over SSE on the same run id.
-  startExtendRun(
+  const started = startExtendRun(
     runId,
     entries.map((entry) => ({
       linkedin: entry.linkedin,
@@ -137,6 +137,12 @@ export async function POST(request: Request, context: { params: Promise<{ runId:
     // denominator now so first-paint progress aims at it, not the old total.
     existing.people.length + entries.length,
   );
+  if (!started) {
+    return NextResponse.json(
+      { error: "The server is busy processing other runs. Try again in a few seconds." },
+      { status: 429, headers: { "retry-after": "15" } },
+    );
+  }
 
   return NextResponse.json({ runId }, { status: 202 });
 }

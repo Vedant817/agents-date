@@ -60,7 +60,7 @@ export async function POST(request: Request) {
   // The slow work — capture per person, then dating and ranking — runs in the
   // background. The client follows progress over SSE and opens the run when
   // it completes, instead of holding this connection open for the whole job.
-  startCreateRun(
+  const started = startCreateRun(
     runId,
     entries.map((entry) => ({
       linkedin: entry.linkedin,
@@ -70,6 +70,15 @@ export async function POST(request: Request) {
       instagramText: entry.instagramText,
     })),
   );
+  if (!started) {
+    // Every slot is busy. Remove the running row so it never reads as a
+    // stuck run, and ask the client to retry rather than queue silently.
+    await store.delete(runId).catch(() => undefined);
+    return NextResponse.json(
+      { error: "The server is busy processing other runs. Try again in a few seconds." },
+      { status: 429, headers: { "retry-after": "15" } },
+    );
+  }
 
   return NextResponse.json({ runId, manageToken }, { status: 202 });
 }

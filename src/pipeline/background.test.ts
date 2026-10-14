@@ -2,7 +2,7 @@ import { describe, expect, it, beforeEach } from "vitest";
 import { POST as create } from "@/app/api/runs/route";
 import { GET as events } from "@/app/api/runs/[runId]/events/route";
 import { resetRateLimit } from "@/api/rate-limit";
-import { snapshot, startCreateRun, startExtendRun, subscribe, waitForRun } from "@/pipeline/background";
+import { snapshot, startCreateRun, startExtendRun, subscribe, sweepOrphanedRuns, waitForRun } from "@/pipeline/background";
 import type { ProgressEvent } from "@/pipeline/background";
 import { getStore } from "@/store/runs";
 import { emptyRun, newRunId } from "@/pipeline/run";
@@ -96,6 +96,60 @@ describe("background run processing", () => {
   it("snapshot answers an unknown run as failed, not a hang", async () => {
     const snap = await snapshot("run_nope_missing");
     expect(snap.type).toBe("failed");
+  });
+
+  it("sweepOrphanedRuns fails stuck runs but keeps the people already read", async () => {
+    // A restart kills the in-memory jobs. Without the boot sweep the stored
+    // status lies forever and the next visitor watches a dead run.
+    const store = getStore();
+    const runId = newRunId();
+    await store.save({
+      ...emptyRun(runId),
+      status: "running",
+      people: [
+        {
+          id: "p1",
+          runId,
+          displayName: "Half Done",
+          linkedinUrl: "https://www.linkedin.com/in/half",
+          instagramUrl: "https://www.instagram.com/half",
+          status: "ready",
+          createdAt: 1,
+        },
+      ],
+    });
+
+    const swept = await sweepOrphanedRuns();
+    expect(swept).toBeGreaterThanOrEqual(1);
+    const run = await store.get(runId);
+    expect(run!.status).toBe("failed");
+    expect(run!.people.length).toBe(1);
+    expect((run!.notes ?? []).join(" ")).toMatch(/server restarted/i);
+    await store.delete(runId);
+  });
+
+  it("refuses new jobs when every slot is busy", async () => {
+    // Deterministic: with one slot, the first job holds it synchronously, so
+    // the second start is refused without any timing involved.
+    const previous = process.env.JOB_CONCURRENCY;
+    process.env.JOB_CONCURRENCY = "1";
+    try {
+      const store = getStore();
+      const first = newRunId();
+      await store.save({ ...emptyRun(first), status: "running" });
+      expect(startCreateRun(first, [])).toBe(true);
+      const second = newRunId();
+      await store.save({ ...emptyRun(second), status: "running" });
+      expect(startCreateRun(second, [])).toBe(false);
+      expect(startExtendRun(second, [])).toBe(false);
+      await waitForRun(first);
+      await waitForRun(second);
+      await store.delete(first);
+      await store.delete(second);
+    } finally {
+      if (previous === undefined) delete process.env.JOB_CONCURRENCY;
+      else process.env.JOB_CONCURRENCY = previous;
+    }
   });
 
   it("snapshot stays live while an extend job runs on a complete run", async () => {

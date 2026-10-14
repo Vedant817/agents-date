@@ -91,6 +91,8 @@ data being read, which is what the pasted-text path is.
 | `APIFY_TOKEN` | no | Enables automatic Instagram capture |
 | `APIFY_MAX_CHARGE_USD` | no | Per-capture cap. Parsed defensively and clamped to ≤ $2 — an empty or unparseable value falls back to $0.50 rather than silently disabling the cap |
 | `AGENTS_DATE_DATA_DIR` | no | Where runs are stored. Defaults to `.data/runs` |
+| `TRUST_PROXY` | no (yes on Render) | Set to `1` behind a proxy that overwrites `x-forwarded-for` so rate limits apply per IP. Without it every anonymous caller shares one budget |
+| `JOB_CONCURRENCY` | no | Background runs processed at once (default 4). Beyond it, creation/extension answer 429 instead of collapsing |
 
 ---
 

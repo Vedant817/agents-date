@@ -50,6 +50,25 @@ const totals = new Map<string, number>();
 /** Test hook: in-flight jobs by run id, so tests can await completion. */
 const pendingJobs = new Map<string, Set<Promise<void>>>();
 
+/**
+ * Admission gate: at most JOB_CONCURRENCY background jobs at once (default
+ * 4). Without it, a burst of 20-person runs fires thousands of concurrent
+ * outbound fetches on a single free-tier instance and everything falls over
+ * together. Beyond the gate the routes answer 429, which is backpressure
+ * instead of collapse.
+ */
+function maxSlots(): number {
+  const n = Number(process.env.JOB_CONCURRENCY ?? 4);
+  if (!Number.isFinite(n) || n < 1) return 4;
+  return Math.min(Math.floor(n), 64);
+}
+
+function activeSlots(): number {
+  let n = 0;
+  for (const set of pendingJobs.values()) n += set.size;
+  return n;
+}
+
 function trackJob(runId: string, job: Promise<void>): void {
   let set = pendingJobs.get(runId);
   if (!set) {
@@ -180,8 +199,14 @@ export function isRunActive(runId: string): boolean {
 /**
  * Processes a brand-new run in the background. Saves each finished person as
  * it goes, so a refresh mid-run shows real progress instead of an empty page.
+ *
+ * Returns false when every slot is busy: the caller must refuse (429) rather
+ * than queue silently, and must clean up the running row it already saved.
+ * The check and the registration are synchronous, so two routes racing each
+ * other cannot both slip through.
  */
-export function startCreateRun(runId: string, entries: JobEntry[]): void {
+export function startCreateRun(runId: string, entries: JobEntry[]): boolean {
+  if (activeSlots() >= maxSlots()) return false;
   totals.set(runId, entries.length);
   const job = (async () => {
     const store = getStore();
@@ -247,6 +272,7 @@ export function startCreateRun(runId: string, entries: JobEntry[]): void {
     }
   })();
   trackJob(runId, job);
+  return true;
 }
 
 /**
@@ -260,7 +286,8 @@ export function startCreateRun(runId: string, entries: JobEntry[]): void {
  * the total only appears at merge time and early progress reads against the
  * old count — the same stale-denominator race the create path never has.
  */
-export function startExtendRun(runId: string, entries: JobEntry[], expectedTotal?: number): void {
+export function startExtendRun(runId: string, entries: JobEntry[], expectedTotal?: number): boolean {
+  if (activeSlots() >= maxSlots()) return false;
   if (expectedTotal !== undefined) totals.set(runId, expectedTotal);
   const job = (async () => {
     const store = getStore();
@@ -362,4 +389,31 @@ export function startExtendRun(runId: string, entries: JobEntry[], expectedTotal
     }
   })();
   trackJob(runId, job);
+  return true;
+}
+
+/**
+ * Marks every run left `running` as failed. Runs on boot: a restart kills
+ * the in-memory jobs, so without this the stored status lies forever and the
+ * next visitor watches a dead run. People already read are kept; only the
+ * status and an explanatory note change.
+ */
+export async function sweepOrphanedRuns(): Promise<number> {
+  const store = getStore();
+  const runs = await store.list().catch(() => []);
+  let swept = 0;
+  for (const run of runs) {
+    if (run.status !== "running") continue;
+    const notes = [
+      ...(run.notes ?? []).filter((n) => !n.startsWith("Processing stopped")),
+      "Processing stopped before this run finished (the server restarted). What had been read so far is kept below.",
+    ];
+    await store
+      .update(run.id, (fresh) =>
+        fresh.status === "running" ? { ...fresh, status: "failed", notes } : null,
+      )
+      .catch(() => null);
+    swept += 1;
+  }
+  return swept;
 }
