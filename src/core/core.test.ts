@@ -216,6 +216,48 @@ describe("taxonomy", () => {
     expect(keys).not.toContain("interest:podcasts");
   });
 
+  it("honours multi-word negation and abandonment, not just single words", () => {
+    // FATAL regression class: the cue list named phrases ("gave up",
+    // "nothing to do with") but the check ran over single tokens, so no
+    // phrase could ever fire — and shipped refuted quotes like a Running
+    // trait cited to "I gave up running last year".
+    const cases: [string, string][] = [
+      ["I gave up running last year", "hobby:running"],
+      ["I have nothing to do with film", "interest:film"],
+      ["I used to love skiing but quit after injury", "hobby:skiing"],
+      ["Former marathon runner, now into chess", "hobby:running"],
+      ["Not into hiking anymore", "hobby:hiking"],
+    ];
+    for (const [line, key] of cases) {
+      const keys = matchLine(line).map((h) => h.def.key);
+      expect(keys, `"${line}" must not claim ${key}`).not.toContain(key);
+    }
+    // ...while keeping the genuine second half of an abandoned past.
+    expect(matchLine("Former marathon runner, now into chess").map((h) => h.def.key)).toContain(
+      "interest:board-games",
+    );
+  });
+
+  it("reads dependence as enthusiasm, not dislike", () => {
+    // "Without coffee I cannot function" contains two negation cues and no
+    // liking words, but dependence is enthusiasm. Over-negation turned a
+    // coffee lover trait-less.
+    expect(matchLine("Without coffee I cannot function").map((h) => h.def.key)).toContain("interest:coffee");
+  });
+
+  it("lets a longer form of the same trait claim its words first", () => {
+    // "Photographer shooting photos with my film camera" reported photography
+    // via "shooting photos", skipped the seen trait's remaining forms, and
+    // let bare "film" fire — a camera became cinema. Seen traits still claim.
+    const keys = matchLine("Photographer shooting photos with my film camera").map((h) => h.def.key);
+    expect(keys).toContain("hobby:photography");
+    expect(keys).not.toContain("interest:film");
+  });
+
+  it("matches singulars people actually write", () => {
+    expect(matchLine("Trail runner seeking partner").map((h) => h.def.key)).toContain("hobby:trail-running");
+  });
+
   it("does not read the gerund 'running' as the sport", () => {
     // Regression: found in the seeded demo. A beekeeper "running 14 hives"
     // and a psychologist "running a peer support group" were both reported

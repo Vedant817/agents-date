@@ -9,6 +9,7 @@
  */
 import { readFileSync } from "node:fs";
 import type { PersonRecord, Run } from "../src/core/types";
+import { isTraitNegated } from "../src/core/negation";
 
 const file = process.argv[2] ?? "data/demo.json";
 const run = JSON.parse(readFileSync(file, "utf8")) as Run;
@@ -122,27 +123,18 @@ for (const p of run.people) {
 // citation refutes. Scope must match taxonomy.ts exactly, otherwise
 // "Craft beer after the game, never before." is wrongly flagged -- the
 // negation is in a different clause and the trait is genuine.
-const NEG_CUES = [
-  "hate", "hates", "hated", "dislike", "dislikes", "never", "no", "not", "isnt",
-  "cant", "cannot", "wont", "avoid", "avoids", "against", "quit", "stopped",
-  "used to", "former", "gave up", "anti", "uninterested", "allergic",
-  "allergies", "intolerant", "zero", "none", "without", "except", "scraped",
-  "deleted",
-];
+/**
+ * A stored trait whose own quote refutes it. Uses the SAME predicate as the
+ * matcher (src/core/negation.ts): when each had its own copy, multi-word
+ * cues could never fire in either place, so refuted quotes were both shipped
+ * and certified clean. They cannot drift apart now.
+ */
 function quoteRefutesTrait(quote: string, traitKey: string): boolean {
   const label = (traitKey.split(":")[1] ?? "").replace(/-/g, " ");
-  const lower = quote.toLowerCase();
-  const idx = lower.indexOf(label.split(" ")[0] ?? label);
-  if (idx === -1) return false;
-  const before = lower.slice(0, idx);
-  const lastBreak = Math.max(
-    before.lastIndexOf(","), before.lastIndexOf(";"), before.lastIndexOf("."),
-    before.lastIndexOf(" but "), before.lastIndexOf(" though "), before.lastIndexOf(" although "),
-  );
-  const clause = lower.slice(lastBreak + 1, idx + label.length);
-  const words = clause.split(/[^a-z]+/).filter(Boolean);
   const firstTraitWord = (label.split(" ")[0] ?? label).toLowerCase();
-  return words.some((w) => w !== firstTraitWord && NEG_CUES.includes(w));
+  if (!firstTraitWord) return false;
+  // Probe with the trait's own lead word so clause extraction anchors on it.
+  return isTraitNegated(quote, firstTraitWord);
 }
 let negatedTraits = 0;
 for (const p of run.people) {

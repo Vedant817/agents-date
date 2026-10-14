@@ -6,6 +6,7 @@
  * analyser maps any match onto the same canonical key so that "trail running"
  * and "trail runs" compare as one hobby.
  */
+import { isTraitNegated } from "./negation";
 
 export interface TraitDefinition {
   readonly key: string;
@@ -23,7 +24,7 @@ export interface TraitDefinition {
 
 export const TRAITS: readonly TraitDefinition[] = [
   // --- Outdoor & sport -----------------------------------------------------
-  { key: "hobby:trail-running", label: "Trail running", category: "hobby", forms: ["trail running", "trail runs", "ultra running", "trailrunner", "trail runners"], affinity: 0.9 },
+  { key: "hobby:trail-running", label: "Trail running", category: "hobby", forms: ["trail running", "trail runner", "trail runs", "ultra running", "trailrunner", "trail runners"], affinity: 0.9 },
   { key: "hobby:running", label: "Running", category: "hobby", forms: ["running", "jogging", "marathon", "marathons", "10k", "half marathon"], affinity: 0.85 },
   { key: "hobby:cycling", label: "Cycling", category: "hobby", forms: ["cycling", "biking", "bike rides", "gravel ride", "cyclocross"], affinity: 0.8 },
   { key: "hobby:climbing", label: "Climbing", category: "hobby", forms: ["climbing", "bouldering", "sport climbing", "top rope"], affinity: 0.75 },
@@ -31,7 +32,7 @@ export const TRAITS: readonly TraitDefinition[] = [
   // Multi-word or unambiguous forms only.
   { key: "hobby:surfing", label: "Surfing", category: "hobby", forms: ["surfing", "surf", "stand up paddle", "paddleboarding", "sup surfing"], affinity: 0.7 },
   { key: "hobby:hiking", label: "Hiking", category: "hobby", forms: ["hiking", "trekking", "day hikes", "backpacking", "mountaineering"], affinity: 0.85 },
-  { key: "hobby:skiing", label: "Skiing", category: "hobby", forms: ["skiing", "skiing", "snowboarding", "ski slopes"], affinity: 0.7 },
+  { key: "hobby:skiing", label: "Skiing", category: "hobby", forms: ["skiing", "snowboarding", "ski slopes"], affinity: 0.7 },
   { key: "hobby:swimming", label: "Swimming", category: "hobby", forms: ["swimming", "open water", "laps"], affinity: 0.7 },
   { key: "hobby:tennis", label: "Tennis", category: "hobby", forms: ["tennis", "pickleball", "padel"], affinity: 0.7 },
   { key: "hobby:cricket", label: "Cricket", category: "hobby", forms: ["cricket", "test match"], affinity: 0.7 },
@@ -62,6 +63,9 @@ export const TRAITS: readonly TraitDefinition[] = [
   // --- Culture & media -----------------------------------------------------
   { key: "interest:live-music", label: "Live music", category: "interest", forms: ["live music", "concerts", "gigs", "festivals", "gigging"], affinity: 0.75 },
   { key: "interest:film", label: "Film", category: "interest", forms: ["film", "cinema", "movie", "a24", "arthouse"], affinity: 0.7 },
+  // NOTE: no bare "book" or "novel" forms. In professional bios both are
+  // adjectives far more often than hobbies ("book a flight", "novel
+  // therapeutics"), and the false positives read as invented claims.
   { key: "interest:books", label: "Books", category: "interest", forms: ["books", "reading", "reader", "novels", "book club", "literature"], affinity: 0.7 },
   { key: "interest:poetry", label: "Poetry", category: "interest", forms: ["poetry", "poems", "poet", "spoken word"], affinity: 0.65 },
   { key: "interest:podcasts", label: "Podcasts", category: "interest", forms: ["podcasts", "podcast", "podcasting", "podcast host"], affinity: 0.65 },
@@ -123,14 +127,12 @@ export function allTraitKeys(): readonly string[] {
  * citation read "I hate running" -- a cited claim that the citation itself
  * refutes. That is the single most credibility-destroying output this app can
  * produce, so a negated mention is treated as absent, not as a hobby.
+ *
+ * The actual lists and predicate live in ./negation, SHARED with the audit
+ * script. Each once had its own copy, and the copies drifted: multi-word
+ * cues could never fire in the matcher while the audit certified the
+ * resulting refuted quotes as clean.
  */
-const NEGATION_CUES = [
-  "hate", "hates", "hated", "dislike", "dislikes", "never", "no", "not", "isnt",
-  "cant", "cannot", "wont", "avoid", "avoids", "against", "quit", "stopped",
-  "used to", "former", "gave up", "anti", "uninterested", "nothing to do with",
-  "allergic", "allergies", "intolerant", "zero", "none", "without", "except",
-  "rather not", "not into", "not a fan", "scraped", "deleted", "bad",
-];
 
 /**
  * Returns true when the trait word is negated in its own clause.
@@ -140,28 +142,7 @@ const NEGATION_CUES = [
  * markers first is what makes the check correct rather than merely cautious.
  */
 function isNegated(line: string, form: string): boolean {
-  const lower = line.toLowerCase();
-  const idx = lower.indexOf(form.toLowerCase());
-  if (idx === -1) return false;
-
-  // Isolate the clause containing the match.
-  const boundary = /[,;.!?]|\bbut\b|\bthough\b|\balthough\b|\bhowever\b|\bbut also\b/;
-  const before = lower.slice(0, idx);
-  const lastBreak = Math.max(
-    before.lastIndexOf(","), before.lastIndexOf(";"), before.lastIndexOf("."),
-    before.lastIndexOf(" but "), before.lastIndexOf(" though "), before.lastIndexOf(" although "),
-  );
-  const clauseStart = lastBreak >= 0 ? lastBreak + 1 : 0;
-  const clause = lower.slice(clauseStart, idx + form.length);
-
-  const words = clause.split(/[^a-z]+/).filter(Boolean);
-  // Cue words anywhere in the clause, but never the trait word itself.
-  const traitWord = form.toLowerCase().split(/\s+/)[0] ?? form;
-  for (const w of words) {
-    if (w === traitWord) continue;
-    if (NEGATION_CUES.includes(w)) return true;
-  }
-  return false;
+  return isTraitNegated(line, form);
 }
 
 /**
@@ -197,7 +178,6 @@ export function matchLine(
   const claimedWords = new Set<string>();
 
   for (const { def, form } of SORTED) {
-    if (seen.has(def.key)) continue;
     const normalised = form.toLowerCase().replace(/[^a-z0-9\s+]/g, " ").trim();
     // "10k" is a legitimate running cue, but not when it is a money figure.
     // Stripping punctuation turns "$10k" into " 10k ".
@@ -208,8 +188,13 @@ export function matchLine(
 
     const needle = ` ${normalised} `;
     if (haystack.includes(needle) && !isNegated(line, form) && !isManagedObject(line, normalised)) {
-      seen.add(def.key);
+      // Claim the words even when this trait was already reported through a
+      // longer form. Skipping seen traits here let "shooting photos" report
+      // photography while "film camera" never ran, so bare "film" fired and a
+      // camera became cinema.
       for (const w of words) claimedWords.add(w);
+      if (seen.has(def.key)) continue;
+      seen.add(def.key);
       hits.push({ def, matchedForm: form });
     }
   }
