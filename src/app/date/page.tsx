@@ -86,6 +86,7 @@ export default async function DatePage(props: {
       <p className="lede">
         Any pair from any run — including pairs the planner never scheduled. The date plays turn by turn, computed
         fresh by the same deterministic engine, and nothing is saved: the run keeps exactly the dates it already had.
+        Every date is a simulated conversation — neither person said any of it.
       </p>
       {options.length === 0 ? (
         <section className="panel empty">
