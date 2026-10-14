@@ -2,7 +2,7 @@ import { describe, expect, it, beforeEach } from "vitest";
 import { POST as create } from "@/app/api/runs/route";
 import { GET as events } from "@/app/api/runs/[runId]/events/route";
 import { resetRateLimit } from "@/api/rate-limit";
-import { snapshot, startCreateRun, subscribe, waitForRun } from "@/pipeline/background";
+import { snapshot, startCreateRun, startExtendRun, subscribe, waitForRun } from "@/pipeline/background";
 import type { ProgressEvent } from "@/pipeline/background";
 import { getStore } from "@/store/runs";
 import { emptyRun, newRunId } from "@/pipeline/run";
@@ -90,6 +90,35 @@ describe("background run processing", () => {
   it("snapshot answers an unknown run as failed, not a hang", async () => {
     const snap = await snapshot("run_nope_missing");
     expect(snap.type).toBe("failed");
+  });
+
+  it("snapshot stays live while an extend job runs on a complete run", async () => {
+    // Regression with real user impact: extending a finished run, then
+    // opening the event stream, replayed the OLD completion instantly. The
+    // stream closed, the client moved on, and the new person had not landed
+    // yet. While a job is active the snapshot must be live, whatever the
+    // stored status says.
+    const res = await create(post({ entries: people2 }));
+    const runId = ((await res.json()) as { runId: string }).runId;
+    await waitForRun(runId);
+    expect((await snapshot(runId)).type).toBe("complete");
+
+    startExtendRun(runId, [
+      {
+        linkedin: "linkedin.com/in/c",
+        instagram: "instagram.com/c",
+        linkedinText: "C Example\nDesigner.",
+        instagramText: "C Example\nDesigner.",
+      },
+    ]);
+    const mid = await snapshot(runId);
+    expect(mid.type).toBe("snapshot");
+    expect(mid.total).toBe(3);
+
+    await waitForRun(runId);
+    const done = await snapshot(runId);
+    expect(done.type).toBe("complete");
+    expect(done.done).toBe(3);
   });
 
   it("startCreateRun marks the run failed when capture throws everything away", async () => {

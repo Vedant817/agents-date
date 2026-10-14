@@ -105,7 +105,12 @@ export async function snapshot(runId: string): Promise<ProgressEvent> {
     return { seq: nextSeq(runId), type: "failed", total: 0, error: "That run does not exist or has expired." };
   }
   const ready = run.people.filter((p) => p.status === "ready").length;
-  if (run.status === "complete") {
+  const active = isRunActive(runId);
+  // A new job on an already-complete run (extending it) must NOT replay the
+  // old completion as if the new work were done: the stream closed instantly
+  // and the client moved on before the merge landed. While a job is active
+  // the snapshot is always live, whatever the stored status says.
+  if (run.status === "complete" && !active) {
     let sessions = 0;
     const seen = new Set<string>();
     for (const p of run.people) {
@@ -246,6 +251,11 @@ export function startExtendRun(runId: string, entries: JobEntry[]): void {
   const job = (async () => {
     const store = getStore();
     try {
+      // Publish the expected total up front, so a snapshot taken while this
+      // job captures (on an already-complete run) shows live progress toward
+      // the new total instead of the previous job's numbers.
+      const base = await store.get(runId).catch(() => null);
+      totals.set(runId, (base?.people.length ?? 0) + entries.length);
       const adapters = buildJobAdapters(entries);
       const added: PersonRecord[] = [];
       for (const [i, entry] of entries.entries()) {

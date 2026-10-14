@@ -41,6 +41,9 @@ export async function GET(_request: Request, context: { params: Promise<{ runId:
       let heartbeat: ReturnType<typeof setInterval> | null = null;
       let unsub: () => void = () => undefined;
       let closed = false;
+      // Set when a terminal event went down the stream, so the fallback
+      // below does not deliver it a second time.
+      let terminalSent = false;
       const close = () => {
         if (!closed) {
           closed = true;
@@ -68,6 +71,7 @@ export async function GET(_request: Request, context: { params: Promise<{ runId:
       unsub = subscribe(runId, (evt) => {
         send(evt.type, evt);
         if (evt.type === "complete" || evt.type === "failed") {
+          terminalSent = true;
           // Flush the terminal event, then close on the next tick so it is
           // not lost to a consumer that is still draining.
           setTimeout(close, 50);
@@ -87,9 +91,24 @@ export async function GET(_request: Request, context: { params: Promise<{ runId:
       // Belt and braces: if the background job settles without emitting
       // (process edge cases), re-check and close rather than hanging forever.
       void waitForRun(runId, 10 * 60_000).then(async () => {
-        if (closed) return;
+        if (closed || terminalSent) return;
         const last = await snapshot(runId).catch(() => null);
-        if (last && (last.type === "complete" || last.type === "failed")) send(last.type, last);
+        if (!last) {
+          close();
+          return;
+        }
+        if (last.type === "complete" || last.type === "failed") {
+          send(last.type, last);
+        } else {
+          // Still "running" with no job behind it: the worker died without
+          // emitting. Say so instead of closing silently and leaving the
+          // client on a spinner forever.
+          send("failed", {
+            ...last,
+            type: "failed",
+            error: "Processing stopped before this run finished (the server restarted). What was read so far is kept on the run page.",
+          });
+        }
         close();
       });
     },
