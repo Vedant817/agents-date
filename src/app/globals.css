@@ -1071,6 +1071,9 @@ ul.clean b {
 .muted { color: var(--muted); }
 .dim { color: var(--faint); }
 .mono { font-family: var(--mono); }
+/* A 64-char manage token must wrap instead of blowing the page sideways on
+   mobile (measured 530px page width at a 390px viewport before this). */
+.token { overflow-wrap: anywhere; word-break: break-word; }
 .nowrap { white-space: nowrap; }
 .mb0 { margin-bottom: 0; }
 .mt8 { margin-top: 8px; }
@@ -1093,6 +1096,10 @@ details.disclose > summary {
   color: var(--muted);
   font-size: 12.5px;
   font-weight: 650;
+  /* 24px WCAG 2.2 target-size floor: the text is small, so pad the hit area. */
+  display: inline-block;
+  min-height: 24px;
+  line-height: 24px;
 }
 
 details.disclose > summary:hover {
@@ -1118,6 +1125,9 @@ details.disclose > summary:hover {
     flex-direction: row;
     overflow-x: auto;
     padding-bottom: 2px;
+    /* A fade at the trailing edge says more names live off-screen. Without
+       it the strip reads as the whole list. */
+    mask-image: linear-gradient(to right, black 88%, transparent 100%);
   }
 
   .list-nav a {

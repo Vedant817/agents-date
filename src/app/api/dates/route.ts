@@ -11,9 +11,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const BodySchema = z.object({
-  runId: z.string().min(1, "Pick a run first."),
-  a: z.string().min(1, "Pick the first person."),
-  b: z.string().min(1, "Pick the second person."),
+  runId: z.string({ required_error: "Pick a run first." }).min(1, "Pick a run first."),
+  a: z.string({ required_error: "Pick the first person." }).min(1, "Pick the first person."),
+  b: z.string({ required_error: "Pick the second person." }).min(1, "Pick the second person."),
 });
 
 /**

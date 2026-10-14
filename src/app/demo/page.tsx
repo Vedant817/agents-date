@@ -30,8 +30,11 @@ export default async function DemoPage(props: {
   if (!run) {
     return (
       <main>
+        <div className="page-head">
+          <p className="eyebrow">Showcase run</p>
+          <h1>No showcase run yet</h1>
+        </div>
         <section className="panel empty">
-          <h2>No showcase run yet</h2>
           <p>
             The showcase is a real run built from consenting volunteers — never synthetic data, so there is nothing to
             show until people contribute their own profiles. Start a run of your own, or volunteer yours for the

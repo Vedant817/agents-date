@@ -29,9 +29,15 @@ export interface RunStore {
    * endpoint did, silently dropping a person while both requests said 200.
    */
   update(runId: string, fn: (run: Run) => Run | null): Promise<Run | null>;
-  list(): Promise<Run[]>;
+  /**
+   * Newest first. With a limit, pre-trims by filename (run ids are
+   * time-ordered) so callers that show a page never parse the whole store.
+   */
+  list(limit?: number): Promise<Run[]>;
   /** File count without parsing: O(1) reads for health checks and badges. */
   count(): Promise<number>;
+  /** Removes orphaned tmp files. Runs at boot via instrumentation. */
+  reapTmpFiles(): Promise<number>;
   delete(runId: string): Promise<void>;
   /** True when writes do not survive a restart. */
   isEphemeral(): boolean;
@@ -150,12 +156,19 @@ export class FileRunStore implements RunStore {
     throw lastError;
   }
 
-  async list(): Promise<Run[]> {
+  async list(limit?: number): Promise<Run[]> {
     if (!existsSync(DATA_DIR)) return [];
-    const files = await readdir(DATA_DIR);
+    let files = await readdir(DATA_DIR);
+    files = files.filter((f) => f.endsWith(".json"));
+    if (limit !== undefined) {
+      // Pre-trim by filename before parsing: run ids start with a base-36
+      // timestamp, so lexicographic order is newest-first and a gallery
+      // query never parses thousands of files to show 30. Parsing the
+      // whole store per page hit made /runs take 17s locally.
+      files = files.sort().reverse().slice(0, Math.max(0, limit));
+    }
     const runs: Run[] = [];
     for (const f of files) {
-      if (!f.endsWith(".json")) continue;
       try {
         const raw = await readFile(path.join(DATA_DIR, f), "utf8");
         runs.push(JSON.parse(raw) as Run);
@@ -172,6 +185,24 @@ export class FileRunStore implements RunStore {
       const { unlink } = await import("node:fs/promises");
       await unlink(file);
     }
+  }
+
+  /**
+   * Removes orphaned tmp files left by kills between write and rename.
+   * Readers ignore non-.json files, so these are pure litter — but unbounded
+   * litter on a long-lived process. Runs at boot, never per request.
+   */
+  async reapTmpFiles(): Promise<number> {
+    if (!existsSync(DATA_DIR)) return 0;
+    const { unlink } = await import("node:fs/promises");
+    const files = await readdir(DATA_DIR);
+    let reaped = 0;
+    for (const f of files) {
+      if (!f.endsWith(".tmp")) continue;
+      await unlink(path.join(DATA_DIR, f)).catch(() => undefined);
+      reaped += 1;
+    }
+    return reaped;
   }
 
   async count(): Promise<number> {

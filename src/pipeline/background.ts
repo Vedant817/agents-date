@@ -15,8 +15,8 @@ import { getStore } from "@/store/runs";
  *
  * Runs on a single Node instance (Render free plan, `next start`). There is
  * no cross-instance bus: with one instance the in-memory map is the bus. If
- * the process restarts mid-run the run stays `running` and the run page says
- * so, rather than pretending it finished.
+ * the process restarts mid-run, the boot sweep marks it failed with a note
+ * (see sweepOrphanedRuns) and the run page shows what had been read.
  */
 
 export type ProgressType =
@@ -303,11 +303,14 @@ export function startExtendRun(runId: string, entries: JobEntry[], expectedTotal
       // job captures (on an already-complete run) shows live progress toward
       // the new total instead of the previous job's numbers.
       const base = await store.get(runId).catch(() => null);
-      totals.set(runId, (base?.people.length ?? 0) + entries.length);
+      const baseCount = base?.people.length ?? 0;
+      totals.set(runId, baseCount + entries.length);
       const adapters = buildJobAdapters(entries);
       const added: PersonRecord[] = [];
       for (const [i, entry] of entries.entries()) {
-        emit(runId, { type: "person-started", personId: `new-${i + 1}`, total: entries.length });
+        // done counts from the run's existing people, not from zero: the bar
+        // must move 4/5 → 5/5, never 4/5 → 1/2.
+        emit(runId, { type: "person-started", personId: `new-${i + 1}` });
         const person = await processPerson(
           runId,
           { linkedin: entry.linkedin, instagram: entry.instagram, name: entry.name },
@@ -319,8 +322,7 @@ export function startExtendRun(runId: string, entries: JobEntry[], expectedTotal
           type: "person-done",
           personId: `new-${i + 1}`,
           displayName: person.displayName,
-          total: entries.length,
-          done: added.length,
+          done: baseCount + added.length,
         });
       }
 
@@ -350,9 +352,13 @@ export function startExtendRun(runId: string, entries: JobEntry[], expectedTotal
         const notes = new Set([...(fresh.notes ?? [])]);
         const ready = numbered.filter((p) => p.status === "ready").length;
         if (numbered.length > 0) {
+          // The running total keeps each extend's note distinct: a bare Set
+          // collapsed two identical "+1 more person" strings into one and ate
+          // the run's own history.
+          const total = fresh.people.length + numbered.length;
           notes.add(
-            `Extended with ${ready} more ${ready === 1 ? "person" : "people"}${
-              numbered.length - ready > 0 ? ` (${numbered.length - ready} could not be read)` : ""
+            `Extended with ${ready} more ${ready === 1 ? "person" : "people"} (${total} total)${
+              numbered.length - ready > 0 ? `, ${numbered.length - ready} could not be read` : ""
             }.`,
           );
         }

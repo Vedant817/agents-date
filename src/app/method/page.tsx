@@ -15,7 +15,7 @@ const STEPS = [
   },
   {
     title: "Analyse, with a citation on every claim",
-    body: `Each line is classified, then matched against a shared trait taxonomy of exactly ${allTraitKeys().length} traits. A trait that appears on both sources scores higher. Nothing is claimed without a quote and a line number — and anything outside the ${allTraitKeys().length} traits is invisible to the analysis, which the profile page admits as a gap rather than guessing around.`,
+    body: `Each line is classified, then matched against a shared English-language trait taxonomy of exactly ${allTraitKeys().length} traits. A trait that appears on both sources scores higher. Nothing is claimed without a quote and a line number — and anything outside the ${allTraitKeys().length} traits is invisible to the analysis, which the profile page admits as a gap rather than guessing around.`,
   },
   {
     title: "Say what is unknown",

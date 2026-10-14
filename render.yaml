@@ -1,0 +1,26 @@
+# Render blueprint: the deployment as code, so dashboard state cannot drift
+# from the repo unnoticed. Matches the existing service (Oregon, free,
+# master, `npm install && npm run build` / `npm run start`).
+#
+# TRUST_PROXY=1: Render terminates TLS and overwrites x-forwarded-for, so
+# the rate limiter sees real client IPs. Without it every anonymous caller
+# shares one global bucket.
+services:
+  - type: web
+    name: agents-date
+    runtime: node
+    region: oregon
+    plan: free
+    branch: master
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: TRUST_PROXY
+        value: "1"
+      - key: RATE_LIMIT_RUNS_PER_MINUTE
+        value: "5"
+      - key: JOB_CONCURRENCY
+        value: "4"

@@ -14,8 +14,8 @@ export default function NotFound() {
         <h1>This page does not exist.</h1>
       </div>
       <p className="lede">
-        The link may be mistyped, or it may point at something this deployment does not have. Nothing here was a
-        match — that part of the site still works.
+        The link may be mistyped, or it may point at a run that expired when the server restarted. Start pages,
+        the gallery and the showcase below all still work.
       </p>
 
       <div className="panel">

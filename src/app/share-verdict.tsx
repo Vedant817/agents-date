@@ -21,6 +21,7 @@ export default function ShareVerdict({
   url: string;
 }) {
   const [copied, setCopied] = useState(false);
+  const [showFallback, setShowFallback] = useState(false);
   const trailer = trailerFor(session);
   if (!trailer) return null;
 
@@ -35,14 +36,23 @@ export default function ShareVerdict({
       await navigator.clipboard.writeText(card);
       setCopied(true);
     } catch {
+      // No alert(): dumping the card into a dialog steals focus and
+      // interrupts screen readers. The button label says where to find it.
       setCopied(false);
-      alert(card);
+      setShowFallback(true);
     }
   }
 
   return (
-    <button className="btn btn-sm btn-ghost" type="button" onClick={() => void copy()}>
-      {copied ? "Copied!" : "Share verdict"}
-    </button>
+    <span className="cluster">
+      <button className="btn btn-sm btn-ghost" type="button" onClick={() => void copy()}>
+        {copied ? "Copied!" : "Share verdict"}
+      </button>
+      {showFallback && !copied && (
+        <span className="small" role="status">
+          Copy unavailable — select the verdict text above.
+        </span>
+      )}
+    </span>
   );
 }

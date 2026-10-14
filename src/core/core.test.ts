@@ -245,6 +245,32 @@ describe("taxonomy", () => {
     expect(matchLine("Without coffee I cannot function").map((h) => h.def.key)).toContain("interest:coffee");
   });
 
+  it("scopes the money guard to the number the sign belongs to", () => {
+    // A line-wide guard suppressed genuine races ("Salary $50k, I love 10k
+    // races" lost its running); a proximity window misfired both ways. The $
+    // must be attached to THIS number.
+    expect(matchLine("Made $10k last quarter").map((h) => h.def.key)).not.toContain("hobby:running");
+    expect(matchLine("Salary $50k, I love 10k races").map((h) => h.def.key)).toContain("hobby:running");
+  });
+
+  it("does not mint traits from URL slugs in pasted text", () => {
+    // Pasted text contains links, and sanitising turned paths into prose:
+    // "https://example.com/trail-running-tips" produced a hobby nobody
+    // stated. URLs are stripped before anything matches.
+    expect(matchLine("See https://example.com/trail-running-tips for details").map((h) => h.def.key)).not.toContain(
+      "hobby:trail-running",
+    );
+    expect(matchLine("My blog www.example.com/running-club is new").map((h) => h.def.key)).not.toContain(
+      "interest:running-clubs",
+    );
+  });
+
+  it("covers gym life and reads litotes as affirmation", () => {
+    expect(matchLine("Gym four mornings a week, lifting heavy").map((h) => h.def.key)).toContain("hobby:fitness");
+    expect(matchLine("I am not unhappy with running").map((h) => h.def.key)).toContain("hobby:running");
+    expect(matchLine("I don't dislike cycling").map((h) => h.def.key)).toContain("hobby:cycling");
+  });
+
   it("lets a longer form of the same trait claim its words first", () => {
     // "Photographer shooting photos with my film camera" reported photography
     // via "shooting photos", skipped the seen trait's remaining forms, and

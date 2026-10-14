@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { snapshot, subscribe, waitForRun } from "@/pipeline/background";
 import { getStore } from "@/store/runs";
 
@@ -19,7 +20,9 @@ export const dynamic = "force-dynamic";
 export async function GET(_request: Request, context: { params: Promise<{ runId: string }> }) {
   const { runId } = await context.params;
   if (!/^[a-zA-Z0-9_-]{1,120}$/.test(runId)) {
-    return new Response("Unknown run.\n", { status: 404 });
+    // JSON like every other error on this route: an EventSource client that
+    // gets text/plain here cannot parse it.
+    return NextResponse.json({ error: "That run does not exist or has expired." }, { status: 404 });
   }
   const store = getStore();
   let exists = false;
@@ -29,7 +32,7 @@ export async function GET(_request: Request, context: { params: Promise<{ runId:
     return Response.json({ error: "The run could not be read." }, { status: 500 });
   }
   if (!exists) {
-    return new Response("Unknown run.\n", { status: 404 });
+    return NextResponse.json({ error: "That run does not exist or has expired." }, { status: 404 });
   }
 
   const stream = new ReadableStream({
@@ -125,4 +128,24 @@ export async function GET(_request: Request, context: { params: Promise<{ runId:
       connection: "keep-alive",
     },
   });
+}
+
+function methodNotAllowed() {
+  return NextResponse.json({ error: "Use GET to watch a run's progress." }, { status: 405 });
+}
+
+export async function POST() {
+  return methodNotAllowed();
+}
+
+export async function PUT() {
+  return methodNotAllowed();
+}
+
+export async function PATCH() {
+  return methodNotAllowed();
+}
+
+export async function DELETE() {
+  return methodNotAllowed();
 }

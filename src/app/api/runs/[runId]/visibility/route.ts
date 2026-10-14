@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 const BodySchema = z.object({
   listed: z.boolean({ required_error: "Say whether the run should be listed.", invalid_type_error: "Listed must be true or false." }),
-  manageToken: z.string().min(1, "The manage token is required.").max(200),
+  manageToken: z.string({ required_error: "The manage token is required." }).min(1, "The manage token is required.").max(200),
 });
 
 /**

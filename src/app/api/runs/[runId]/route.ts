@@ -33,7 +33,6 @@ export async function GET(_request: Request, context: { params: Promise<{ runId:
   }
   return NextResponse.json({ run: publicRun(run), summary: summarise(run) });
 }
-
 /**
  * Deletes a run: the takedown path. Requires the manage token when the run
  * carries a hash, so only the creator (or anyone they gave the token) can
@@ -71,4 +70,22 @@ export async function DELETE(request: Request, context: { params: Promise<{ runI
   }
   await store.delete(runId);
   return NextResponse.json({ deleted: true }, { status: 200 });
+}
+
+// Reads use GET, deletion uses DELETE. Anything else gets JSON rather than
+// Next's bodyless 405, matching every other route in this API.
+function methodNotAllowed() {
+  return NextResponse.json({ error: "Use GET to read a run, DELETE to remove it." }, { status: 405 });
+}
+
+export async function POST() {
+  return methodNotAllowed();
+}
+
+export async function PUT() {
+  return methodNotAllowed();
+}
+
+export async function PATCH() {
+  return methodNotAllowed();
 }

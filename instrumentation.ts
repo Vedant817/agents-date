@@ -8,6 +8,8 @@
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
     const { sweepOrphanedRuns } = await import("./src/pipeline/background");
+    const { FileRunStore } = await import("./src/store/runs");
     await sweepOrphanedRuns().catch(() => undefined);
+    await new FileRunStore().reapTmpFiles().catch(() => undefined);
   }
 }

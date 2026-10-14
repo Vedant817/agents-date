@@ -93,29 +93,45 @@ export function validateSubmission(
 }
 
 /**
- * School-age cues that mark a profile as underage. Deliberately student-side
- * phrasing only: "high school teacher" or "back in high school" must not
- * refuse an adult, so bare "high school" is not a cue — but reminiscence
- * without an educator word ("back in high school, I ran track") still
- * refuses, because a missed minor is worse than a false refusal the error
- * message tells the user how to fix.
+ * School-age cues that mark a profile as underage. The educator-word guard
+ * applies to ALL of them uniformly: "middle school teacher" clears exactly
+ * like "high school teacher" does, because the writer is the adult in the
+ * room either way. Gating it per-label refused a middle-school teacher while
+ * passing an identical secondary-school one.
+ *
+ * Senior years (grade 12, year 12, form 6) are included even though some
+ * seniors are 18: on a dating product a missed minor is worse than a false
+ * refusal the error message tells the user how to fix.
+ *
+ * KNOWN GAP: patterns are English, US/UK-leaning. Non-English school cues
+ * pass silently. This backstop supports the 18+ attestation; it is not a
+ * replacement for caring who gets submitted.
  */
 const MINOR_PATTERNS: { pattern: RegExp; label: string }[] = [
   { pattern: /\bhigh school (student|senior|junior|sophomore|freshman)\b/i, label: "high school student" },
   { pattern: /\bmiddle school\b/i, label: "middle school" },
   { pattern: /\bsecondary school\b/i, label: "secondary school" },
   { pattern: /\bclass of 20(2[7-9]|3\d)\b/i, label: "upcoming graduating class" },
-  { pattern: /\bgrade (9|10|11)\b/i, label: "school grade" },
-  { pattern: /\b(9|10|11)th grade\b/i, label: "school grade" },
-  { pattern: /\byear (7|8|9|10|11)\b/i, label: "school year" },
-  { pattern: /\bform (1|2|3|4|5)\b/i, label: "school form" },
+  { pattern: /\bgrade (9|10|11|12)\b/i, label: "school grade" },
+  { pattern: /\b(9|10|11|12)th grade\b/i, label: "school grade" },
+  { pattern: /\byear (7|8|9|10|11|12)\b/i, label: "school year" },
+  { pattern: /\bform (1|2|3|4|5|6)\b/i, label: "school form" },
   { pattern: /\bunder (1[0-7])\b/i, label: "underage" },
   { pattern: /\b(1[0-7]) years old\b/i, label: "underage" },
   { pattern: /\bin high school\b/i, label: "in high school" },
 ];
 
 /** Words that mark the writer as the adult in the room, not the student. */
-const EDUCATOR_WORDS = /\b(teacher|coach|mentor|tutor|professor|lecturer|graduated|alumni|reunion|principal)\b/i;
+const EDUCATOR_WORDS =
+  /\b(teacher|teaching|coach|coaching|mentor|mentoring|tutor|tutoring|professor|lecturer|graduated|alumni|reunion|principal)\b/i;
+
+/**
+ * Explicit enrollment beats the educator guard: "high school senior
+ * tutoring freshmen" is a student with a job, not a teacher. Everything
+ * else with an educator word clears.
+ */
+const STUDENT_STRONG =
+  /\bhigh school (student|senior|junior|sophomore|freshman)\b|\b(high|middle) schoolers?\b/i;
 
 /**
  * Returns the matched cue label when captured profile text reads as
@@ -125,11 +141,11 @@ export function findMinorCue(lines: readonly string[]): string | null {
   for (const line of lines) {
     for (const { pattern, label } of MINOR_PATTERNS) {
       if (!pattern.test(line)) continue;
-      // "High school teacher", "coaching middle schoolers", "back in high
-      // school at the reunion": the educator word clears the line.
-      if (label === "in high school" || label === "secondary school") {
-        if (EDUCATOR_WORDS.test(line)) continue;
-      }
+      // "High school teacher", "coaching middle schoolers", "secondary
+      // school reunion": an educator word marks the writer as the adult and
+      // clears the line — unless the line explicitly enrolls them, in which
+      // case the enrollment wins ("high school senior tutoring freshmen").
+      if (!STUDENT_STRONG.test(line) && EDUCATOR_WORDS.test(line)) continue;
       return label;
     }
   }
@@ -245,7 +261,7 @@ export function reassignPersonId(person: PersonRecord, newId: string): PersonRec
     return from === newId ? person : { ...person, id: newId };
   }
   const analysis = person.analysis;
-  return {
+  const remapped = {
     ...person,
     id: newId,
     analysis: {
@@ -258,6 +274,21 @@ export function reassignPersonId(person: PersonRecord, newId: string): PersonRec
       needs: remapEvidence(analysis.needs, from, newId),
       openers: remapEvidence(analysis.openers, from, newId),
     },
+  };
+  // Belt and braces: matches and sessions should not exist pre-merge (the
+  // merge recomputes them), but if call order ever changes a stale tmp_
+  // reference must not survive. Unit tests probe this shape directly.
+  return {
+    ...remapped,
+    matches: (remapped.matches ?? []).map((m) => ({
+      ...m,
+      candidateId: m.candidateId === from ? newId : m.candidateId,
+    })),
+    sessions: (remapped.sessions ?? []).map((s) => ({
+      ...s,
+      personAId: s.personAId === from ? newId : s.personAId,
+      personBId: s.personBId === from ? newId : s.personBId,
+    })),
   };
 }
 

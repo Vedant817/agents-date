@@ -1,13 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import RunProgress from "./run-progress";
 import type { PersonRecord, Run } from "@/core/types";
 
 interface Entry {
-  key: number;
+  key: string;
   name: string;
   linkedin: string;
   instagram: string;
@@ -22,50 +22,60 @@ interface Entry {
   origin: "new" | "in-run";
 }
 
-let seq = 0;
-const blank = (showText = false): Entry => ({
-  key: seq++,
-  name: "",
-  linkedin: "",
-  instagram: "",
-  linkedinText: "",
-  instagramText: "",
-  showText,
-  origin: "new",
-});
-
-/**
- * Rebuilds form rows from a run that already exists, so "Add more people"
- * resumes it instead of discarding it. The stored text comes back from
- * SourceRecord.lines, which was already normalised (whitespace collapsed,
- * capped at 60 lines / 220 characters), so a restored paste is slightly
- * tidier than what was originally typed. That is stated in the UI.
- */
-function entryFromPerson(person: PersonRecord, showText: boolean): Entry {
-  const sources = person.analysis?.sources;
-  return {
-    ...blank(showText),
-    name: person.displayName ?? "",
-    linkedin: person.linkedinUrl.replace(/^https?:\/\/(www\.)?/, ""),
-    instagram: person.instagramUrl.replace(/^https?:\/\/(www\.)?/, ""),
-    linkedinText: (sources?.linkedin.lines ?? []).join("\n"),
-    instagramText: (sources?.instagram.lines ?? []).join("\n"),
-    origin: "in-run",
-  };
-}
-
 /** Must match the zod cap in src/app/api/runs/schema.ts. */
 const MAX_PEOPLE = 20;
 
 export default function StartForm({
   captureEnabled,
   extendRun = null,
+  showcaseAvailable = false,
 }: {
   captureEnabled: boolean;
   /** A run to resume, when the visitor arrived via "Add more people". */
   extendRun?: Run | null;
+  /** Whether data/showcase.json exists — the showcase promo must not promise
+   * a finished run that is not there. */
+  showcaseAvailable?: boolean;
 }) {
   const router = useRouter();
+  // Row keys must match between server render and hydration. A module-level
+  // counter persisted across requests on the server while every client
+  // started at 0, so aria-controls pointed at the wrong ids (and could
+  // collide as rows were added). useId is stable on both sides; the local
+  // counter restarts identically per mount.
+  const uid = useId();
+  const seq = useRef(0);
+  const blank = (showText = false): Entry => ({
+    key: `${uid}-${++seq.current}`,
+    name: "",
+    linkedin: "",
+    instagram: "",
+    linkedinText: "",
+    instagramText: "",
+    showText,
+    origin: "new",
+  });
+
+  /**
+   * Rebuilds form rows from a run that already exists, so "Add more people"
+   * resumes it instead of discarding it. The stored text comes back from
+   * SourceRecord.lines, which was already normalised (whitespace collapsed,
+   * capped at 60 lines / 220 characters), so a restored paste is slightly
+   * tidier than what was originally typed. That is stated in the UI.
+   */
+  function entryFromPerson(person: PersonRecord, showText: boolean): Entry {
+    const sources = person.analysis?.sources;
+    return {
+      ...blank(showText),
+      name: person.displayName ?? "",
+      linkedin: person.linkedinUrl.replace(/^https?:\/\/(www\.)?/, ""),
+      instagram: person.instagramUrl.replace(/^https?:\/\/(www\.)?/, ""),
+      linkedinText: (sources?.linkedin.lines ?? []).join("\n"),
+      instagramText: (sources?.instagram.lines ?? []).join("\n"),
+      origin: "in-run",
+    };
+  }
+
   // When automatic capture is off, pasted text is the ONLY way a profile gets
   // read. The notice told users to paste, but the textareas were hidden behind
   // a ghost "Add profile text" button, so the working path needed a click to
@@ -107,7 +117,7 @@ export default function StartForm({
     if (error) errorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [error]);
 
-  function update(key: number, patch: Partial<Entry>) {
+  function update(key: string, patch: Partial<Entry>) {
     setEntries((prev) => prev.map((e) => (e.key === key ? { ...e, ...patch } : e)));
   }
 
@@ -123,7 +133,7 @@ export default function StartForm({
     setEntries((prev) => [...prev, blank(!captureEnabled)]);
   }
 
-  function remove(key: number) {
+  function remove(key: string) {
     setEntries((prev) => (prev.length === 1 ? prev : prev.filter((e) => e.key !== key)));
   }
 
@@ -153,7 +163,11 @@ export default function StartForm({
   const [consent, setConsent] = useState(false);
   const [adult, setAdult] = useState(false);
 
-  async function submit() {    // Only NEW rows are payload. Restored rows already exist in the run, so
+  async function submit() {
+    // Double-submit guard at entry, not just on the disabled flag: two rapid
+    // clicks before React re-renders fired two POSTs and made two runs.
+    if (busy) return;
+    // Only NEW rows are payload. Restored rows already exist in the run, so
     // sending them is rejected as duplicates — and that is what made the resume
     // path unusable.
     const newEntries = entries.filter((e) => e.origin === "new");
@@ -198,9 +212,10 @@ export default function StartForm({
         setBusy(false);
         return;
       }
-      // 202: the run is accepted and processing live. Watch it instead of
-      // navigating to a half-empty page — the progress component takes the
-      // visitor to the finished run.
+      // 202: the run is accepted and processing live. Hand over to the
+      // progress component and stop the button's own timer: leaving busy on
+      // ran a dead "Reading profiles… Ns so far" label forever, next to the
+      // live panel saying the same thing.
       if (!data.runId) {
         setError("The server accepted the run but did not return its id.");
         setBusy(false);
@@ -212,6 +227,7 @@ export default function StartForm({
         window.sessionStorage.setItem(`ad-manage-${data.runId}`, data.manageToken);
         setManageToken(data.manageToken);
       }
+      setBusy(false);
       setPendingRunId(data.runId as string);
     } catch {
       setError("Could not reach the server. Check your connection and try again.");
@@ -231,8 +247,8 @@ export default function StartForm({
       </div>
       <p className="lede">
         Paste one LinkedIn and one public Instagram per person. Each agent reads those two profiles, works out needs,
-        hobbies and interests with citations, and then dates the other agents. You get a profile page per person and a
-        ranked shortlist of who fits them best.
+        hobbies and interests with citations, and then dates the other agents in simulated conversations — no person
+        says any of it. You get a profile page per person and a ranked shortlist of who fits them best.
       </p>
 
       {extendRun && (
@@ -296,6 +312,7 @@ export default function StartForm({
         <div className="fact">
           <b>n−1</b>
           <span>ranked per person</span>
+          <span className="fact-sub">everyone else, best fit first</span>
         </div>
         <div className="fact">
           <b>0</b>
@@ -477,7 +494,8 @@ export default function StartForm({
           <button
             className="btn btn-primary"
             type="submit"
-            disabled={busy || (extendRun !== null && newCount === 0)}
+            disabled={busy || (extendRun !== null && newCount === 0) || !consent || !adult}
+            title={!consent || !adult ? "Confirm consent and age above first" : undefined}
           >
             {busy
               ? extendRun
@@ -507,6 +525,9 @@ export default function StartForm({
             ) : (
               <>Add 2+ people to get rankings. A single person still gets a profile page.</>
             )}
+            {!busy && (!consent || !adult) && (
+              <> Confirm the two statements above to continue.</>
+            )}
           </span>
         </div>
       </form>
@@ -518,7 +539,7 @@ export default function StartForm({
             <div className="notice notice-warn" role="status">
               <b>Save this manage token — it is shown once.</b> Adding people later, listing this run in the gallery,
               or deleting it all require it, and the server keeps only a hash.{" "}
-              <span className="mono">{manageToken}</span>
+              <span className="mono token">{manageToken}</span>
             </div>
           )}
           <p className="small dim">
@@ -555,16 +576,18 @@ export default function StartForm({
         )}
       </section>
 
-      <section className="panel">
-        <h2>Want to see it populated first?</h2>
-        <p className="small">
-          The showcase run is already finished: real volunteers&apos; analysed profiles, the dates their agents went on,
-          and every person&apos;s ranked shortlist.
-        </p>
-        <Link className="btn btn-primary" href="/demo">
-          Open the showcase run
-        </Link>
-      </section>
+      {showcaseAvailable && (
+        <section className="panel">
+          <h2>Want to see it populated first?</h2>
+          <p className="small">
+            The showcase run is already finished: real volunteers&apos; analysed profiles, the dates their agents went
+            on, and every person&apos;s ranked shortlist.
+          </p>
+          <Link className="btn btn-primary" href="/demo">
+            Open the showcase run
+          </Link>
+        </section>
+      )}
     </>
   );
 }

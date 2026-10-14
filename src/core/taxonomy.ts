@@ -42,6 +42,10 @@ export const TRAITS: readonly TraitDefinition[] = [
   { key: "hobby:badminton", label: "Badminton", category: "hobby", forms: ["badminton", "table tennis"], affinity: 0.6 },
   { key: "hobby:golf", label: "Golf", category: "hobby", forms: ["golf", "golfing"], affinity: 0.6 },
   { key: "hobby:yoga", label: "Yoga", category: "hobby", forms: ["yoga", "vinyasa", "pilates", "stretching"], affinity: 0.65 },
+  // Fitness is a top bio topic with no home until now; gym-less profiles
+  // fell through to the "thin" gap path. "strength" alone is excluded: in
+  // professional bios it means company strengths far more often than gyms.
+  { key: "hobby:fitness", label: "Fitness", category: "hobby", forms: ["gym", "workout", "workouts", "lifting", "crossfit", "weightlifting", "calisthenics", "strength training"], affinity: 0.7 },
 
   // --- Creative ------------------------------------------------------------
   { key: "hobby:photography", label: "Photography", category: "hobby", forms: ["photography", "photographer", "shooting photos", "film camera", "phone camera", "cameras"], affinity: 0.75 },
@@ -83,7 +87,7 @@ export const TRAITS: readonly TraitDefinition[] = [
   { key: "value:community-building", label: "Community building", category: "value", forms: ["community work", "organising meetups", "organizing meetups", "community events", "running a meetup", "running a club", "found a meetup"], affinity: 0.65 },
 
   // --- Ways of spending time ------------------------------------------------
-  { key: "interest:travel", label: "Travel", category: "interest", forms: ["travel", "travelling", "traveling", "backpacking", "road trip"], affinity: 0.6 },
+  { key: "interest:travel", label: "Travel", category: "interest", forms: ["travel", "travelling", "traveling", "road trip"], affinity: 0.6 },
   { key: "interest:cooking-together", label: "Cooking for people", category: "interest", forms: ["hosting", "dinner parties", "cooking for friends"], affinity: 0.6 },
   { key: "interest:dogs", label: "Dogs", category: "interest", forms: ["dog", "dogs", "rescue", "puppy", "hound"], affinity: 0.6 },
   { key: "interest:cats", label: "Cats", category: "interest", forms: ["cat", "cats", "kitten"], affinity: 0.55 },
@@ -168,7 +172,11 @@ function isManagedObject(line: string, form: string): boolean {
 export function matchLine(
   line: string,
 ): { def: TraitDefinition; matchedForm: string }[] {
-  const haystack = ` ${line.toLowerCase().replace(/[^a-z0-9\s+]/g, " ")} `;
+  // URLs are not prose: pasted text with links ("see https://example.com/
+  // trail-running-tips") minted traits from path slugs. Strip them before
+  // anything matches.
+  const deLinked = line.replace(/https?:\/\/\S+|\bwww\.\S+/gi, " ");
+  const haystack = ` ${deLinked.toLowerCase().replace(/[^a-z0-9\s+]/g, " ")} `;
   const hits: { def: TraitDefinition; matchedForm: string }[] = [];
   const seen = new Set<string>();
   // Words already consumed by a more specific trait. "trail running" claims
@@ -177,17 +185,37 @@ export function matchLine(
   // substring in the direction the old check assumed.
   const claimedWords = new Set<string>();
 
+  // The raw line keeps punctuation (positions align 1:1 with the haystack
+  // because sanitising swaps one char for one space), so currency signs
+  // survive for the money guard below.
+  const raw = ` ${line.toLowerCase()} `;
   for (const { def, form } of SORTED) {
     const normalised = form.toLowerCase().replace(/[^a-z0-9\s+]/g, " ").trim();
-    // "10k" is a legitimate running cue, but not when it is a money figure.
-    // Stripping punctuation turns "$10k" into " 10k ".
-    if (/\d/.test(form) && /[$£€]/.test(line)) continue;
-
     const words = normalised.split(/\s+/).filter(Boolean);
     if (words.length > 0 && words.every((w) => claimedWords.has(w))) continue;
 
+    // "10k" is a legitimate running cue, but not when it is a money figure.
+    // Scope is attachment, not the line: the $ must belong to THIS number
+    // ("$10k prize" suppresses; "Salary $50k, I love 10k races" keeps its
+    // race, because the $ belongs to the 50k). A fixed window either way
+    // misfires on one of the two.
     const needle = ` ${normalised} `;
-    if (haystack.includes(needle) && !isNegated(line, form) && !isManagedObject(line, normalised)) {
+    let matched = false;
+    if (/\d/.test(form)) {
+      let start = 0;
+      for (;;) {
+        const at = haystack.indexOf(needle, start);
+        if (at < 0) break;
+        if (!/[$£€]\s*[\d,.]*$/.test(raw.slice(0, at + 1))) {
+          matched = true;
+          break;
+        }
+        start = at + 1;
+      }
+    } else {
+      matched = haystack.includes(needle);
+    }
+    if (matched && !isNegated(line, form) && !isManagedObject(line, normalised)) {
       // Claim the words even when this trait was already reported through a
       // longer form. Skipping seen traits here let "shooting photos" report
       // photography while "film camera" never ran, so bare "film" fired and a

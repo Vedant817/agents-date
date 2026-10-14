@@ -42,6 +42,10 @@ export default function RunProgress({ runId, onDone }: { runId: string; onDone: 
   });
   const [elapsed, setElapsed] = useState(0);
   const doneRef = useRef(false);
+  // A dropped connection must say so. EventSource retries silently, which
+  // used to read as a spinner ticking up forever on a dead stream.
+  const [disconnected, setDisconnected] = useState(false);
+  const terminalRef = useRef(false);
 
   useEffect(() => {
     doneRef.current = false;
@@ -61,6 +65,7 @@ export default function RunProgress({ runId, onDone }: { runId: string; onDone: 
       } else if (evt.type === "dates") {
         setState((prev) => ({ ...prev, sessions: evt.sessions ?? prev.sessions, current: undefined }));
       } else if (evt.type === "complete") {
+        terminalRef.current = true;
         setState((prev) => ({
           ...prev,
           total: evt.total ?? prev.total,
@@ -76,6 +81,7 @@ export default function RunProgress({ runId, onDone }: { runId: string; onDone: 
           onDone(runId);
         }
       } else if (evt.type === "failed") {
+        terminalRef.current = true;
         setState((prev) => ({ ...prev, failed: true, error: evt.error }));
         source.close();
       }
@@ -93,8 +99,11 @@ export default function RunProgress({ runId, onDone }: { runId: string; onDone: 
     const types = ["snapshot", "person-started", "person-done", "dates", "complete", "failed"];
     for (const t of types) source.addEventListener(t, handler as EventListener);
     source.onerror = () => {
-      // EventSource retries by itself. If the run already finished between
-      // polls, the run page (not this component) shows the result.
+      if (doneRef.current || terminalRef.current) return;
+      // The server closes the stream itself on complete/failed, which also
+      // fires onerror — but then a terminal event already arrived first.
+      // Anything else is a dropped connection worth saying out loud.
+      setDisconnected(true);
       if (source.readyState === EventSource.CLOSED) clearInterval(timer);
     };
     return () => {
@@ -122,6 +131,12 @@ export default function RunProgress({ runId, onDone }: { runId: string; onDone: 
             {elapsed > 0 ? ` · ${elapsed}s so far` : ""}
           </p>
           {state.current && <p className="small mono">reading {state.current}…</p>}
+          {disconnected && (
+            <p className="small">
+              Connection lost — retrying automatically. If this persists,{" "}
+              <a href={`/run/${runId}`}>open the run page</a>, which shows the same progress.
+            </p>
+          )}
         </>
       )}
       {state.failed && <p className="small">{state.error ?? "Something went wrong while processing this run."}</p>}

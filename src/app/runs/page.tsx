@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { getStore } from "@/store/runs";
-import { summarise } from "@/pipeline/run";
+import { SHOWCASE_RUN_ID, summarise } from "@/pipeline/run";
 import type { Run } from "@/core/types";
 import CopyRunLink from "./copy-link";
 
@@ -17,11 +19,16 @@ export default async function RunsPage() {
   const store = getStore();
   let runs: Run[] = [];
   try {
-    runs = (await store.list()).filter((run) => run.listed === true);
+    // Newest 200 parsed at most: listed runs live near the head, and the
+    // gallery shows 30. Parsing the whole store per hit took 17s locally.
+    runs = (await store.list(200)).filter((run) => run.listed === true);
   } catch {
     runs = [];
   }
   const summaries = runs.map((run) => ({ run, summary: summarise(run) }));
+  // The pinned showcase card promises a finished run: only render it when
+  // the file exists, instead of advertising an empty state as content.
+  const showcaseAvailable = existsSync(path.join(process.cwd(), "data", `${SHOWCASE_RUN_ID}.json`));
   // The gallery is a directory, not an archive: runs pile up on a long-lived
   // server, and rendering all of them buries the ones a visitor wants.
   // Latest 30, newest first.
@@ -44,21 +51,23 @@ export default async function RunsPage() {
       </p>
 
       <div className="grid grid-2 mt16">
-        <section className="panel person-card">
-          <div className="person-top">
-            <div>
-              <div className="person-name">Showcase run</div>
-              <div className="person-sub">real volunteers · always available</div>
+        {showcaseAvailable && (
+          <section className="panel person-card">
+            <div className="person-top">
+              <div>
+                <div className="person-name">Showcase run</div>
+                <div className="person-sub">real volunteers · always available</div>
+              </div>
+              <span className="chip">pinned</span>
             </div>
-            <span className="chip">pinned</span>
-          </div>
-          <p className="small dim">
-            The finished example: analysed profiles, recorded agent dates, every shortlist ranked.
-          </p>
-          <Link className="btn btn-sm" href={`/demo`}>
-            Open the showcase
-          </Link>
-        </section>
+            <p className="small dim">
+              The finished example: analysed profiles, recorded agent dates, every shortlist ranked.
+            </p>
+            <Link className="btn btn-sm" href={`/demo`}>
+              Open the showcase
+            </Link>
+          </section>
+        )}
 
         {visible.map(({ run, summary }) => (
           <section className="panel person-card" key={run.id}>
@@ -68,6 +77,17 @@ export default async function RunsPage() {
                   {summary.ready > 0
                     ? `${summary.ready} agent${summary.ready === 1 ? "" : "s"}`
                     : "Unreadable run"}
+                </div>
+                <div className="person-sub">
+                  {/* Creators opted these runs into the gallery, so naming
+                      names is consented visibility — and a wall of identical
+                      "N agents" cards is unscannable without them. */}
+                  {run.people
+                    .filter((p) => p.status === "ready")
+                    .slice(0, 3)
+                    .map((p) => p.displayName ?? p.id)
+                    .join(" · ")}
+                  {summary.ready > 3 ? ` · +${summary.ready - 3} more` : ""}
                 </div>
                 <div className="person-sub">
                   {summary.sessions} date{summary.sessions === 1 ? "" : "s"} ·{" "}
@@ -82,7 +102,9 @@ export default async function RunsPage() {
                 </div>
               </div>
               <span className={run.status === "complete" ? "score-pill" : "chip"}>
-                {run.status === "complete" ? `${summary.sessions} dates` : run.status}
+                {run.status === "complete"
+                  ? `${summary.sessions} date${summary.sessions === 1 ? "" : "s"}`
+                  : run.status}
               </span>
             </div>
             <div className="cluster mt16">

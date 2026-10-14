@@ -699,6 +699,50 @@ describe("processPerson (consented text, no network)", () => {
     );
     expect(p.status).toBe("ready");
   });
+
+  it("refuses senior years and sixth form", async () => {
+    // Grade 12 / year 12 / form 6 straddle 17-18. On a dating product the
+    // miss is worse than the false refusal, which the error message tells
+    // the user how to fix.
+    const refused = [
+      "Senior year\nGrade 12 student\nSoccer and art.",
+      "Amara Diallo\nYear 12 pupil\nDebate and running.",
+      "Jo Lambert\nForm 6 student\nPhysics and climbing.",
+    ];
+    for (const linkedinText of refused) {
+      const adapter = new ConsentedTextAdapter();
+      adapter.supply("linkedin", "https://www.linkedin.com/in/senior-case", linkedinText);
+      adapter.supply("instagram", "https://www.instagram.com/senior.case", "Student.");
+      const p = await processPerson(
+        "r",
+        { linkedin: "https://linkedin.com/in/senior-case", instagram: "https://instagram.com/senior.case" },
+        [adapter],
+        "m",
+      );
+      expect(p.status, linkedinText).toBe("failed");
+      expect(p.error, linkedinText).toMatch(/18 or older/);
+    }
+  });
+
+  it("admits educators at every school level, students at none", async () => {
+    const admitted = [
+      "Middle school teacher for 10 years",
+      "Secondary school teacher in London",
+      "Coaching middle schoolers on weekends",
+    ];
+    for (const linkedinText of admitted) {
+      const adapter = new ConsentedTextAdapter();
+      adapter.supply("linkedin", "https://www.linkedin.com/in/educator-case", `${linkedinText}\nRunning and coffee.`);
+      adapter.supply("instagram", "https://www.instagram.com/educator.case", "Runner.");
+      const p = await processPerson(
+        "r",
+        { linkedin: "https://linkedin.com/in/educator-case", instagram: "https://instagram.com/educator.case" },
+        [adapter],
+        "m",
+      );
+      expect(p.status, linkedinText).toBe("ready");
+    }
+  });
 });
 
 describe("summarise", () => {  it("counts people and unique sessions", () => {

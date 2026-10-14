@@ -4,6 +4,7 @@ import { getStore } from "@/store/runs";
 import { SHOWCASE_RUN_ID } from "@/pipeline/run";
 import type { DateSession, Run } from "@/core/types";
 import { readFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import path from "node:path";
 
 /**
@@ -35,7 +36,11 @@ export default async function StartPage(props: { searchParams: Promise<{ from?: 
   return (
     <main>
       <HeroSlot />
-      <StartForm captureEnabled={captureEnabled} extendRun={extendRun} />
+      <StartForm
+        captureEnabled={captureEnabled}
+        extendRun={extendRun}
+        showcaseAvailable={existsSync(path.join(process.cwd(), "data", `${SHOWCASE_RUN_ID}.json`))}
+      />
     </main>
   );
 }

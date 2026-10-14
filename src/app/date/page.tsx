@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import Link from "next/link";
 import { getStore } from "@/store/runs";
 import { SHOWCASE_RUN_ID } from "@/pipeline/run";
 import type { Run } from "@/core/types";
@@ -51,7 +52,11 @@ export default async function DatePage(props: {
   const store = getStore();
   let runs: Run[] = [];
   try {
-    runs = await store.list();
+    // Gallery rule applies here too: only listed runs are discoverable.
+    // Without this filter the picker enumerated every unlisted run's people
+    // by name, defeating unlisted-by-default entirely. Newest 200 parsed at
+    // most: parsing the whole store inlined 124MB into this page.
+    runs = (await store.list(200)).filter((run) => run.listed === true);
   } catch {
     runs = [];
   }
@@ -91,7 +96,13 @@ export default async function DatePage(props: {
       {options.length === 0 ? (
         <section className="panel empty">
           <h2>No datable runs yet</h2>
-          <p>A date needs a run with at least two readable profiles. Start one below.</p>
+          <p>
+            A date needs a run with at least two readable profiles. Start one below — it takes a minute, and the
+            instant date is waiting here when you return.
+          </p>
+          <Link className="btn btn-primary" href="/">
+            Add profiles
+          </Link>
         </section>
       ) : (
         <DatePlayer runs={options} initial={initial} />

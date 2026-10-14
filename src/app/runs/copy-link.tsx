@@ -1,22 +1,35 @@
 "use client";
 
+import { useState } from "react";
+
 /**
- * Copies a run's share link. Falls back to showing the URL when the
- * clipboard API is unavailable, so the link is never trapped.
+ * Copies a run's share link. Falls back to showing the URL inline when the
+ * clipboard API is unavailable, so the link is never trapped — and never
+ * steals focus with an alert().
  */
 export default function CopyRunLink({ runId }: { runId: string }) {
+  const [state, setState] = useState<"idle" | "copied" | "shown">("idle");
+  const url = typeof window !== "undefined" ? `${window.location.origin}/run/${runId}` : `/run/${runId}`;
+
   async function copy() {
-    const url = `${window.location.origin}/run/${runId}`;
     try {
       await navigator.clipboard.writeText(url);
-      alert(`Copied: ${url}`);
+      setState("copied");
     } catch {
-      alert(`Copy this link: ${url}`);
+      setState("shown");
     }
   }
+
   return (
-    <button className="btn btn-sm btn-ghost" type="button" onClick={() => void copy()}>
-      Copy link
-    </button>
+    <span className="cluster">
+      <button className="btn btn-sm btn-ghost" type="button" onClick={() => void copy()}>
+        {state === "copied" ? "Copied!" : "Copy link"}
+      </button>
+      {state === "shown" && (
+        <span className="small mono" role="status">
+          {url}
+        </span>
+      )}
+    </span>
   );
 }

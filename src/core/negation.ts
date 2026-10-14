@@ -36,9 +36,12 @@ export const NEGATION_PHRASE_CUES = [
 /**
  * "Without X I cannot function" is dependence, i.e. enthusiasm, not dislike.
  * Without this exception the over-broad "without"+"cannot" cues turned a
- * coffee lover trait-less.
+ * coffee lover trait-less. Same for litotes — "not unhappy", "don't
+ * dislike", "never not" all affirm by negating a negative. Rare in bios,
+ * always a false negative when hit.
  */
 const WITHOUT_NEED = /\bwithout\b[\s\S]*\b(can ?not|cannot|can't|unable)\b[\s\S]*\b(function|live|survive|sleep|start|get going)\b/;
+const LITOTES = /\b(not unhappy|don't dislike|doesn't dislike|never not|not uninteresting)\b/;
 
 /** First word of a matched form, never treated as its own negation cue. */
 export function traitWordOf(form: string): string {
@@ -84,6 +87,7 @@ export function isTraitNegated(line: string, form: string): boolean {
   const clause = extractClause(line, idx);
 
   if (WITHOUT_NEED.test(clause)) return false;
+  if (LITOTES.test(clause)) return false;
 
   for (const phrase of NEGATION_PHRASE_CUES) {
     if (clause.includes(phrase)) return true;
