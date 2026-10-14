@@ -20,9 +20,16 @@
   --bad: #991b1b;
   --bad-bg: #fdecea;
   --bad-line: #f2c1bc;
-  --info: #1e40af;
-  --info-bg: #eaf0fe;
-  --info-line: #c7d7fc;
+  /* No blue anywhere: information is a neutral ink tint, so notices never
+     read as a SaaS default. Status colour is reserved for states that need
+     action (warn/bad) and quiet confirmation (ok). */
+  --info: #3d4450;
+  --info-bg: var(--surface-2);
+  --info-line: var(--line-strong);
+  /* Romance accent: used sparingly, only where the product is about the
+     date itself (person B's turns, live playback). Evidence stays ink. */
+  --rose: #9d2c4d;
+  --rose-soft: #f9e8ec;
   --radius: 12px;
   --radius-sm: 8px;
   --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -205,7 +212,7 @@ p {
 .lede {
   max-width: 68ch;
   font-size: 17px;
-  color: #2c333d;
+  color: var(--body);
 }
 
 .eyebrow {
@@ -528,9 +535,9 @@ a.chip:hover {
 
 .notice-info {
   border-color: var(--info-line);
-  border-left-color: var(--info);
+  border-left-color: var(--ink);
   background: var(--info-bg);
-  color: #1e3a8a;
+  color: var(--body);
 }
 
 ul.clean {
@@ -578,13 +585,72 @@ ul.clean b {
 }
 
 .evidence .src {
-  color: var(--muted);
+  color: var(--faint);
   font-family: var(--mono);
   font-size: 11px;
 }
 
 .evidence-item + .evidence-item {
   margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--line);
+}
+
+/* Live playback: turns arrive with a soft rise, and the header carries a
+   pulsing "live" dot while the date is playing. Reduced-motion users get
+   the same information with no movement (see the media query below). */
+@keyframes turn-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.turn-live {
+  animation: turn-in 320ms ease-out both;
+}
+
+.live-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: var(--rose);
+  vertical-align: 1px;
+  animation: live-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.8);
+  }
+}
+
+.playback-bar {
+  height: 4px;
+  margin: 12px 0 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.playback-bar > i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--rose);
+  transition: width 300ms ease-out;
 }
 
 .trait-row {
@@ -608,6 +674,11 @@ ul.clean b {
 
 .person-card {
   display: block;
+  transition: border-color 140ms ease-out;
+}
+
+.person-card:hover {
+  border-color: var(--line-strong);
 }
 
 .person-top {
@@ -772,12 +843,17 @@ ul.clean b {
 .transcript {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 8px;
+  gap: 14px;
+  margin-top: 10px;
 }
 
+/*
+ * Two voices, two treatments. A speaks on plain paper with an ink rule;
+ * B answers on a blush tint with the romance accent. The date reads as a
+ * conversation at a glance, without either side looking like an alert.
+ */
 .turn {
-  padding: 13px 15px;
+  padding: 14px 16px;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--surface);
@@ -788,7 +864,42 @@ ul.clean b {
 }
 
 .turn.b {
-  border-left: 4px solid var(--line-strong);
+  border-left: 4px solid var(--rose);
+  background: #fffafa;
+}
+
+/*
+ * Evidence is the product's proof, so it stays fully visible — but as a
+ * quiet footnote, not a loud box. Previously every citation was a big tan
+ * fill that drowned the conversation it was proving.
+ */
+.evidence {
+  margin-top: 10px;
+  padding: 0 0 0 10px;
+  border: 0;
+  border-left: 2px solid var(--line-strong);
+  border-radius: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.evidence b {
+  color: var(--body);
+  font-weight: 650;
+}
+
+.evidence .src {
+  color: var(--faint);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.evidence-item + .evidence-item {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--line);
 }
 
 .turn-head {

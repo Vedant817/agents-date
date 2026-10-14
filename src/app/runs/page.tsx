@@ -21,6 +21,12 @@ export default async function RunsPage() {
     runs = [];
   }
   const summaries = runs.map((run) => ({ run, summary: summarise(run) }));
+  // The gallery is a directory, not an archive: test and verification runs
+  // pile up on a long-lived server (hundreds), and rendering all of them
+  // buries the runs a visitor actually wants. Latest 30, newest first.
+  const GALLERY_LIMIT = 30;
+  const visible = summaries.slice(0, GALLERY_LIMIT);
+  const hidden = summaries.length - visible.length;
 
   return (
     <main>
@@ -52,7 +58,7 @@ export default async function RunsPage() {
           </Link>
         </section>
 
-        {summaries.map(({ run, summary }) => (
+        {visible.map(({ run, summary }) => (
           <section className="panel person-card" key={run.id}>
             <div className="person-top">
               <div>
@@ -86,6 +92,12 @@ export default async function RunsPage() {
           </section>
         ))}
       </div>
+
+      {hidden > 0 && (
+        <p className="small dim mt16 mb0">
+          Showing the latest {visible.length} of {summaries.length} runs. Older runs still open by their own links.
+        </p>
+      )}
 
       {summaries.length === 0 && (
         <section className="panel empty">

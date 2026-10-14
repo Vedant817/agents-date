@@ -215,15 +215,33 @@ export default function DatePlayer({
         <section className="panel mt16" aria-live="polite">
           <div className="entry-head">
             <h3 className="mb0">
+              {playing && !finished && (
+                <span className="live-dot" aria-hidden="true" />
+              )}
               {nameOf(session.personAId)} <span className="dim">×</span> {nameOf(session.personBId)}
             </h3>
             {finished && session.evaluation && (
               <span className="score-pill">{session.evaluation.overall}</span>
             )}
           </div>
+          {!finished && (
+            <div
+              className="playback-bar"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={session.turns.length}
+              aria-valuenow={revealed}
+              aria-label={`Turn ${Math.min(revealed + 1, session.turns.length)} of ${session.turns.length}`}
+            >
+              <i style={{ width: `${Math.round((revealed / Math.max(1, session.turns.length)) * 100)}%` }} />
+            </div>
+          )}
           <div className="transcript">
-            {session.turns.slice(0, revealed).map((t) => (
-              <div key={t.seq} className={`turn ${t.role === "A" ? "a" : "b"}`}>
+            {session.turns.slice(0, revealed).map((t, i) => (
+              <div
+                key={t.seq}
+                className={`turn ${t.role === "A" ? "a" : "b"}${i === revealed - 1 && playing ? " turn-live" : ""}`}
+              >
                 <div className="turn-head">
                   <span className="speaker">{t.role === "A" ? nameOf(session.personAId) : nameOf(session.personBId)}</span>
                   <span className="move-tag">{t.move.replace("_", " ")}</span>
