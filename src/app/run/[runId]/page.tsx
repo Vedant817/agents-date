@@ -72,7 +72,7 @@ export default async function RunPage(props: {
         <div className="page-head">
           <p className="eyebrow">{run.isDemo ? "Completed demo run" : "Your run"}</p>
           <h1>
-            {run.isSample ? "Example run" : "Your run"}
+            Your run
             {summary.ready > 0 ? ` — ${summary.ready} agent${summary.ready === 1 ? "" : "s"} ready` : ""}
           </h1>
           <p className="lede mb0">
@@ -131,14 +131,6 @@ export default async function RunPage(props: {
         added until the run reaches 14 dates. Coverage comes first, so a run with many agents can have more dates than
         that target.
       </p>
-
-      {run.isSample && (
-        <div className="notice notice-warn">
-          <b>This run used the built-in example personas.</b> The people below are illustrative sample data, not real
-          profiles, so nothing here is a capture of an actual person. Add your own two links to see the pipeline run on
-          real public profiles.
-        </div>
-      )}
 
       {run.notes && run.notes.length > 0 && (
         <div className="notice notice-warn">

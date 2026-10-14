@@ -283,11 +283,6 @@ function SourceLinks({ person }: { person: PersonRecord }) {
           Instagram: {provenanceLabel(ig)}
         </span>
       )}
-      {person.isSample && (
-        <span className="chip chip-warn" title="Both links are the built-in example, so this profile is sample data.">
-          Example persona
-        </span>
-      )}
     </div>
   );
 }

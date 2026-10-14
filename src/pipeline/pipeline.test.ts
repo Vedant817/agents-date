@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { analyse } from "@/analysis/analyse";
 import { runDate } from "@/dating/engine";
 import { rankCandidates, scoreMatch, MATCH_WEIGHTS, MATCH_COMPONENTS } from "@/matching/rank";
-import { computeNetwork, planSessions, summarise, validateSubmission, emptyRun, isSampleSubmission } from "@/pipeline/run";
+import { computeNetwork, planSessions, summarise, validateSubmission, emptyRun } from "@/pipeline/run";
 import { ConsentedTextAdapter } from "@/ingest/public";
 import { normaliseInstagramUrl, normaliseLinkedInUrl, parseCharge } from "@/ingest/setup";
 import { processPerson } from "@/pipeline/run";
@@ -539,11 +539,6 @@ describe("computeNetwork", () => {
 });
 
 describe("validateSubmission", () => {
-  const SAMPLE_SUBMISSION = [
-    { linkedin: "linkedin.com/in/example-runner", instagram: "instagram.com/example.runner" },
-    { linkedin: "linkedin.com/in/example-designer", instagram: "instagram.com/example.designer" },
-  ];
-
   it("accepts a clean pair", () => {
     expect(validateSubmission([{ linkedin: "https://linkedin.com/in/a", instagram: "https://instagram.com/b" }])).toHaveLength(0);
   });
@@ -561,18 +556,15 @@ describe("validateSubmission", () => {
     expect(issues.some((i) => i.message.includes("Same profile"))).toBe(true);
   });
 
-  it("flags an all-example submission as sample data, and not a mixed one", () => {
-    // Regression: the example links used to be rejected outright, so the one
-    // guided path on the start page was a guaranteed dead end.
-    expect(validateSubmission(SAMPLE_SUBMISSION)).toHaveLength(0);
-    expect(isSampleSubmission(SAMPLE_SUBMISSION)).toBe(true);
-
-    const mixed = [
-      ...SAMPLE_SUBMISSION,
-      { linkedin: "linkedin.com/in/real-person", instagram: "instagram.com/realperson" },
+  it("treats ordinary handles as ordinary input, with no special cases", () => {
+    // There used to be a hardcoded list of placeholder handles with their own
+    // labelling path. Live input has no special handles: every valid pair is
+    // validated the same way.
+    const entries = [
+      { linkedin: "linkedin.com/in/example-runner", instagram: "instagram.com/example.runner" },
+      { linkedin: "linkedin.com/in/ari-vance", instagram: "instagram.com/ari.vance" },
     ];
-    expect(isSampleSubmission(mixed), "one real handle means it is not purely sample data").toBe(false);
-    expect(isSampleSubmission([])).toBe(false);
+    expect(validateSubmission(entries)).toHaveLength(0);
   });
 });
 

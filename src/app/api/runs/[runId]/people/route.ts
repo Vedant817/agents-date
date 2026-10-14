@@ -6,8 +6,6 @@ import {
   computeNetwork,
   processPerson,
   summarise,
-  hasSampleEntry,
-  isSampleSubmission,
   DEMO_RUN_ID,
 } from "@/pipeline/run";
 import { getStore } from "@/store/runs";
@@ -185,21 +183,6 @@ export async function POST(request: Request, context: { params: Promise<{ runId:
         );
       }
 
-      // Recompute the sample flags from the whole run. Spreading the old value
-      // kept "Example run" on the page after real people were added, and kept
-      // the mixed-run notice off when example people were added to a real one.
-      const allEntries = recomputed.map((p) => ({ linkedin: p.linkedinUrl, instagram: p.instagramUrl }));
-      const stillSample = isSampleSubmission(allEntries);
-      const nowMixed = !stillSample && hasSampleEntry(allEntries);
-      if (stillSample) {
-        notes.add(
-          "This run used the built-in example personas, so the profiles are illustrative sample data rather than a real capture.",
-        );
-      } else if (nowMixed) {
-        notes.add(
-          "This run mixes the built-in example personas with real links. The people marked as example are illustrative sample data, not a real capture.",
-        );
-      }
       if (!process.env.APIFY_TOKEN) {
         notes.add(
           "APIFY_TOKEN is not configured, so only pasted profile text could be read. Add the token to capture public profiles automatically.",
@@ -209,7 +192,6 @@ export async function POST(request: Request, context: { params: Promise<{ runId:
       return {
         ...fresh,
         people: recomputed,
-        isSample: stillSample,
         notes: [...notes],
         status: recomputed.some((p) => p.status === "ready") ? "complete" : fresh.status,
       };

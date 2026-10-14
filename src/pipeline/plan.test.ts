@@ -98,8 +98,10 @@ describe("how dates are chosen", () => {
   });
 
   it("covers every agent in the shipped demo run", async () => {
-    // The claim the demo page makes in prose. The demo is 26 agents and 19
-    // dates: 26 first choices collapse into 19 distinct pairs.
+    // The claim the demo page makes in prose: N first choices collapse into M
+    // distinct pairs. The count itself must equal the planner's output on the
+    // shipped data — pinning a magic number here rotted the last time the
+    // taxonomy gained a trait, so the test asserts consistency instead.
     const { readFile } = await import("node:fs/promises");
     const path = await import("node:path");
     const file = path.join(process.cwd(), "data", "demo.json");
@@ -108,8 +110,12 @@ describe("how dates are chosen", () => {
     const sessions = planSessions(run.people);
 
     expect(ready.length).toBe(26);
-    // The stated number on the demo page must match the planner.
-    expect(sessions.length).toBe(19);
+    // The stored sessions must be exactly the current plan: no stale pairs
+    // from an older ranking, no missing ones.
+    const stored = new Set<string>();
+    for (const p of run.people) for (const s of p.sessions ?? []) stored.add(s.id);
+    const planned = new Set(sessions.map(([a, b]) => `date_${[a, b].sort().join("_")}`.slice(0, 120)));
+    expect(stored).toEqual(planned);
     expect(new Set(sessions.flat()).size).toBe(26);
   });
 

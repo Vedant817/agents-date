@@ -53,48 +53,6 @@ function entryFromPerson(person: PersonRecord, showText: boolean): Entry {
   };
 }
 
-/**
- * Two example people, not one. A single-person run produces no dates and no
- * rankings, so a one-person sample demonstrated the one thing the page says
- * is not the point.
- */
-const SAMPLE_PEOPLE = [
-  {
-    name: "Alex Rivera",
-    linkedin: "linkedin.com/in/example-runner",
-    instagram: "instagram.com/example.runner",
-    linkedinText: [
-      "Alex Rivera",
-      "Backend engineer at a fintech scale-up",
-      "Trail running, bouldering and natural wine fill the weekends.",
-      "Skills: Go, Postgres, Kubernetes.",
-      "Mentoring two junior engineers through a local programme.",
-    ].join("\n"),
-    instagramText: [
-      "Alex Rivera",
-      "Runner. Climber. Coffee obsessive.",
-      "Six weeks to a sub-3 marathon. Bouldering four times a week.",
-      "New coffee spot in Marylebone did not disappoint.",
-    ].join("\n"),
-  },
-  {
-    name: "Rowan Ellis",
-    linkedin: "linkedin.com/in/example-designer",
-    instagram: "instagram.com/example.designer",
-    linkedinText: [
-      "Rowan Ellis",
-      "Product designer at a small studio",
-      "Trail running, natural wine and throwing pots on weekday evenings.",
-      "Mentoring a design student through a local programme.",
-    ].join("\n"),
-    instagramText: [
-      "Rowan Ellis",
-      "Trail runner. Wine. Making ceramics.",
-      "Six weeks to a sub-3 marathon. New roastery did not disappoint.",
-    ].join("\n"),
-  },
-] as const;
-
 /** Must match the zod cap in src/app/api/runs/schema.ts. */
 const MAX_PEOPLE = 20;
 
@@ -154,20 +112,6 @@ export default function StartForm({
 
   function remove(key: number) {
     setEntries((prev) => (prev.length === 1 ? prev : prev.filter((e) => e.key !== key)));
-  }
-
-  function loadSample() {
-    setEntries(
-      SAMPLE_PEOPLE.slice(0, MAX_PEOPLE).map((person) => ({
-        ...blank(),
-        name: person.name,
-        linkedin: person.linkedin,
-        instagram: person.instagram,
-        linkedinText: person.linkedinText,
-        instagramText: person.instagramText,
-        showText: true,
-      })),
-    );
   }
 
   // A run with many people takes real seconds, and a button that just changes
@@ -303,14 +247,6 @@ export default function StartForm({
         <div className="entry-head">
           <h2 className="mb0">Add people</h2>
           <div className="cluster">
-            {/* Hidden while resuming: replacing a restored run with the
-                built-in example is the same data loss "Add more people" had,
-                just reached from the other direction. */}
-            {!extendRun && (
-              <button className="btn btn-sm" onClick={loadSample} type="button">
-                Fill example
-              </button>
-            )}
             <button className="btn btn-sm" onClick={add} type="button" disabled={entries.length >= MAX_PEOPLE}>
               + Add person
             </button>

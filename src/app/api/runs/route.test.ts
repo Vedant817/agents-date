@@ -35,26 +35,25 @@ describe("POST /api/runs validation", () => {
     expect(body.issues[0]).toMatchObject({ index: 0 });
   });
 
-  it("accepts the shipped example links and flags the run as sample data", async () => {
-    // Regression: "Fill example" filled example-runner / example.runner, and
-    // rejecting those made the one guided path on the start page a guaranteed
-    // dead end. The run is now accepted and labelled instead.
+  it("creates a run from real links with pasted profile text", async () => {
+    // The live path takes real user input only: two links per person plus the
+    // visible profile text. No built-in personas exist anymore.
     const res = await POST(
       post({
         entries: [
           {
-            name: "Alex Rivera",
-            linkedin: "linkedin.com/in/example-runner",
-            instagram: "instagram.com/example.runner",
-            linkedinText: "Alex Rivera\nRunner.",
-            instagramText: "Alex Rivera\nRunner.",
+            name: "Ari Vance",
+            linkedin: "linkedin.com/in/ari-vance",
+            instagram: "instagram.com/ari.vance",
+            linkedinText: "Ari Vance\nProduct engineer\nTrail running and bouldering at weekends.",
+            instagramText: "Ari Vance\nRunner. Coffee obsessive.",
           },
           {
-            name: "Rowan Ellis",
-            linkedin: "linkedin.com/in/example-designer",
-            instagram: "instagram.com/example.designer",
-            linkedinText: "Rowan Ellis\nDesigner.",
-            instagramText: "Rowan Ellis\nDesigner.",
+            name: "Bo Lindqvist",
+            linkedin: "linkedin.com/in/bo-lindqvist",
+            instagram: "instagram.com/bo.lindqvist",
+            linkedinText: "Bo Lindqvist\nProduct designer\nTrail running and natural wine.",
+            instagramText: "Bo Lindqvist\nTrail runner. Natural wine.",
           },
         ],
       }),
@@ -65,7 +64,11 @@ describe("POST /api/runs validation", () => {
 
     const store = await getStore();
     const saved = await store.get(body.runId);
-    expect(saved?.isSample, "example data must never be labelled as a real run").toBe(true);
+    expect(saved?.people.length).toBe(2);
+    expect(saved?.people.every((p) => p.status === "ready")).toBe(true);
+    // Nothing in a live run is sample data: the flag no longer exists.
+    expect(saved).not.toHaveProperty("isSample");
+    expect(saved?.people.every((p) => !("isSample" in p))).toBe(true);
   });
 
   it("does not burn the rate budget on invalid requests", async () => {

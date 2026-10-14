@@ -5,8 +5,6 @@ import type { Run } from "@/core/types";
 import {
   computeNetwork,
   emptyRun,
-  hasSampleEntry,
-  isSampleSubmission,
   newRunId,
   processPerson,
   summarise,
@@ -51,26 +49,13 @@ export async function POST(request: Request) {
   const store = getStore();
   const runId = newRunId();
   const notes: string[] = [];
-  // The built-in example is accepted so the guided path works, but flagged so
-  // the UI can label it instead of presenting synthetic profiles as a capture.
-  // Each person is flagged individually: a run that mixes example and real
-  // people must still mark the example ones.
-  const isSample = isSampleSubmission(entries);
-  const isMixed = !isSample && hasSampleEntry(entries);
-  if (isSample || isMixed) {
-    notes.push(
-      isSample
-        ? "This run used the built-in example personas, so the profiles are illustrative sample data rather than a real capture."
-        : "This run mixes the built-in example personas with real links. The people marked as example are illustrative sample data, not a real capture.",
-    );
-  }
   if (!process.env.APIFY_TOKEN) {
     notes.push(
       "APIFY_TOKEN is not configured, so only pasted profile text could be read. Add the token to capture public profiles automatically.",
     );
   }
 
-  const run: Run = { ...emptyRun(runId, false, notes), isSample: isSample || isMixed };
+  const run: Run = { ...emptyRun(runId, false, notes) };
   run.status = "running";
   await store.save(run);
 

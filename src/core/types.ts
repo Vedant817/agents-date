@@ -237,13 +237,6 @@ export interface PersonRecord {
   readonly instagramUrl: string;
   status: PersonStatus;
   error?: string;
-  /**
-   * True when BOTH of this person's links are the built-in example handles.
-   * Tracked per person, not per run: a run that mixes example people with a
-   * real person would otherwise lose the sample marker entirely and present
-   * invented profiles as a real capture.
-   */
-  isSample?: boolean;
   analysis?: PersonAnalysis;
   /** Computed once both sides exist. */
   matches?: readonly MatchScore[];
@@ -255,13 +248,6 @@ export interface Run {
   readonly id: string;
   /** Marks the frozen, already-completed run used by /demo. */
   readonly isDemo: boolean;
-  /**
-   * Marks a run created from the built-in example personas. The data is
-   * synthetic, so the UI must never present it as a real capture. Rejecting
-   * the example instead would make the one guided path a dead end, so the run
-   * is accepted and labelled instead.
-   */
-  readonly isSample?: boolean;
   status: RunStatus;
   people: PersonRecord[];
   createdAt: number;

@@ -49,57 +49,6 @@ export interface ValidationIssue {
   readonly message: string;
 }
 
-/**
- * Handles that belong to the built-in example, not to a real person. The
- * start page "Fill example" button fills these so a visitor can reach a real
- * result without their own links. The run is accepted and flagged `isSample`
- * rather than rejected, and the UI labels it, so the guided path works while
- * synthetic data is still never presented as a real capture.
- */
-const PLACEHOLDER_HANDLES = new Set(
-  [
-    "example",
-    "example-runner",
-    "example.runner",
-    "example-designer",
-    "example.designer",
-    "yourname",
-    "your-name",
-    "your_name",
-    "username",
-    "john-doe",
-    "jane-doe",
-    "foo",
-    "sample",
-  ].map((h) => h.toLowerCase()),
-);
-
-function isPlaceholderHandle(handle: string | undefined): boolean {
-  return Boolean(handle && PLACEHOLDER_HANDLES.has(handle.toLowerCase()));
-}
-
-/** True when BOTH of one person's links are example handles. */
-export function isSampleEntry(entry: { linkedin?: string; instagram?: string }): boolean {
-  const li = parseLinkedIn(entry.linkedin ?? "");
-  const ig = parseInstagram(entry.instagram ?? "");
-  return isPlaceholderHandle(li.handle) && isPlaceholderHandle(ig.handle);
-}
-
-/** True when every submitted person used an example handle. */
-export function isSampleSubmission(
-  entries: readonly { linkedin?: string; instagram?: string }[],
-): boolean {
-  if (entries.length === 0) return false;
-  return entries.every((entry) => isSampleEntry(entry));
-}
-
-/** True when ANY submitted person used example handles, so the run is mixed. */
-export function hasSampleEntry(
-  entries: readonly { linkedin?: string; instagram?: string }[],
-): boolean {
-  return entries.some((entry) => isSampleEntry(entry));
-}
-
 /** Validates a whole submission before any network work begins. */
 export function validateSubmission(
   entries: readonly { linkedin?: string; instagram?: string; name?: string }[],
@@ -192,9 +141,6 @@ export async function processPerson(
     linkedinUrl: li.url!,
     instagramUrl: ig.url!,
     status: readable ? "ready" : "failed",
-    // Set per person so a run that mixes example and real people still marks
-    // the example ones instead of presenting them as a real capture.
-    isSample: isSampleEntry(entry),
     error: bothUnread
       ? "Neither source could be read, so no analysis was produced. Add an Apify token, or paste the visible profile text."
       : undefined,

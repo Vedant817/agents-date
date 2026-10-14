@@ -187,6 +187,35 @@ describe("taxonomy", () => {
     expect(keys).toContain("hobby:climbing");
   });
 
+  it("covers the interests real public figures actually state", () => {
+    // Found by running three real public profiles through the pipeline:
+    // cricket, poetry, frisbee, EVs, podcasts and phone cameras all went
+    // unrecognised, so real hobbies never reached the analysis.
+    const cases: [string, string][] = [
+      ["Cricket fan. Reader.", "hobby:cricket"],
+      ["Interests: cricket, poetry and books", "interest:poetry"],
+      ["Ultimate frisbee player", "hobby:frisbee"],
+      ["Tech videos. EVs. Cameras.", "interest:electric-vehicles"],
+      ["Host of the Waveform podcast", "interest:podcasts"],
+      ["Shot on the latest phone camera, unedited", "hobby:photography"],
+      ["Kitesurfing weekends", "hobby:kitesurfing"],
+      ["Avid reader. Annual book recommendations", "interest:books"],
+    ];
+    for (const [line, key] of cases) {
+      const keys = matchLine(line).map((h) => h.def.key);
+      expect(keys, `"${line}" must yield ${key}`).toContain(key);
+    }
+  });
+
+  it("does not turn a disliked thing into an interest", () => {
+    // "bad X" in profile prose consistently means not-into-X. Without this,
+    // "Reading, mostly non-fiction, and bad podcasts" produced a confident
+    // Podcasts trait cited to a line saying the opposite.
+    const keys = matchLine("Reading, mostly non-fiction, and bad podcasts").map((h) => h.def.key);
+    expect(keys).toContain("interest:books");
+    expect(keys).not.toContain("interest:podcasts");
+  });
+
   it("does not read the gerund 'running' as the sport", () => {
     // Regression: found in the seeded demo. A beekeeper "running 14 hives"
     // and a psychologist "running a peer support group" were both reported

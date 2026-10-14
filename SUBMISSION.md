@@ -37,8 +37,8 @@ current data and fails on twelve properties, including citations that do not
 resolve to a real source line, one-sided claims cited to the wrong side,
 traits with no evidence, a trait refuted by its own quote, a misleading "adds
 something new", a wrong session `runId`, and a leaked placeholder name. On the
-seeded run: 426 citations, 0 unresolved, 0 refuted, 650 additive claims with 0
-false, 7 of 325 exact symmetric ranking ties (2.2%).
+seeded run: 408 citations, 0 unresolved, 0 refuted, 650 additive claims with 0
+false, 6 of 325 exact symmetric ranking ties (1.8%).
 
 **Defects found by adversarial QA and fixed, each with a regression test.**
 Clause-scoped negation, so "I hate running" no longer yields "into running";

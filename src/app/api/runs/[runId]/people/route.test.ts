@@ -185,19 +185,18 @@ describe("POST /api/runs/<runId>/people (extend a run)", () => {
   });
 });
 
-describe("sample labelling survives an extend", () => {
-  it("drops the run-level sample label once a real person is added", async () => {
+describe("live runs carry no sample labelling", () => {
+  it("never flags a run or a person as sample data", async () => {
     resetRateLimit();
-    // Regression: the extend route spread the stored `isSample` verbatim, so a
-    // run made of example personas kept its "Example run" heading and its "not
-    // real profiles" banner after a real person had been added to it.
+    // There is no sample path anymore: every run is built from user-submitted
+    // links, so the sample flag must not appear anywhere in the stored run.
     const runId = await createRun([
-      { linkedin: LI("example-runner"), instagram: IG("example.runner") },
-      { linkedin: LI("example-designer"), instagram: IG("example.designer") },
+      { linkedin: LI("ari-vance"), instagram: IG("ari.vance"), ...text("Ari") },
+      { linkedin: LI("bo-lindqvist"), instagram: IG("bo.lindqvist"), ...text("Bo") },
     ]);
 
     const res = await extend(post(`https://x.test/api/runs/${runId}/people`, {
-      entries: [{ linkedin: LI("real-person"), instagram: IG("real.person"), ...text("Real") }],
+      entries: [{ linkedin: LI("cleo-marchetti"), instagram: IG("cleo.marchetti"), ...text("Cleo") }],
     }), { params: Promise.resolve({ runId }) });
     expect(res.status).toBe(200);
 
@@ -205,37 +204,13 @@ describe("sample labelling survives an extend", () => {
       params: Promise.resolve({ runId }),
     });
     const body = (await run.json()) as {
-      run: { isSample?: boolean; notes?: string[]; people: { isSample?: boolean }[] };
+      run: { people: Record<string, unknown>[] } & Record<string, unknown>;
     };
-    // No longer an all-example run.
-    expect(body.run.isSample).toBe(false);
-    // The run explains that it now mixes synthetic and real people.
-    expect((body.run.notes ?? []).join(" ")).toMatch(/mixes the built-in example personas/i);
-    // Per person, not per run: the real person must not inherit the label.
-    expect(body.run.people.filter((p) => p.isSample).length).toBe(2);
-    expect(body.run.people.filter((p) => !p.isSample).length).toBe(1);
-  });
-
-  it("classifies all-example and mixed runs the way the UI needs", async () => {
-    // The run-level flag drives the heading and the banner, so it must be
-    // computed from the whole run rather than carried over from whenever the
-    // run was created.
-    resetRateLimit();
-    const { isSampleSubmission, hasSampleEntry } = await import("@/pipeline/run");
-    const example = [
-      { linkedin: LI("example-runner"), instagram: IG("example.runner") },
-      { linkedin: LI("example-designer"), instagram: IG("example.designer") },
-    ];
-    const real = [{ linkedin: LI("real-person"), instagram: IG("real.person") }];
-
-    expect(isSampleSubmission(example)).toBe(true);
-    expect(hasSampleEntry(example)).toBe(true);
-    expect(isSampleSubmission(real)).toBe(false);
-    expect(hasSampleEntry(real)).toBe(false);
-    // A mixed run is NOT a sample run: it must not claim that nothing in it is
-    // a real capture.
-    expect(isSampleSubmission([...example, ...real])).toBe(false);
-    expect(hasSampleEntry([...example, ...real])).toBe(true);
+    expect(body.run).not.toHaveProperty("isSample");
+    for (const person of body.run.people) {
+      expect(person).not.toHaveProperty("isSample");
+    }
+    expect((body.run.notes as string[]).join(" ")).not.toMatch(/example personas/i);
   });
 });
 

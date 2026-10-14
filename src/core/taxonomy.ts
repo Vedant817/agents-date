@@ -34,13 +34,16 @@ export const TRAITS: readonly TraitDefinition[] = [
   { key: "hobby:skiing", label: "Skiing", category: "hobby", forms: ["skiing", "skiing", "snowboarding", "ski slopes"], affinity: 0.7 },
   { key: "hobby:swimming", label: "Swimming", category: "hobby", forms: ["swimming", "open water", "laps"], affinity: 0.7 },
   { key: "hobby:tennis", label: "Tennis", category: "hobby", forms: ["tennis", "pickleball", "padel"], affinity: 0.7 },
+  { key: "hobby:cricket", label: "Cricket", category: "hobby", forms: ["cricket", "test match"], affinity: 0.7 },
+  { key: "hobby:frisbee", label: "Frisbee", category: "hobby", forms: ["ultimate frisbee", "frisbee", "disc golf"], affinity: 0.65 },
+  { key: "hobby:kitesurfing", label: "Kitesurfing", category: "hobby", forms: ["kitesurfing", "kite surfing", "kitesurf", "windsurfing", "windsurf"], affinity: 0.7 },
   { key: "hobby:football", label: "Football", category: "hobby", forms: ["football", "soccer", "5-a-side", "futsal"], affinity: 0.65 },
   { key: "hobby:badminton", label: "Badminton", category: "hobby", forms: ["badminton", "table tennis"], affinity: 0.6 },
   { key: "hobby:golf", label: "Golf", category: "hobby", forms: ["golf", "golfing"], affinity: 0.6 },
   { key: "hobby:yoga", label: "Yoga", category: "hobby", forms: ["yoga", "vinyasa", "pilates", "stretching"], affinity: 0.65 },
 
   // --- Creative ------------------------------------------------------------
-  { key: "hobby:photography", label: "Photography", category: "hobby", forms: ["photography", "photographer", "shooting photos", "film camera"], affinity: 0.75 },
+  { key: "hobby:photography", label: "Photography", category: "hobby", forms: ["photography", "photographer", "shooting photos", "film camera", "phone camera", "cameras"], affinity: 0.75 },
   { key: "hobby:painting", label: "Painting", category: "hobby", forms: ["painting", "painter", "watercolours", "watercolors", "sketching"], affinity: 0.65 },
   { key: "hobby:writing", label: "Writing", category: "hobby", forms: ["writing", "short stories", "novel writing", "screenwriting", "blogging"], affinity: 0.7 },
   { key: "hobby:music", label: "Music", category: "hobby", forms: ["live music", "guitar", "piano", "djing", "vinyl", "in a band", "producing music", "music production"], affinity: 0.7 },
@@ -59,7 +62,10 @@ export const TRAITS: readonly TraitDefinition[] = [
   // --- Culture & media -----------------------------------------------------
   { key: "interest:live-music", label: "Live music", category: "interest", forms: ["live music", "concerts", "gigs", "festivals", "gigging"], affinity: 0.75 },
   { key: "interest:film", label: "Film", category: "interest", forms: ["film", "cinema", "movie", "a24", "arthouse"], affinity: 0.7 },
-  { key: "interest:books", label: "Books", category: "interest", forms: ["books", "reading", "novels", "book club", "literature"], affinity: 0.7 },
+  { key: "interest:books", label: "Books", category: "interest", forms: ["books", "reading", "reader", "novels", "book club", "literature"], affinity: 0.7 },
+  { key: "interest:poetry", label: "Poetry", category: "interest", forms: ["poetry", "poems", "poet", "spoken word"], affinity: 0.65 },
+  { key: "interest:podcasts", label: "Podcasts", category: "interest", forms: ["podcasts", "podcast", "podcasting", "podcast host"], affinity: 0.65 },
+  { key: "interest:electric-vehicles", label: "Electric vehicles", category: "interest", forms: ["electric vehicles", "electric vehicle", "electric cars", "electric car", "evs", "tesla", "rivian"], affinity: 0.7 },
   { key: "interest:art-galleries", label: "Art galleries", category: "interest", forms: ["gallery", "galleries", "exhibition", "museum", "modern art"], affinity: 0.65 },
   { key: "interest:theatre", label: "Theatre", category: "interest", forms: ["theatre", "theater", "musicals", "stand-up comedy", "shakespeare"], affinity: 0.65 },
   { key: "interest:comics", label: "Comics & anime", category: "interest", forms: ["comics", "anime", "manga", "graphic novel"], affinity: 0.6 },
@@ -123,7 +129,7 @@ const NEGATION_CUES = [
   "cant", "cannot", "wont", "avoid", "avoids", "against", "quit", "stopped",
   "used to", "former", "gave up", "anti", "uninterested", "nothing to do with",
   "allergic", "allergies", "intolerant", "zero", "none", "without", "except",
-  "rather not", "not into", "not a fan", "scraped", "deleted",
+  "rather not", "not into", "not a fan", "scraped", "deleted", "bad",
 ];
 
 /**

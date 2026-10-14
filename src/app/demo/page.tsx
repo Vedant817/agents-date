@@ -89,8 +89,8 @@ export default async function DemoPage(props: {
         <div className="fact">
           <b>{s.sessions}</b>
           <span>agent dates</span>
-          {/* State the rule, not just the number: 26 first choices collapse
-              into 19 distinct pairs, because mutual choices share a date. */}
+          {/* State the rule, not just the number: N first choices collapse
+              into M distinct pairs, because mutual choices share a date. */}
           <span className="fact-sub">{s.ready} first choices, {s.sessions} pairs</span>
         </div>
         <div className="fact">
