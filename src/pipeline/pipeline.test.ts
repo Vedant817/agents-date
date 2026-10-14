@@ -317,6 +317,18 @@ describe("dating", () => {
     expect(s.evaluation?.sharedGround ?? 1).toBeLessThan(0.3);
   });
 
+  it("varies the reflection closer with the outcome instead of repeating one line", () => {
+    // Every date used to end on the same boilerplate sentence, which made
+    // unrelated pairs read identically. The closer is a suggestion, never a
+    // claim, and follows the overlap.
+    const reflectionText = (s: ReturnType<typeof runDate>) =>
+      s.turns.filter((t) => t.move === "reflection").map((t) => t.text);
+    const overlapping = reflectionText(runDate("r", a, c));
+    const disjoint = reflectionText(runDate("r", a, d));
+    expect(overlapping.some((t) => /low-stakes meeting/.test(t))).toBe(false);
+    expect(disjoint.some((t) => /low-stakes meeting/.test(t))).toBe(true);
+  });
+
   it("ends with both agents reflecting", () => {
     const s = runDate("r", a, c);
     const lastTwo = s.turns.slice(-2);

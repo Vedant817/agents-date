@@ -254,7 +254,17 @@ function reflectionFor(
   if (otherOnly.length > 0) {
     parts.push(`What ${firstName(other)} has that ${label} does not is ${otherOnly.slice(0, 2).map((t) => t.label.toLowerCase()).join(", ")}, which is worth a real question rather than a guess.`);
   }
-  parts.push("I would suggest a short, active first date and see whether the conversation survives contact.");
+  // The closer varies with the outcome instead of repeating one boilerplate
+  // sentence on every date. All three are suggestions, never assertions, so
+  // no closer can state anything the evidence does not support.
+  const mismatch = selfOnly.length + otherOnly.length;
+  if (shared.length === 0) {
+    parts.push("With no overlap on paper, the honest next step is one low-stakes meeting, not more analysis.");
+  } else if (mismatch >= 6) {
+    parts.push("The differences are the interesting part here: go find out which ones matter in person.");
+  } else {
+    parts.push("I would suggest a short, active first date and see whether the conversation survives contact.");
+  }
   return parts.join(" ");
 }
 
