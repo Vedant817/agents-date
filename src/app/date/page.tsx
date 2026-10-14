@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { getStore } from "@/store/runs";
-import { DEMO_RUN_ID } from "@/pipeline/run";
+import { SHOWCASE_RUN_ID } from "@/pipeline/run";
 import type { Run } from "@/core/types";
 import DatePlayer from "./player";
 
@@ -14,9 +14,9 @@ export interface DateRunOption {
   people: { id: string; name: string }[];
 }
 
-async function loadDemo(): Promise<Run | null> {
+async function loadShowcase(): Promise<Run | null> {
   try {
-    return JSON.parse(await readFile(path.join(process.cwd(), "data", `${DEMO_RUN_ID}.json`), "utf8")) as Run;
+    return JSON.parse(await readFile(path.join(process.cwd(), "data", `${SHOWCASE_RUN_ID}.json`), "utf8")) as Run;
   } catch {
     return null;
   }
@@ -48,10 +48,10 @@ export default async function DatePage(props: {
   } catch {
     runs = [];
   }
-  const demo = await loadDemo();
+  const demo = await loadShowcase();
 
   const options: DateRunOption[] = [
-    ...(demo ? [toOption(demo, `Live demo (${demo.people.length} people)`)] : []),
+    ...(demo ? [toOption(demo, `Showcase run (${demo.people.length} people)`)] : []),
     ...runs.map((run) =>
       toOption(
         run,
@@ -83,7 +83,7 @@ export default async function DatePage(props: {
       {options.length === 0 ? (
         <section className="panel empty">
           <h2>No datable runs yet</h2>
-          <p>A date needs a run with at least two readable profiles. Start one, or wait for the demo to load.</p>
+          <p>A date needs a run with at least two readable profiles. Start one below.</p>
         </section>
       ) : (
         <DatePlayer runs={options} initial={initial} />

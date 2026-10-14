@@ -1,15 +1,21 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import Link from "next/link";
-import { DEMO_RUN_ID, summarise } from "@/pipeline/run";
+import { SHOWCASE_RUN_ID, summarise } from "@/pipeline/run";
 import type { Run } from "@/core/types";
 import RunClient from "../run/[runId]/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function loadDemo(): Promise<Run | null> {
-  const file = path.join(process.cwd(), "data", `${DEMO_RUN_ID}.json`);
+/**
+ * The showcase: a REAL run built from consenting volunteers' pasted
+ * profiles, committed at data/showcase.json. There is no synthetic data in
+ * this product — no seed script, no invented personas. Until volunteers
+ * contribute, this page renders its empty state instead of faking one.
+ */
+async function loadShowcase(): Promise<Run | null> {
+  const file = path.join(process.cwd(), "data", `${SHOWCASE_RUN_ID}.json`);
   try {
     return JSON.parse(await readFile(file, "utf8")) as Run;
   } catch {
@@ -20,18 +26,19 @@ async function loadDemo(): Promise<Run | null> {
 export default async function DemoPage(props: {
   searchParams: Promise<{ view?: string; person?: string }>;
 }) {
-  const run = await loadDemo();
+  const run = await loadShowcase();
   if (!run) {
     return (
       <main>
         <section className="panel empty">
-          <h2>The demo run is not available</h2>
+          <h2>No showcase run yet</h2>
           <p>
-            The pre-built demo could not be loaded on this deployment. You can still add your own profiles on the start
-            page and see the full pipeline run.
+            The showcase is a real run built from consenting volunteers — never synthetic data, so there is nothing to
+            show until people contribute their own profiles. Start a run of your own, or volunteer yours for the
+            showcase.
           </p>
           <Link href="/" className="btn btn-primary">
-            Add your own links
+            Add profiles
           </Link>
         </section>
       </main>
@@ -65,7 +72,7 @@ export default async function DemoPage(props: {
   return (
     <main>
       <div className="page-head">
-        <p className="eyebrow">Completed demo run</p>
+        <p className="eyebrow">Showcase run · real consenting volunteers</p>
         <h1>
           {s.ready} agents, {s.sessions} dates, every shortlist ranked.
         </h1>
@@ -106,12 +113,12 @@ export default async function DemoPage(props: {
         </div>
       </div>
 
-      <div className="notice notice-warn">
-        <b>What this demo is:</b> the complete pipeline running on 26 clearly-labelled synthetic personas, so you can
-        judge the analysis, the dating and the ranking without a scraping credential. <b>What it is not:</b> real
-        people&apos;s profiles. LinkedIn returns HTTP 999 to automated readers and Instagram serves a
-        JavaScript-only page, so this repo cannot capture real profiles without an Apify token — the same code path
-        reads real ones the moment a token is configured. Add your own links on the start page to see it run on you.
+      <div className="notice notice-info">
+        <b>What this showcase is:</b> the complete pipeline running on real people who consented to be here — every
+        profile below was pasted by its owner, and every quote links back to text they provided. <b>What it is not:</b>{" "}
+        scraped data or invented personas. LinkedIn returns HTTP 999 to automated readers and Instagram serves a
+        JavaScript-only page, so link-only reading needs an Apify token; until then, consent means pasting your own
+        visible profile text. Add your own links on the start page to see it run on you.
       </div>
 
       <RunClient run={run} initialView={initialView} initialPerson={initialPerson} />

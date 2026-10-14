@@ -259,10 +259,9 @@ describe("taxonomy", () => {
   });
 
   it("does not read the gerund 'running' as the sport", () => {
-    // Regression: found in the seeded demo. A beekeeper "running 14 hives"
-    // and a psychologist "running a peer support group" were both reported
-    // as hobby:running, and the UI then showed the managing sentence as the
-    // citation for loving running.
+    // Regression: a beekeeper "running 14 hives" and a psychologist "running
+    // a peer support group" were both reported as hobby:running, and the UI
+    // then showed the managing sentence as the citation for loving running.
     for (const line of [
       "Urban beekeeper running 14 hives across the city",
       "Supervising trainee psychologists and running a peer support group.",

@@ -1,8 +1,8 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getStore } from "@/store/runs";
 import { isRunActive } from "@/pipeline/background";
-import { DEMO_RUN_ID, summarise } from "@/pipeline/run";
+import { summarise } from "@/pipeline/run";
 import RunClient from "./client";
 import RunLive from "./live";
 
@@ -40,19 +40,13 @@ export default async function RunPage(props: {
             Add profiles
           </Link>
           <Link className="btn" href="/demo">
-            Open the live demo
+            Open the showcase
           </Link>
         </div>
       </main>
     );
   }
   if (!run) {
-    // /run/demo is the obvious thing to type, but the demo lives at /demo and
-    // is not in the store. Sending that visitor to the generic "expired" page
-    // told them their data was lost when it was not.
-    if (runId === DEMO_RUN_ID) {
-      redirect("/demo");
-    }
     notFound();
   }
 
@@ -72,7 +66,7 @@ export default async function RunPage(props: {
     <main>
       <div className="cluster cluster-between">
         <div className="page-head">
-          <p className="eyebrow">{run.isDemo ? "Completed demo run" : "Your run"}</p>
+          <p className="eyebrow">Your run</p>
           <h1>
             Your run
             {summary.ready > 0 ? ` — ${summary.ready} agent${summary.ready === 1 ? "" : "s"} ready` : ""}
@@ -82,18 +76,9 @@ export default async function RunPage(props: {
           </p>
         </div>
         <div className="cluster">
-          {/* This linked to / which started a fresh run, so the button threw
-              away every profile, date and ranking already captured. It now
-              resumes the same run, and the start form restores its people. */}
-          {run.isDemo ? (
-            <Link className="btn btn-sm" href="/">
-              Start your own run
-            </Link>
-          ) : (
-            <Link className="btn btn-sm" href={`/?from=${run.id}`}>
-              Add more people to this run
-            </Link>
-          )}
+          <Link className="btn btn-sm" href={`/?from=${run.id}`}>
+            Add more people to this run
+          </Link>
         </div>
       </div>
 
@@ -142,11 +127,11 @@ export default async function RunPage(props: {
         </div>
       )}
 
-      {!run.isDemo && store.isEphemeral() && (
+      {store.isEphemeral() && (
         <div className="notice notice-info">
           This run is stored on temporary disk, so it may disappear if the server restarts. The{" "}
           <Link href="/demo">
-            demo run
+            showcase run
           </Link>{" "}
           is always available.
         </div>

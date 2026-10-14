@@ -44,7 +44,7 @@ describe("background run processing", () => {
     // always replays a snapshot first.
     const store = getStore();
     const runId = newRunId();
-    await store.save({ ...emptyRun(runId, false), status: "running" });
+    await store.save({ ...emptyRun(runId), status: "running" });
     const seen: ProgressEvent[] = [];
     const unsub = subscribe(runId, (evt) => seen.push(evt));
     startCreateRun(runId, people2);
@@ -110,7 +110,7 @@ describe("background run processing", () => {
         linkedinText: "C Example\nDesigner.",
         instagramText: "C Example\nDesigner.",
       },
-    ]);
+    ], 3);
     const mid = await snapshot(runId);
     expect(mid.type).toBe("snapshot");
     expect(mid.total).toBe(3);
@@ -125,7 +125,7 @@ describe("background run processing", () => {
     // No pasted text and no network in tests: nobody is readable.
     const store = getStore();
     const runId = newRunId();
-    await store.save({ ...emptyRun(runId, false), status: "running" });
+    await store.save({ ...emptyRun(runId), status: "running" });
     startCreateRun(runId, [
       { linkedin: "linkedin.com/in/ghost-one", instagram: "instagram.com/ghost.one" },
     ]);

@@ -18,7 +18,7 @@ export default function RunNotFound() {
       <div className="notice notice-info">
         <b>If the run really existed, it has probably expired.</b> User runs are stored on temporary disk, so they can
         be lost when the server restarts or the site is redeployed. The committed{" "}
-        <Link href="/demo">demo run</Link> does not expire, because it is read from the repository.
+        <Link href="/demo">showcase run</Link> does not expire, because it is read from the repository.
       </div>
 
       <div className="cluster">
@@ -26,7 +26,7 @@ export default function RunNotFound() {
           Add profiles
         </Link>
         <Link className="btn" href="/demo">
-          Open the live demo
+          Open the showcase
         </Link>
       </div>
     </main>

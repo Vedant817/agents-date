@@ -55,8 +55,18 @@ describe("POST /api/dates (instant date)", () => {
     expect(body.session.evaluation.overall).toBeGreaterThan(0);
   });
 
-  it("dates the demo cohort too", async () => {
-    const res = await dates(post({ runId: "demo", a: "p1", b: "p2" }));
+  it("dates the showcase cohort, or says plainly that none exists", async () => {
+    // The showcase is a real consented run read from a committed file. Until
+    // volunteers contribute one, the endpoint must say so — nothing synthetic
+    // may stand in for it. Either way the test asserts real behavior.
+    const { existsSync } = await import("node:fs");
+    const { default: path } = await import("node:path");
+    const res = await dates(post({ runId: "showcase", a: "p1", b: "p2" }));
+    if (!existsSync(path.join(process.cwd(), "data", "showcase.json"))) {
+      expect(res.status).toBe(500);
+      expect((await res.json()).error).toMatch(/could not be loaded/i);
+      return;
+    }
     expect(res.status).toBe(200);
     const body = (await res.json()) as { session: { turns: unknown[] } };
     expect(body.session.turns.length).toBeGreaterThan(0);

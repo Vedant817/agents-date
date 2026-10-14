@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const run: Run = { ...emptyRun(runId, false, notes) };
+  const run: Run = { ...emptyRun(runId, notes) };
   run.status = "running";
   await store.save(run);
 

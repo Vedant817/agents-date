@@ -92,7 +92,7 @@ export default function RunClient({
   const nameOf = (id: string) => ready.find((p) => p.id === id)?.displayName ?? "this person";
   /**
    * How a quoted line was obtained, so a transcript citation cannot read like
-   * a live read when the text was pasted or seeded.
+   * a live read when the text was pasted.
    */
   const modeOf = (personId: string, source: string): string | undefined =>
     ready.find((p) => p.id === personId)?.analysis?.sources[source as "linkedin" | "instagram"]?.readMode;
@@ -254,16 +254,14 @@ function SourceLinks({ person }: { person: PersonRecord }) {
       )}
       {/* Provenance must be explicit. "via consented-text" was a chip identical
           in weight to a real read, so pasted text looked like a verified
-          capture. Live, pasted and seeded are now visually distinct. */}
+          capture. Live reads and pasted text are visually distinct. */}
       {li?.status === "captured" && (
         <span
           className={li.readMode === "live" ? "chip" : "chip chip-warn"}
           title={
             li.readMode === "live"
               ? "This system read the public LinkedIn profile."
-              : li.readMode === "seeded"
-                ? "Authored sample data shipped with the demo, never a capture of a real person."
-                : "This text was pasted from the profile by whoever started the run, not read from LinkedIn by this system."
+              : "This text was pasted from the profile by whoever started the run, not read from LinkedIn by this system."
           }
         >
           LinkedIn: {provenanceLabel(li)}
@@ -275,9 +273,7 @@ function SourceLinks({ person }: { person: PersonRecord }) {
           title={
             ig.readMode === "live"
               ? "This system read the public Instagram profile."
-              : ig.readMode === "seeded"
-                ? "Authored sample data shipped with the demo, never a capture of a real person."
-                : "This text was pasted from the profile by whoever started the run, not read from Instagram by this system."
+              : "This text was pasted from the profile by whoever started the run, not read from Instagram by this system."
           }
         >
           Instagram: {provenanceLabel(ig)}
@@ -499,8 +495,9 @@ function SessionPanel({
                     {e.quote.length > 90 ? "…" : ""}&rdquo;{" "}
                     <span className="src">
                       {nameOf(e.personId)} · {e.source} · line {(e.line ?? 0) + 1}
-                      {/* A transcript quote looked exactly like a live read even
-                          in the seeded demo. Mark anything not read live. */}
+                      {/* A transcript quote must never read like a live capture
+                          when the text was pasted. Mark anything not read
+                          live. */}
                       {(() => {
                         const tag = provenanceTag(modeOf(e.personId, e.source));
                         return tag ? ` · ${tag}` : null;

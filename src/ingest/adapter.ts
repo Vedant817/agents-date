@@ -34,7 +34,6 @@ export function provenanceLabel(record: SourceRecord | undefined): string {
   if (!record) return "no source";
   if (record.status === "unavailable") return "not read";
   if (record.readMode === "live") return "read live";
-  if (record.readMode === "seeded") return "seeded sample";
   // Anything without a proven live read is treated as pasted. Claiming "live"
   // is the one thing this must never do without an adapter that earned it.
   return "pasted text";
@@ -52,7 +51,6 @@ export function isLiveRead(record: SourceRecord | undefined): boolean {
  */
 export function provenanceTag(mode: string | undefined): string | null {
   if (mode === "live") return null;
-  if (mode === "seeded") return "seeded sample";
   if (mode === "pasted") return "pasted text";
   return null;
 }

@@ -8,7 +8,7 @@
 | Prebuilt demo | https://agents-date.onrender.com/demo |
 | How it works / limits | https://agents-date.onrender.com/method |
 | Repository | https://github.com/Vedant817/agents-date |
-| Video | `artifacts/agents-date-demo.mp4` (69s, 1600x900, H.264) - not yet published to YouTube |
+| Video | `artifacts/agents-date-demo.mp4` (69s — STALE: shows the retired synthetic demo; recapture against the real showcase run once volunteers contribute, per `data/SHOWCASE.md`) - not yet published to YouTube |
 
 ## Short description (167 characters)
 
@@ -32,13 +32,16 @@ supports, and ranking scores each directed pair on five weighted components
 drawn from the two profiles. Nothing is sent to a real person: the transcripts
 are labelled AI simulations in the UI.
 
-**Evidence integrity is enforced, not asserted.** `npm run audit` re-derives the
-current data and fails on twelve properties, including citations that do not
-resolve to a real source line, one-sided claims cited to the wrong side,
-traits with no evidence, a trait refuted by its own quote, a misleading "adds
-something new", a wrong session `runId`, and a leaked placeholder name. On the
-seeded run: 408 citations, 0 unresolved, 0 refuted, 650 additive claims with 0
-false, 6 of 325 exact symmetric ranking ties (1.8%).
+**Evidence integrity is enforced, not asserted.** `npm run audit <run-file>`
+re-derives the current data and fails on twelve properties, including citations
+that do not resolve to a real source line, one-sided claims cited to the wrong
+side, traits with no evidence, a trait refuted by its own quote, a misleading
+"adds something new", a wrong session `runId`, and a leaked placeholder name.
+The negation check shares its predicate with the matcher
+(`src/core/negation.ts`), so a refuted quote can neither ship nor pass the
+audit. There is no synthetic data in the repo: the audit runs against real
+stored runs, or against the committed showcase run once volunteers contribute
+it (see `data/SHOWCASE.md`).
 
 **Defects found by adversarial QA and fixed, each with a regression test.**
 Clause-scoped negation, so "I hate running" no longer yields "into running";
@@ -48,7 +51,7 @@ string that was false for 144 of 650 pairs; dating turns that refuted their own
 citation; unreadable people silently entering rankings; forged
 `x-forwarded-for` headers that reset the rate limit; pasted profile text
 rendered with the authority of a live capture (every source now carries
-`readMode: live | pasted | seeded`, labelled in the UI); "Add more people"
+`readMode: live | pasted`, labelled in the UI); "Add more people"
 discarding the run it came from (runs extend in place, with concurrent extends
 merged under a per-run lock); case-variant duplicates rated as separate people;
 an undocumented date count (each agent dates its first choice; mutual choices
@@ -59,8 +62,9 @@ automated readers, so that capture path is disabled by default under the site
 terms. Instagram serves a client-only page and its JSON endpoint returns 401, so
 real Instagram capture needs an `APIFY_TOKEN` and is opt-in. Without a token the
 app still runs end to end on pasted public profile text, and failed captures
-stay visible rather than being faked. The demo run ships 26 clearly-labelled
-synthetic personas instead of real people, because capturing real profiles would
-need both authorisation and a paid scraping credential. The demo uses the same
-pipeline and the same audit as a live run; only the source text differs. Runs
-are stored on an ephemeral filesystem and can be lost on redeploy.
+stay visible rather than being faked. The showcase (`/demo`, committed at
+`data/showcase.json`) is a real run built from consenting volunteers through
+the same pipeline and the same audit as a live run — see `data/SHOWCASE.md`
+for the contribution rules. Until volunteers contribute, `/demo` renders its
+empty state instead of faking one. Runs are stored on an ephemeral filesystem
+and can be lost on redeploy.

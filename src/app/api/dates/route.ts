@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { runDate } from "@/dating/engine";
-import { DEMO_RUN_ID } from "@/pipeline/run";
+import { SHOWCASE_RUN_ID } from "@/pipeline/run";
 import { getStore } from "@/store/runs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -52,11 +52,11 @@ export async function POST(request: Request) {
   }
 
   let run: Run | null;
-  if (runId === DEMO_RUN_ID) {
+  if (runId === SHOWCASE_RUN_ID) {
     try {
-      run = JSON.parse(await readFile(path.join(process.cwd(), "data", `${DEMO_RUN_ID}.json`), "utf8")) as Run;
+      run = JSON.parse(await readFile(path.join(process.cwd(), "data", `${SHOWCASE_RUN_ID}.json`), "utf8")) as Run;
     } catch {
-      return NextResponse.json({ error: "The demo run could not be loaded." }, { status: 500 });
+      return NextResponse.json({ error: "The showcase run could not be loaded." }, { status: 500 });
     }
   } else {
     const store = getStore();

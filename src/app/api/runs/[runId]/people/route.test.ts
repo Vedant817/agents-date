@@ -66,6 +66,66 @@ describe("POST /api/runs/<runId>/people (extend a run)", () => {
     expect(body.run.people.length).toBe(3);
   });
 
+  it("leaves no placeholder ids in stored people, analyses or evidence", async () => {
+    // Regression with user-visible damage: captures ran under tmp_1 ids and
+    // the merge renamed only the record. Dates were planned for a phantom,
+    // transcripts cited "this person" instead of a name, and the audit
+    // failed on unresolvable quotes.
+    const runId = await createRun([
+      { linkedin: LI("a"), instagram: IG("a"), ...text("A") },
+      { linkedin: LI("b"), instagram: IG("b"), ...text("B") },
+    ]);
+    const res = await extend(post(`https://x.test/api/runs/${runId}/people`, {
+      entries: [{ linkedin: LI("c"), instagram: IG("c"), ...text("C") }],
+    }), { params: Promise.resolve({ runId }) });
+    expect(res.status).toBe(202);
+    await waitForRun(runId);
+
+    const run = await getRun(new Request(`https://x.test/api/runs/${runId}`), {
+      params: Promise.resolve({ runId }),
+    });
+    const body = (await run.json()) as {
+      run: {
+        people: {
+          id: string;
+          analysis?: {
+            personId: string;
+            traits: { evidence: { personId: string; quote: string }[] }[];
+            needs: { evidence: { personId: string; quote: string }[] }[];
+            openers: { evidence: { personId: string; quote: string }[] }[];
+            sources: { linkedin: { lines?: string[] }; instagram: { lines?: string[] } };
+          };
+          sessions?: { personAId: string; personBId: string }[];
+          matches?: { candidateId: string }[];
+        }[];
+      };
+    };
+    const ids = new Set(body.run.people.map((p) => p.id));
+    expect([...ids].some((id) => id.startsWith("tmp_"))).toBe(false);
+    for (const person of body.run.people) {
+      expect(person.analysis?.personId, `${person.id} analysis points at its own record`).toBe(person.id);
+      const lines = [
+        ...(person.analysis?.sources.linkedin.lines ?? []),
+        ...(person.analysis?.sources.instagram.lines ?? []),
+      ];
+      const evidence = [
+        ...(person.analysis?.traits ?? []).flatMap((t) => t.evidence),
+        ...(person.analysis?.needs ?? []).flatMap((n) => n.evidence),
+        ...(person.analysis?.openers ?? []).flatMap((o) => o.evidence),
+      ];
+      for (const e of evidence) {
+        expect(ids.has(e.personId), `evidence cites ${e.personId}, which is nobody in the run`).toBe(true);
+        expect(lines, `quote resolves to a source line: ${e.quote}`).toContain(e.quote);
+      }
+      for (const s of person.sessions ?? []) {
+        expect(ids.has(s.personAId) && ids.has(s.personBId), `session ${s.personAId}x${s.personBId} names run members`).toBe(true);
+      }
+      for (const m of person.matches ?? []) {
+        expect(ids.has(m.candidateId), `ranking names ${m.candidateId}, who is nobody`).toBe(true);
+      }
+    }
+  });
+
   it("gives the original people the new dates and ranking entries", async () => {
     const runId = await createRun([
       { linkedin: LI("a"), instagram: IG("a"), ...text("A") },
@@ -137,12 +197,12 @@ describe("POST /api/runs/<runId>/people (extend a run)", () => {
     expect((await res.json()).error).toMatch(/already in this run/i);
   });
 
-  it("refuses to extend the frozen demo run", async () => {
-    const res = await extend(post("https://x.test/api/runs/demo/people", {
+  it("refuses to extend the fixed showcase run", async () => {
+    const res = await extend(post("https://x.test/api/runs/showcase/people", {
       entries: [{ linkedin: LI("z"), instagram: IG("z") }],
-    }), { params: Promise.resolve({ runId: "demo" }) });
+    }), { params: Promise.resolve({ runId: "showcase" }) });
     expect(res.status).toBe(400);
-    expect((await res.json()).error).toMatch(/demo/i);
+    expect((await res.json()).error).toMatch(/showcase/i);
   });
 
   it("explains that the run is gone rather than creating a new one", async () => {
@@ -168,7 +228,6 @@ describe("POST /api/runs/<runId>/people (extend a run)", () => {
     }));
     await store.save({
       id: "run_full",
-      isDemo: false,
       status: "complete",
       people,
       createdAt: 1,

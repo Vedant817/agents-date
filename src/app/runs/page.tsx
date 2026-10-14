@@ -45,8 +45,8 @@ export default async function RunsPage() {
         <section className="panel person-card">
           <div className="person-top">
             <div>
-              <div className="person-name">Live demo</div>
-              <div className="person-sub">26 agents · 18 dates · always available</div>
+              <div className="person-name">Showcase run</div>
+              <div className="person-sub">real volunteers · always available</div>
             </div>
             <span className="chip">pinned</span>
           </div>
@@ -54,7 +54,7 @@ export default async function RunsPage() {
             The finished example: analysed profiles, recorded agent dates, every shortlist ranked.
           </p>
           <Link className="btn btn-sm" href={`/demo`}>
-            Open the demo
+            Open the showcase
           </Link>
         </section>
 
@@ -112,7 +112,7 @@ export default async function RunsPage() {
       {store.isEphemeral() && summaries.length > 0 && (
         <div className="notice notice-info">
           These runs live on temporary disk and can disappear when the server restarts. The{" "}
-          <Link href="/demo">demo run</Link> does not expire.
+          <Link href="/demo">showcase run</Link> does not expire.
         </div>
       )}
     </main>

@@ -20,9 +20,7 @@ export type ReadMode =
   /** Text read from the platform itself, by a real capture adapter. */
   | "live"
   /** Text the submitter pasted from what the profile shows in public. */
-  | "pasted"
-  /** Authored sample data shipped with the demo, never a capture of a person. */
-  | "seeded";
+  | "pasted";
 
 /** The two sources for a person are both required and both fixed in shape. */
 export interface SourcePair {
@@ -246,8 +244,6 @@ export interface PersonRecord {
 
 export interface Run {
   readonly id: string;
-  /** Marks the frozen, already-completed run used by /demo. */
-  readonly isDemo: boolean;
   status: RunStatus;
   people: PersonRecord[];
   createdAt: number;

@@ -6,13 +6,13 @@ import type { Run } from "@/core/types";
 /**
  * Filesystem-backed run store.
  *
- * Chosen over a hosted database for one reason: the demo and the live site must
- * both work with zero external credentials. A hosted adapter can be added
+ * Chosen over a hosted database for one reason: the showcase and the live site
+ * must both work with zero external credentials. A hosted adapter can be added
  * behind the same interface later.
  *
  * DEPLOYMENT CAVEAT: on most PaaS hosts (Render, Heroku, Fly) the container
  * filesystem is ephemeral, so user-created runs are lost on restart or
- * redeploy. The committed demo run is unaffected because it is read from the
+ * redeploy. The committed showcase run is unaffected because it is read from the
  * repository. `isEphemeral` is surfaced on the run page so the UI can tell the
  * user their run is temporary instead of silently losing it.
  *

@@ -1,7 +1,7 @@
 import { ConsentedTextAdapter } from "@/ingest/public";
 import { buildAdapters, normaliseInstagramUrl, normaliseLinkedInUrl } from "@/ingest/setup";
 import type { PersonRecord } from "@/core/types";
-import { computeNetwork, processPerson } from "@/pipeline/run";
+import { computeNetwork, processPerson, reassignPersonId } from "@/pipeline/run";
 import { getStore } from "@/store/runs";
 
 /**
@@ -59,7 +59,14 @@ function trackJob(runId: string, job: Promise<void>): void {
   set.add(job);
   void job.catch(() => undefined).finally(() => {
     set.delete(job);
-    if (set.size === 0) pendingJobs.delete(runId);
+    if (set.size === 0) {
+      pendingJobs.delete(runId);
+      // seqs/totals are only meaningful while a job is in flight. Prune with
+      // the set so a long-lived process does not accumulate one entry per
+      // run id forever.
+      seqs.delete(runId);
+      totals.delete(runId);
+    }
   });
 }
 
@@ -246,8 +253,15 @@ export function startCreateRun(runId: string, entries: JobEntry[]): void {
  * Processes added people in the background and merges them under the run's
  * lock, with the same duplicate and capacity re-checks the synchronous path
  * had. Person ids continue the run's numbering from the authoritative count.
+ *
+ * `expectedTotal` (existing people + new entries, known by the caller from
+ * its pre-check read) is published synchronously so a snapshot taken a
+ * millisecond after accept already aims at the new denominator. Without it
+ * the total only appears at merge time and early progress reads against the
+ * old count — the same stale-denominator race the create path never has.
  */
-export function startExtendRun(runId: string, entries: JobEntry[]): void {
+export function startExtendRun(runId: string, entries: JobEntry[], expectedTotal?: number): void {
+  if (expectedTotal !== undefined) totals.set(runId, expectedTotal);
   const job = (async () => {
     const store = getStore();
     try {
@@ -294,7 +308,10 @@ export function startExtendRun(runId: string, entries: JobEntry[]): void {
           }
         }
         const firstIndex = fresh.people.length + 1;
-        const numbered = added.map((person, i) => ({ ...person, id: `p${firstIndex + i}` }));
+        // Deep renumber BEFORE computeNetwork plans anything: analysis and
+        // every evidence personId move off the placeholder, or dates cite a
+        // phantom and the audit fails on unresolvable quotes.
+        const numbered = added.map((person, i) => reassignPersonId(person, `p${firstIndex + i}`));
         const recomputed = computeNetwork([...fresh.people, ...numbered]);
         const notes = new Set([...(fresh.notes ?? [])]);
         const ready = numbered.filter((p) => p.status === "ready").length;

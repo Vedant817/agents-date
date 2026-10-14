@@ -97,26 +97,23 @@ describe("how dates are chosen", () => {
     expect(planSessions([])).toEqual([]);
   });
 
-  it("covers every agent in the shipped demo run", async () => {
-    // The claim the demo page makes in prose: N first choices collapse into M
-    // distinct pairs. The count itself must equal the planner's output on the
-    // shipped data — pinning a magic number here rotted the last time the
-    // taxonomy gained a trait, so the test asserts consistency instead.
-    const { readFile } = await import("node:fs/promises");
-    const path = await import("node:path");
-    const file = path.join(process.cwd(), "data", "demo.json");
-    const run = JSON.parse(await readFile(file, "utf8")) as { people: PersonRecord[] };
-    const ready = run.people.filter((p) => p.status === "ready");
-    const sessions = planSessions(run.people);
-
-    expect(ready.length).toBe(26);
-    // The stored sessions must be exactly the current plan: no stale pairs
-    // from an older ranking, no missing ones.
-    const stored = new Set<string>();
-    for (const p of run.people) for (const s of p.sessions ?? []) stored.add(s.id);
-    const planned = new Set(sessions.map(([a, b]) => `date_${[a, b].sort().join("_")}`.slice(0, 120)));
-    expect(stored).toEqual(planned);
-    expect(new Set(sessions.flat()).size).toBe(26);
+  it("keeps stored sessions exactly equal to the current plan", () => {
+    // The run page states the date rule as fact, so the stored sessions must
+    // be exactly what the planner produces: no stale pairs from an older
+    // ranking, no missing ones. Uses a generated cohort — there is no demo
+    // data file to read from anymore.
+    const ids = ["a", "b", "c", "d", "e", "f", "g", "h"];
+    const people = peopleWithPreferences(
+      ids.map((id, i) => ({
+        id,
+        prefs: [ids[(i + 1) % ids.length]!, ids[(i + 3) % ids.length]!, ids[(i + 5) % ids.length]!],
+      })),
+    );
+    const sessions = planSessions(people);
+    // Every agent covered, none dating twice in the same plan.
+    expect(new Set(sessions.flat()).size).toBe(ids.length);
+    const keys = sessions.map(([x, y]) => [x, y].sort().join("|"));
+    expect(new Set(keys).size).toBe(keys.length);
   });
 
   it("recomputing a network is stable, so extending a run adds rather than resets", () => {

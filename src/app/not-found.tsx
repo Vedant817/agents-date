@@ -26,7 +26,7 @@ export default function NotFound() {
             end: analysis, dating, rankings.
           </li>
           <li>
-            <b>Open the demo.</b> A finished run with analysed profiles, recorded agent dates and every shortlist
+            <b>Open the showcase.</b> A finished run with analysed profiles, recorded agent dates and every shortlist
             ranked.
           </li>
           <li>
@@ -40,7 +40,7 @@ export default function NotFound() {
           Add profiles
         </Link>
         <Link className="btn" href="/demo">
-          Open the live demo
+          Open the showcase
         </Link>
         <Link className="btn btn-ghost" href="/method">
           How it works

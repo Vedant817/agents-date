@@ -5,13 +5,21 @@
  * tests: every citation resolves, no turn refutes its own evidence, and
  * rankings are directed.
  *
- * Run: npx tsx scripts/audit-run.ts data/demo.json
+ * Run: npx tsx scripts/audit-run.ts <run-file>
+ * With no argument, audits the committed showcase run (data/showcase.json),
+ * which fails openly until volunteers contribute one.
  */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import type { PersonRecord, Run } from "../src/core/types";
 import { isTraitNegated } from "../src/core/negation";
 
-const file = process.argv[2] ?? "data/demo.json";
+const file = process.argv[2] ?? "data/showcase.json";
+if (!existsSync(file)) {
+  console.error(
+    `No run file at ${file}. Pass a run file to audit (e.g. npx tsx scripts/audit-run.ts .data/runs/<id>.json), or contribute the showcase run: see data/SHOWCASE.md.`,
+  );
+  process.exit(2);
+}
 const run = JSON.parse(readFileSync(file, "utf8")) as Run;
 
 const lines = new Map<string, string[]>();

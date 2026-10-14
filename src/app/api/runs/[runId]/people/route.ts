@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { normaliseInstagramUrl, normaliseLinkedInUrl } from "@/ingest/setup";
 import type { Run } from "@/core/types";
-import { DEMO_RUN_ID } from "@/pipeline/run";
+import { SHOWCASE_RUN_ID } from "@/pipeline/run";
 import { startExtendRun } from "@/pipeline/background";
 import { getStore } from "@/store/runs";
 import { RATE_ACTIONS, rateLimit } from "@/api/rate-limit";
@@ -18,12 +18,12 @@ export async function POST(request: Request, context: { params: Promise<{ runId:
 
   const { runId } = await context.params;
 
-  // The demo is served from a committed file, not the store, so a normal
-  // lookup would report 404 and blame the link. Answer the well-known id
-  // directly instead: it exists, it is just not extendable.
-  if (runId === DEMO_RUN_ID) {
+  // The showcase is a committed file, not a stored run, so a normal lookup
+  // would report 404 and blame the link. Answer the well-known id directly
+  // instead: it exists, it is just not extendable.
+  if (runId === SHOWCASE_RUN_ID) {
     return NextResponse.json(
-      { error: "The demo run is a fixed example and cannot be extended. Start your own run instead." },
+      { error: "The showcase run is a fixed example and cannot be extended. Start your own run instead." },
       { status: 400 },
     );
   }
@@ -119,6 +119,9 @@ export async function POST(request: Request, context: { params: Promise<{ runId:
       linkedinText: entry.linkedinText,
       instagramText: entry.instagramText,
     })),
+    // The pre-check read above counted every stored person: publish the new
+    // denominator now so first-paint progress aims at it, not the old total.
+    existing.people.length + entries.length,
   );
 
   return NextResponse.json({ runId }, { status: 202 });

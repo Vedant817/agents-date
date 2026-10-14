@@ -218,7 +218,7 @@ export function rankCandidates(
     .filter((c) => c.personId !== subject.personId)
     .map((c) => scoreMatch(subject, c))
     // Ties break on personId so the ordering is stable across runs and
-    // a demo link always shows the same list.
+    // a shared link always shows the same list.
     .sort((a, b) => b.overall - a.overall || a.candidateId.localeCompare(b.candidateId))
     .map((s, i) => ({ ...s }));
 }

@@ -111,7 +111,6 @@ describe("computeNetwork is idempotent for sessions", () => {
     const net = computeNetwork(people);
     const run: Run = {
       id: "run_probe",
-      isDemo: false,
       status: "complete",
       people: net,
       createdAt: 1,

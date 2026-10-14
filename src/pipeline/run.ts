@@ -6,13 +6,20 @@ import type { CaptureAdapter } from "@/ingest/adapter";
 import { AnonymousWebAdapter, ConsentedTextAdapter } from "@/ingest/public";
 import type {
   DateSession,
+  Evidence,
   PersonAnalysis,
   PersonRecord,
   Run,
   SourceRecord,
 } from "@/core/types";
 
-export const DEMO_RUN_ID = "demo";
+/**
+ * The committed showcase run: a REAL run built from consenting volunteers'
+ * pasted profiles, stored at data/showcase.json. There is no synthetic data
+ * anywhere in the product — no seed script, no invented personas. Until
+ * volunteers contribute, /demo renders its empty state.
+ */
+export const SHOWCASE_RUN_ID = "showcase";
 
 export interface PipelineDeps {
   readonly adapters: readonly CaptureAdapter[];
@@ -30,11 +37,10 @@ export function newRunId(): string {
   return `run_${stamp}${rand}`;
 }
 
-export function emptyRun(id: string, isDemo: boolean, notes: string[] = []): Run {
+export function emptyRun(id: string, notes: string[] = []): Run {
   const now = Date.now();
   return {
     id,
-    isDemo,
     status: "created",
     people: [],
     createdAt: now,
@@ -149,6 +155,50 @@ export async function processPerson(
   };
 }
 
+function remapEvidence<T extends { readonly evidence: readonly Evidence[] }>(
+  items: readonly T[],
+  from: string,
+  to: string,
+): T[] {
+  return items.map((item) => ({
+    ...item,
+    evidence: item.evidence.map((e) => (e.personId === from ? { ...e, personId: to } : e)),
+  }));
+}
+
+/**
+ * Gives an analysed person their final id, rewriting every identity inside
+ * the analysis to match.
+ *
+ * The extend path captures people under placeholder ids (`tmp_1`) because
+ * the real numbering is only known under the run's lock. Renaming just the
+ * record left `analysis.personId` and every evidence `personId` pointing at
+ * the placeholder: dates were planned for a phantom, transcripts cited
+ * "this person" instead of a name, and the audit failed on unresolvable
+ * quotes. Renumbering is deep or it is wrong.
+ */
+export function reassignPersonId(person: PersonRecord, newId: string): PersonRecord {
+  const from = person.id;
+  if (from === newId || !person.analysis) {
+    return from === newId ? person : { ...person, id: newId };
+  }
+  const analysis = person.analysis;
+  return {
+    ...person,
+    id: newId,
+    analysis: {
+      ...analysis,
+      personId: newId,
+      traits: remapEvidence(analysis.traits, from, newId),
+      hobbies: remapEvidence(analysis.hobbies, from, newId),
+      interests: remapEvidence(analysis.interests, from, newId),
+      values: remapEvidence(analysis.values, from, newId),
+      needs: remapEvidence(analysis.needs, from, newId),
+      openers: remapEvidence(analysis.openers, from, newId),
+    },
+  };
+}
+
 /**
  * Chooses date sessions in two passes.
  *
@@ -165,8 +215,10 @@ export async function processPerson(
  * matters more than hitting a round number.
  *
  * The resulting count is therefore derived rather than arbitrary: with 26
- * agents, 26 first choices collapse into 19 distinct pairs, and pass 2 has
- * nothing to add because coverage already exceeded the target.
+ * agents, 26 first choices might collapse into 19 distinct pairs on one data
+ * set and 18 on another, and pass 2 has nothing to add once coverage already
+ * exceeds the target. The demo page states the live numbers; never hardcode
+ * a count here.
  */
 export function planSessions(
   people: readonly { id: string; matches?: readonly { candidateId: string; overall: number }[] }[],

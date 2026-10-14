@@ -483,11 +483,11 @@ export default function StartForm({
       <section className="panel">
         <h2>Want to see it populated first?</h2>
         <p className="small">
-          The demo run is already finished: 26 people, their analysed profiles, the dates their agents went on, and every
-          person&apos;s ranked shortlist.
+          The showcase run is already finished: real volunteers&apos; analysed profiles, the dates their agents went on,
+          and every person&apos;s ranked shortlist.
         </p>
         <Link className="btn btn-primary" href="/demo">
-          Open the live demo
+          Open the showcase run
         </Link>
       </section>
     </main>

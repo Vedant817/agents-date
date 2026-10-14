@@ -129,7 +129,7 @@ export default function DatePlayer({
             <select value={runId} onChange={(e) => setRunId(e.target.value)}>
               {runs.map((r) => (
                 <option key={r.id} value={r.id}>
-                  {r.id === "demo" ? r.label : `Run · ${r.label}`}
+                  {r.id === "showcase" ? r.label : `Run · ${r.label}`}
                 </option>
               ))}
             </select>

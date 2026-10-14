@@ -14,8 +14,7 @@
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "seed": "tsx scripts/seed-demo.ts",
-    "audit": "tsx scripts/audit-run.ts data/demo.json"
+    "audit": "tsx scripts/audit-run.ts"
   },
   "dependencies": {
     "next": "15.5.26",

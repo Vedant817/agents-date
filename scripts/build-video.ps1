@@ -38,9 +38,19 @@ function Invoke-FF([string[]]$ffArgs, [string]$label) {
 }
 
 # Order matches the required narrative: profile pages FIRST, then the agents
-# dating, then rankings, then how it works.
+# dating, then rankings, then how it works. Numbers come from the showcase
+# file, never hardcoded — there is no synthetic data to count on.
+$showcaseFile = Join-Path (Get-Location) "data/showcase.json"
+if (-not (Test-Path $showcaseFile)) {
+  throw "No showcase run at data/showcase.json. See data/SHOWCASE.md — the video is captured from real volunteers, never synthetic data."
+}
+$showcase = Get-Content $showcaseFile -Raw | ConvertFrom-Json
+$agentCount = @($showcase.people | Where-Object { $_.status -eq "ready" }).Count
+$dateIds = @{}
+foreach ($p in $showcase.people) { foreach ($s in ($p.sessions ?? @())) { $dateIds[$s.id] = $true } }
+$dateCount = $dateIds.Count
 $story = @(
-  @{ file = "00.png"; seconds = 6;  caption = "26 agents. 19 dates. Every claim cited to a source line." },
+  @{ file = "00.png"; seconds = 6;  caption = "$agentCount agents. $dateCount dates. Every claim cited to a source line." },
   @{ file = "01.png"; seconds = 7;  caption = "Profile FIRST: hobbies, interests, needs - each quote traced to its source line" },
   @{ file = "02.png"; seconds = 6;  caption = "A second person, read only from their own two profiles" },
   @{ file = "03.png"; seconds = 11; caption = "The agents actually date. Real transcripts - every turn grounded in evidence" },
