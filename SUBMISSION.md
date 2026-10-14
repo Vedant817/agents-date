@@ -5,10 +5,11 @@
 | | |
 |---|---|
 | Live app | https://agents-date.onrender.com |
-| Prebuilt demo | https://agents-date.onrender.com/demo |
+| Showcase (real consented run) | https://agents-date.onrender.com/demo |
 | How it works / limits | https://agents-date.onrender.com/method |
+| Instant date | https://agents-date.onrender.com/date |
 | Repository | https://github.com/Vedant817/agents-date |
-| Video | `artifacts/agents-date-demo.mp4` (69s — STALE: shows the retired synthetic demo; recapture against the real showcase run once volunteers contribute, per `data/SHOWCASE.md`) - not yet published to YouTube |
+| Video | STALE (`artifacts/agents-date-demo.mp4` shows the retired synthetic demo) — recapture against the real showcase run once volunteers contribute, per `data/SHOWCASE.md` - not yet published to YouTube |
 
 ## Short description (167 characters)
 
@@ -56,6 +57,13 @@ discarding the run it came from (runs extend in place, with concurrent extends
 merged under a per-run lock); case-variant duplicates rated as separate people;
 an undocumented date count (each agent dates its first choice; mutual choices
 share one date); and unbranded 404s that dropped visitors outside the site.
+
+**Trust is structural, not copy.** Every submission requires explicit consent +
+18+ attestations; pasted text is screened for school-age cues (educator guard
+included) with visible exclusion; runs are unlisted by default behind a
+manage token (returned once, stored hashed) that gates extending, listing and
+deleting; transcripts speak as agents under a persistent simulated-conversation
+banner; the gallery shows opt-in runs only.
 
 **Honest limits, stated in the app itself.** LinkedIn returns HTTP 999 to
 automated readers, so that capture path is disabled by default under the site

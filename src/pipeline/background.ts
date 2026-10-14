@@ -196,6 +196,13 @@ export function isRunActive(runId: string): boolean {
   return (pendingJobs.get(runId)?.size ?? 0) > 0;
 }
 
+/** Jobs in flight across all runs, for the health endpoint. */
+export function pendingJobsSnapshot(): number {
+  let n = 0;
+  for (const set of pendingJobs.values()) n += set.size;
+  return n;
+}
+
 /**
  * Processes a brand-new run in the background. Saves each finished person as
  * it goes, so a refresh mid-run shows real progress instead of an empty page.

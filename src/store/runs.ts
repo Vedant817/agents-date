@@ -30,6 +30,8 @@ export interface RunStore {
    */
   update(runId: string, fn: (run: Run) => Run | null): Promise<Run | null>;
   list(): Promise<Run[]>;
+  /** File count without parsing: O(1) reads for health checks and badges. */
+  count(): Promise<number>;
   delete(runId: string): Promise<void>;
   /** True when writes do not survive a restart. */
   isEphemeral(): boolean;
@@ -170,6 +172,14 @@ export class FileRunStore implements RunStore {
       const { unlink } = await import("node:fs/promises");
       await unlink(file);
     }
+  }
+
+  async count(): Promise<number> {
+    if (!existsSync(DATA_DIR)) return 0;
+    const files = await readdir(DATA_DIR);
+    let n = 0;
+    for (const f of files) if (f.endsWith(".json")) n += 1;
+    return n;
   }
 }
 
